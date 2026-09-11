@@ -1,0 +1,759 @@
+/* Beautiful Game IQ — App styling */
+
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #172033;
+  background: #f3f5f8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f3f5f8;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: #e9edf3;
+  color: #172033;
+  font-weight: 600;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+button:hover {
+  box-shadow: 0 3px 10px rgba(20, 30, 50, 0.12);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid #d7dce5;
+  border-radius: 10px;
+  padding: 11px 12px;
+  background: white;
+  color: #172033;
+}
+
+.app {
+  min-height: 100vh;
+  padding-bottom: 84px;
+}
+
+.app-header {
+  background: linear-gradient(135deg, #152238 0%, #243b5a 100%);
+  color: white;
+  padding: 26px 20px;
+  box-shadow: 0 3px 14px rgba(20, 30, 50, 0.18);
+}
+
+.header-content {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 30px);
+}
+
+.app-header p {
+  margin: 5px 0 0;
+  opacity: 0.78;
+}
+
+.main-content {
+  width: min(1180px, calc(100% - 28px));
+  margin: 24px auto;
+}
+
+.welcome {
+  margin-bottom: 18px;
+}
+
+.welcome h2 {
+  margin: 2px 0 4px;
+  font-size: 30px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #718096;
+}
+
+.team-card,
+.next-game-card,
+.analytics-card,
+.section-card {
+  background: white;
+  border: 1px solid #e1e5eb;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 5px 18px rgba(25, 35, 55, 0.06);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.section-header span {
+  color: #718096;
+  font-size: 14px;
+}
+
+.primary-button {
+  background: #1f6f4a;
+  color: white;
+}
+
+.secondary-button {
+  background: #e9edf3;
+  color: #344054;
+}
+
+.back-button {
+  margin-bottom: 14px;
+  background: transparent;
+  padding-left: 0;
+  color: #36506f;
+  box-shadow: none;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.add-player-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.roster-list {
+  display: grid;
+  gap: 10px;
+}
+
+.roster-player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 14px;
+  border: 1px solid #e1e5eb;
+  border-radius: 14px;
+  background: #fbfcfe;
+}
+
+.roster-player > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.roster-player strong {
+  font-size: 17px;
+}
+
+.roster-player > span {
+  order: -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #172b49;
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.roster-actions {
+  display: flex;
+  gap: 7px;
+  margin-top: 5px;
+}
+
+.roster-actions button {
+  padding: 6px 10px;
+  font-size: 13px;
+  background: white;
+  border: 1px solid #d7dce5;
+  box-shadow: none;
+}
+
+.roster-actions button:last-child {
+  color: #9b3030;
+  border-color: #e4caca;
+}
+
+.roster-actions button:hover {
+  background: #f1f4f8;
+}
+
+.next-game-card h3 {
+  margin: 0 0 6px;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.analytics-table th,
+.analytics-table td {
+  border-bottom: 1px solid #edf0f4;
+  padding: 9px 6px;
+}
+
+.analytics-table th {
+  color: #667085;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bottom-nav {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 7px;
+  border: 1px solid #dfe4eb;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 30px rgba(25, 35, 55, 0.16);
+  backdrop-filter: blur(10px);
+}
+
+.bottom-nav button {
+  min-width: 82px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.bottom-nav button:hover {
+  background: #edf1f5;
+}
+
+@media (min-width: 760px) {
+  .add-player-form {
+    grid-template-columns: 1fr 180px auto;
+    align-items: center;
+  }
+
+  .roster-player {
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-content {
+    width: min(100% - 18px, 1180px);
+    margin-top: 16px;
+  }
+
+  .team-card,
+  .next-game-card,
+  .analytics-card,
+  .section-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .roster-player {
+    align-items: center;
+  }
+
+  .roster-player > div:first-child {
+    gap: 10px;
+  }
+
+  .roster-player strong {
+    font-size: 16px;
+  }
+
+  .roster-player > span {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .bottom-nav {
+    width: calc(100% - 20px);
+    justify-content: center;
+  }
+
+  .bottom-nav button {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+
+
+/* Home team identity */
+.home-team-identity {
+  margin-bottom: 20px;
+}
+
+.home-team-name {
+  margin: 2px 0 10px;
+  font-size: clamp(36px, 6vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.home-coaches {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.home-coaches-label {
+  padding-top: 3px;
+  color: #718096;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.home-coach-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.home-coach {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  color: #344054;
+}
+
+.home-coach strong {
+  font-size: 16px;
+}
+
+.home-coach > span {
+  color: #718096;
+  font-size: 13px;
+}
+
+/* Home dashboard */
+.home-next-game {
+  background: white;
+  border: 1px solid #dbe3ec;
+  border-left: 5px solid #1f6f4a;
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+  box-shadow: 0 6px 20px rgba(25, 35, 55, 0.07);
+}
+
+.home-next-game .section-header {
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.home-next-game h2 {
+  margin: 2px 0 0;
+  font-size: clamp(22px, 3vw, 28px);
+}
+
+.home-next-game .section-header > span {
+  white-space: nowrap;
+  color: #52627a;
+  font-size: 14px;
+  padding-top: 4px;
+}
+
+.next-game-location {
+  margin: 4px 0 14px;
+  color: #667085;
+}
+
+.home-action-row {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.home-record-card {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 2.4fr;
+  gap: 20px;
+  align-items: stretch;
+  background: white;
+  border: 1px solid #e1e5eb;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 5px 18px rgba(25, 35, 55, 0.06);
+}
+
+.record-main {
+  padding-right: 20px;
+  border-right: 1px solid #e6eaf0;
+}
+
+.home-record {
+  margin-top: 4px;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.record-main > span {
+  color: #7a8699;
+  font-size: 12px;
+}
+
+.home-record-meta {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.home-record-meta > div,
+.season-stat-grid > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 70px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f6f8fb;
+}
+
+.home-record-meta strong,
+.season-stat-grid strong {
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.home-record-meta span,
+.season-stat-grid span {
+  margin-top: 4px;
+  color: #667085;
+  font-size: 12px;
+}
+
+.home-quick-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+}
+
+.home-quick-actions button {
+  flex: 1 1 150px;
+}
+
+.home-team-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.home-team-summary h2 {
+  margin: 3px 0 4px;
+}
+
+.home-team-summary p:not(.eyebrow) {
+  margin: 0;
+  color: #667085;
+}
+
+.home-team-summary > strong {
+  white-space: nowrap;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: #edf6f1;
+  color: #1f6f4a;
+}
+
+.home-season-analytics .section-header,
+.player-analytics-card .section-header {
+  margin-bottom: 14px;
+}
+
+.season-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.top-scorers {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e7ebf0;
+}
+
+.subsection-title {
+  margin-bottom: 7px;
+  font-weight: 800;
+}
+
+.top-scorer-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.top-scorer-row:last-child {
+  border-bottom: 0;
+}
+
+.top-scorer-row b {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #eef2f7;
+  font-size: 11px;
+}
+
+.top-scorer-row strong {
+  min-width: 28px;
+  text-align: right;
+}
+
+.analytics-table-wrap {
+  overflow-x: auto;
+}
+
+.analytics-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.analytics-table th,
+.analytics-table td {
+  border-bottom: 1px solid #e8ecf1;
+  padding: 10px 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.analytics-table th {
+  background: #f6f8fb;
+  color: #536176;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.analytics-table th:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.analytics-table th:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.analytics-table th span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.analytics-table .player-col {
+  text-align: left;
+}
+
+.analytics-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.analytics-table tbody tr:hover td {
+  background: #fafbfd;
+}
+
+@media (max-width: 700px) {
+  .home-next-game .section-header {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .home-next-game .section-header > span {
+    white-space: normal;
+    padding-top: 0;
+  }
+
+  .home-record-card {
+    grid-template-columns: 1fr;
+  }
+
+  .record-main {
+    padding-right: 0;
+    padding-bottom: 14px;
+    border-right: 0;
+    border-bottom: 1px solid #e6eaf0;
+  }
+
+  .home-record-meta,
+  .season-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .home-team-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+/* Authentication screens */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px 18px;
+  background: linear-gradient(145deg, #eef2f7 0%, #f8fafc 100%);
+}
+
+.auth-card {
+  width: min(100%, 480px);
+  padding: 34px;
+  border: 1px solid #dce3eb;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 16px 45px rgba(25, 35, 55, 0.12);
+}
+
+.auth-brand {
+  margin-bottom: 24px;
+}
+
+.auth-kicker {
+  margin-bottom: 8px;
+  color: #1f6f4a;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.auth-brand h1 {
+  margin: 0;
+  color: #152238;
+  font-size: clamp(30px, 6vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.auth-brand p {
+  margin: 12px 0 0;
+  color: #667085;
+  line-height: 1.55;
+}
+
+.auth-form {
+  display: grid;
+  gap: 15px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 7px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.auth-form button {
+  margin-top: 3px;
+  background: #1f6f4a;
+  color: white;
+  padding: 12px 15px;
+}
+
+.auth-form button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.auth-switch {
+  width: 100%;
+  margin-top: 12px;
+  background: #eef2f6;
+  color: #243b5a;
+}
+
+.auth-message,
+.auth-error {
+  margin-top: 15px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.auth-message {
+  background: #edf6f1;
+  color: #1f6f4a;
+}
+
+.auth-error {
+  background: #fff1f1;
+  color: #9b3030;
+}
+
+@media (max-width: 520px) {
+  .auth-card {
+    padding: 26px 20px;
+    border-radius: 16px;
+  }
+}
