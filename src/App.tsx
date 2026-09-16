@@ -208,6 +208,8 @@ function App() {
   const [homeAway, setHomeAway] = useState('Home')
   const [gameNotes, setGameNotes] = useState('')
   const [showNewTeamForm, setShowNewTeamForm] = useState(false)
+  const [analyticsSort, setAnalyticsSort] = useState<'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'captain'>('player')
+  const [analyticsSortAsc, setAnalyticsSortAsc] = useState(true)
   const [newTeamName, setNewTeamName] = useState('')
   const [newTeamAgeGroup, setNewTeamAgeGroup] = useState('U10')
   const [newTeamFormat, setNewTeamFormat] = useState('7v7')
@@ -1325,6 +1327,15 @@ function playerAtPosition(position: string) {
     setBugReport({ severity: 'Normal', summary: '', details: '' })
   }
 
+  function handleAnalyticsSort(field: 'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'captain') {
+    if (analyticsSort === field) {
+      setAnalyticsSortAsc((value) => !value)
+    } else {
+      setAnalyticsSort(field)
+      setAnalyticsSortAsc(field === 'player')
+    }
+  }
+
   function renderHome() {
     const nextGame = upcomingGames[0]
 
@@ -1480,19 +1491,53 @@ function playerAtPosition(position: string) {
           <div className="analytics-table-wrap">
             <table className="analytics-table">
               <thead><tr>
-                <th className="player-col">Player</th>
-                <th>QTRS<br /><span>Played</span></th>
-                <th>GK<br /><span>Qtrs</span></th>
+                <th className="player-col" onClick={() => handleAnalyticsSort('player')}>Player</th>
+                <th onClick={() => handleAnalyticsSort('played')}>QTRS<br /><span>Played</span></th>
+                <th onClick={() => handleAnalyticsSort('gk')}>GK<br /><span>Qtrs</span></th>
                 <th>DEF<br /><span>Qtrs</span></th>
                 <th>MID<br /><span>Qtrs</span></th>
-                <th>STR<br /><span>Qtrs</span></th>
-                <th>Bench<br /><span>Qtrs</span></th>
-                <th>Goals</th>
-                <th>Assists</th>
-                <th>Captain<br /><span>Gms</span></th>
+                <th onClick={() => handleAnalyticsSort('str')}>STR<br /><span>Qtrs</span></th>
+                <th onClick={() => handleAnalyticsSort('bench')}>Bench<br /><span>Qtrs</span></th>
+                <th onClick={() => handleAnalyticsSort('goals')}>Goals</th>
+                <th onClick={() => handleAnalyticsSort('assists')}>Assists</th>
+                <th onClick={() => handleAnalyticsSort('captain')}>Captain<br /><span>Gms</span></th>
               </tr></thead>
               <tbody>
-                {players.map((player) => {
+                {[...players].sort((a, b) => {
+                    if (analyticsSort === 'player') {
+                      const result = a.name.localeCompare(b.name)
+                      return analyticsSortAsc ? result : -result
+                    }
+
+                    const getValue = (player: typeof players[number]) => {
+                      const playerEvents = completedGameEvents.filter((event) => event.player_id === player.id)
+                      const playerAssists = completedGameEvents.filter((event) => event.assister_id === player.id).length
+                      const playerGoals = playerEvents.filter((event) => event.event_type === 'our_goal').length
+                      const playerLineups = actualSeasonLineups.filter((lineup) => lineup.player_id === player.id)
+                      const playerPlayed = playerLineups.length
+                      const playerGk = playerLineups.filter((lineup) => lineup.position === 'Goalkeeper').length
+                      const playerStr = playerLineups.filter((lineup) => lineup.position === 'Center Striker').length
+                      const playerCaptain = completedGames.filter(
+                        (game) => game.captain_1_id === player.id || game.captain_2_id === player.id
+                      ).length
+                      const playerBench = Math.max(0, completedGames.length * 4 - playerPlayed)
+
+                      return {
+                        played: playerPlayed,
+                        gk: playerGk,
+                        str: playerStr,
+                        bench: playerBench,
+                        goals: playerGoals,
+                        assists: playerAssists,
+                        captain: playerCaptain,
+                      }[analyticsSort]
+                    }
+
+                    const aValue = getValue(a) as number
+                    const bValue = getValue(b) as number
+                    const result = bValue - aValue
+                    return analyticsSortAsc ? -result : result
+                  }).map((player) => {
                   const rows = completedSeasonLineups.filter(
                     (item) => item.player_id === player.id
                   )
@@ -1648,7 +1693,41 @@ function playerAtPosition(position: string) {
             </div>
 
             <div style={{ display: 'grid', gap: '10px', marginTop: '10px' }}>
-              {players.map((player) => {
+              {[...players].sort((a, b) => {
+                    if (analyticsSort === 'player') {
+                      const result = a.name.localeCompare(b.name)
+                      return analyticsSortAsc ? result : -result
+                    }
+
+                    const getValue = (player: typeof players[number]) => {
+                      const playerEvents = completedGameEvents.filter((event) => event.player_id === player.id)
+                      const playerAssists = completedGameEvents.filter((event) => event.assister_id === player.id).length
+                      const playerGoals = playerEvents.filter((event) => event.event_type === 'our_goal').length
+                      const playerLineups = actualSeasonLineups.filter((lineup) => lineup.player_id === player.id)
+                      const playerPlayed = playerLineups.length
+                      const playerGk = playerLineups.filter((lineup) => lineup.position === 'Goalkeeper').length
+                      const playerStr = playerLineups.filter((lineup) => lineup.position === 'Center Striker').length
+                      const playerCaptain = completedGames.filter(
+                        (game) => game.captain_1_id === player.id || game.captain_2_id === player.id
+                      ).length
+                      const playerBench = Math.max(0, completedGames.length * 4 - playerPlayed)
+
+                      return {
+                        played: playerPlayed,
+                        gk: playerGk,
+                        str: playerStr,
+                        bench: playerBench,
+                        goals: playerGoals,
+                        assists: playerAssists,
+                        captain: playerCaptain,
+                      }[analyticsSort]
+                    }
+
+                    const aValue = getValue(a) as number
+                    const bValue = getValue(b) as number
+                    const result = bValue - aValue
+                    return analyticsSortAsc ? -result : result
+                  }).map((player) => {
                 const priority = player.usage_priority || 'Regular'
                 const tolerance = player.bench_tolerance || 'Normal'
                 const prefs = player.position_preferences || {}
@@ -2302,7 +2381,41 @@ function playerAtPosition(position: string) {
               Everyone starts available for all four quarters. Tap a quarter to turn a player's availability off. Use None for absent all game or All for fully available.
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              {players.map((player) => {
+              {[...players].sort((a, b) => {
+                    if (analyticsSort === 'player') {
+                      const result = a.name.localeCompare(b.name)
+                      return analyticsSortAsc ? result : -result
+                    }
+
+                    const getValue = (player: typeof players[number]) => {
+                      const playerEvents = completedGameEvents.filter((event) => event.player_id === player.id)
+                      const playerAssists = completedGameEvents.filter((event) => event.assister_id === player.id).length
+                      const playerGoals = playerEvents.filter((event) => event.event_type === 'our_goal').length
+                      const playerLineups = actualSeasonLineups.filter((lineup) => lineup.player_id === player.id)
+                      const playerPlayed = playerLineups.length
+                      const playerGk = playerLineups.filter((lineup) => lineup.position === 'Goalkeeper').length
+                      const playerStr = playerLineups.filter((lineup) => lineup.position === 'Center Striker').length
+                      const playerCaptain = completedGames.filter(
+                        (game) => game.captain_1_id === player.id || game.captain_2_id === player.id
+                      ).length
+                      const playerBench = Math.max(0, completedGames.length * 4 - playerPlayed)
+
+                      return {
+                        played: playerPlayed,
+                        gk: playerGk,
+                        str: playerStr,
+                        bench: playerBench,
+                        goals: playerGoals,
+                        assists: playerAssists,
+                        captain: playerCaptain,
+                      }[analyticsSort]
+                    }
+
+                    const aValue = getValue(a) as number
+                    const bValue = getValue(b) as number
+                    const result = bValue - aValue
+                    return analyticsSortAsc ? -result : result
+                  }).map((player) => {
                 const quarters = gameAttendance[player.id]?.available_quarters || [1, 2, 3, 4]
                 return (
                   <div key={player.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
