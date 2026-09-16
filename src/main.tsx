@@ -48,11 +48,11 @@ function Root() {
   }
 
   if (!session) {
-    return <Auth />
+    return <Auth passwordRecovery={passwordRecovery} />
   }
 
   if (passwordRecovery) {
-    return <Auth />
+    return <Auth passwordRecovery={passwordRecovery} />
   }
 
   const displayName = session.user.user_metadata?.display_name

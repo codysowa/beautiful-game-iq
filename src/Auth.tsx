@@ -1,12 +1,12 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from './supabase'
 
-export default function Auth() {
+export default function Auth({ passwordRecovery = false }: { passwordRecovery?: boolean }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
-  const [mode, setMode] = useState<'signin' | 'signup' | 'reset'>('signin')
+  const [mode, setMode] = useState<'signin' | 'signup' | 'reset'>(passwordRecovery ? 'reset' : 'signin')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
