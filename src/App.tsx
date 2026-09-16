@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { supabase } from './supabase'
 import LiveGame from './LiveGame'
@@ -216,6 +216,7 @@ function App() {
   const [newTeamSeason, setNewTeamSeason] = useState('Fall 2026')
   const [staff, setStaff] = useState<Array<{ user_id: string; role: 'owner' | 'coach' | 'viewer'; full_name: string; email: string }>>([])
   const [currentUserName, setCurrentUserName] = useState('')
+  const [currentUserEmail, setCurrentUserEmail] = useState('')
   const [currentUserId, setCurrentUserId] = useState('')
   const [currentUserRole, setCurrentUserRole] = useState<'owner' | 'coach' | 'viewer' | null>(null)
   const [coachDraft, setCoachDraft] = useState<{ playerId: string; usage_priority: NonNullable<Player['usage_priority']>; bench_tolerance: NonNullable<Player['bench_tolerance']>; position_preferences: Record<string, number>; avoid_positions: string[]; coach_notes: string } | null>(null)
@@ -356,6 +357,7 @@ function App() {
       user?.user_metadata?.display_name ||
       user?.user_metadata?.full_name ||
       ''
+    setCurrentUserEmail(user?.email || '')
 
     if (user?.id) {
       const { error: profileUpsertError } = await supabase
@@ -411,6 +413,7 @@ function App() {
       })
     )
     setCurrentUserName(currentUserNameFromAuth)
+    setCurrentUserEmail(user?.email || '')
     setCurrentUserId(user?.id || '')
     setCurrentUserRole((teamMemberships.find((membership) => membership.user_id === user?.id)?.role as 'owner' | 'coach' | 'viewer' | undefined) || null)
     setTeam(teamData)
@@ -2872,6 +2875,7 @@ function playerAtPosition(position: string) {
           <h1>Beautiful Game IQ</h1>
           <p>Know the game. Coach the moment.</p>
           <p style={{ marginTop: '4px', opacity: 0.85 }}>Your AI copilot for game day.</p>
+          <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>Signed in as: {currentUserEmail}</p>
           <button
             type="button"
             onClick={signOut}
@@ -2947,6 +2951,12 @@ function playerAtPosition(position: string) {
 }
 
 export default App
+
+
+
+
+
+
 
 
 
