@@ -11,6 +11,7 @@ import type { Session } from '@supabase/supabase-js'
 function Root() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -24,10 +25,11 @@ function Root() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!mounted) return
 
       setSession(nextSession)
+      setPasswordRecovery(event === 'PASSWORD_RECOVERY')
       setLoading(false)
     })
 
@@ -46,6 +48,10 @@ function Root() {
   }
 
   if (!session) {
+    return <Auth />
+  }
+
+  if (passwordRecovery) {
     return <Auth />
   }
 
