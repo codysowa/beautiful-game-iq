@@ -501,7 +501,7 @@ function App() {
       const teamDefault = teamData.default_formation || getDefaultFormationForFormat(teamData.format)
       setDefaultFormation(getFormationsForFormat(teamData.format).includes(teamDefault) ? teamDefault : getDefaultFormationForFormat(teamData.format))
     }
-    setPlayers(playerData || [])
+    setPlayers((playerData || []).sort((a, b) => (a.jersey_number ?? Number.MAX_SAFE_INTEGER) - (b.jersey_number ?? Number.MAX_SAFE_INTEGER)))
     setGames(loadedGames)
     setGameEvents((eventData || []) as GameEvent[])
     setSeasonLineups((lineupData || []) as (LineupItem & { game_id: string })[])
@@ -2552,13 +2552,13 @@ function playerAtPosition(position: string) {
                         <div>
                           <strong>Role Strength</strong>
                           <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '3px', marginBottom: '6px' }}>1 = weak fit, 5 = excellent fit</div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(150px, 160px)', gap: '8px', marginTop: '8px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px', marginTop: '8px' }}>
                             {['GK', 'DEF', 'MID', 'STR'].map((role) => (
                               <label key={role} style={{ display: 'contents' }}>
                                 <span style={{ alignSelf: 'center', fontWeight: 600 }}>{role}</span>
                                 <select
                                   aria-label={`${role} strength`}
-                                  style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}
+                                  style={{ width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}
                                   value={String(draft.position_preferences[role] || 0)}
                                   onChange={(e) => setCoachDraft({
                                     ...draft,
