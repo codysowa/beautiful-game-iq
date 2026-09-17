@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { supabase } from './supabase'
 import LiveGame from './LiveGame'
@@ -17,6 +17,7 @@ type Team = {
   age_group: string
   format: string
   season: string
+  archived: boolean
   max_gk_quarters: number | null
   max_bench_quarters: number | null
   min_quarters_played: number | null
@@ -154,6 +155,10 @@ function formatGameTime(time: string | null) {
 function App() {
   const [team, setTeam] = useState<Team | null>(null)
   const [teams, setTeams] = useState<Team[]>([])
+  const [archivedTeams, setArchivedTeams] = useState<Team[]>([])
+  const [archivedViewTeam, setArchivedViewTeam] = useState<Team | null>(null)
+  const [archivedViewPlayers, setArchivedViewPlayers] = useState<Player[]>([])
+  const [archivedViewGames, setArchivedViewGames] = useState<Game[]>([])
   const [selectedTeamId, setSelectedTeamId] = useState(TEAM_ID)
   const [players, setPlayers] = useState<Player[]>([])
   const [games, setGames] = useState<Game[]>([])
@@ -208,13 +213,21 @@ function App() {
   const [homeAway, setHomeAway] = useState('Home')
   const [gameNotes, setGameNotes] = useState('')
   const [showNewTeamForm, setShowNewTeamForm] = useState(false)
+  const [showNewUserOnboarding, setShowNewUserOnboarding] = useState(false)
+  const [showJoinTeam, setShowJoinTeam] = useState(false)
+  const [showArchivedTeams, setShowArchivedTeams] = useState(false)
+  const [joinTeamSearch, setJoinTeamSearch] = useState('')
+  const [joinTeamResults, setJoinTeamResults] = useState<Team[]>([])
+  const [joinRequestTeamIds, setJoinRequestTeamIds] = useState<string[]>([])
+  const [joinRequests, setJoinRequests] = useState<Array<{ id: string; team_id: string; user_id: string; status: 'pending' | 'approved' | 'denied'; created_at: string; full_name: string; email: string }>>([])
   const [analyticsSort, setAnalyticsSort] = useState<'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'captain'>('player')
   const [analyticsSortAsc, setAnalyticsSortAsc] = useState(true)
   const [newTeamName, setNewTeamName] = useState('')
   const [newTeamAgeGroup, setNewTeamAgeGroup] = useState('U10')
   const [newTeamFormat, setNewTeamFormat] = useState('7v7')
-  const [newTeamSeason, setNewTeamSeason] = useState('Fall 2026')
-  const [staff, setStaff] = useState<Array<{ user_id: string; role: 'owner' | 'coach' | 'viewer'; full_name: string; email: string }>>([])
+  const [newTeamSeasonType, setNewTeamSeasonType] = useState('Fall')
+  const [newTeamSeasonYear, setNewTeamSeasonYear] = useState('2026')
+  const [staff, setStaff] = useState<Array<{ user_id: string; role: 'owner' | 'coach' | 'viewer'; is_head_coach: boolean; full_name: string; email: string }>>([])
   const [currentUserName, setCurrentUserName] = useState('')
   const [currentUserEmail, setCurrentUserEmail] = useState('')
   const [currentUserId, setCurrentUserId] = useState('')
@@ -254,6 +267,36 @@ function App() {
     await loadApp(selectedTeamId)
   }
 
+  async function setHeadCoach(member: { user_id: string; role: 'owner' | 'coach' | 'viewer'; is_head_coach: boolean; full_name: string; email: string }, makeHeadCoach: boolean) {
+    if (currentUserRole !== 'owner' || member.role === 'viewer') return
+
+    if (makeHeadCoach) {
+      const { error: clearError } = await supabase
+        .from('team_members')
+        .update({ is_head_coach: false })
+        .eq('team_id', selectedTeamId)
+
+      if (clearError) {
+        console.error(clearError)
+        alert(`Could not update Head Coach: ${clearError.message}`)
+        return
+      }
+    }
+
+    const { error: setError } = await supabase
+      .from('team_members')
+      .update({ is_head_coach: makeHeadCoach })
+      .eq('team_id', selectedTeamId)
+      .eq('user_id', member.user_id)
+
+    if (setError) {
+      console.error(setError)
+      alert(`Could not update ${member.full_name} as Head Coach: ${setError.message}`)
+      return
+    }
+
+    await loadApp(selectedTeamId)
+  }
   async function removeStaffMember(member: { user_id: string; role: 'owner' | 'coach' | 'viewer'; full_name: string; email: string }) {
     if (currentUserRole !== 'owner' || member.role === 'owner') return
     if (!confirm(`Remove ${member.full_name} from ${team?.name || 'this team'}? They will lose access to the team.`)) return
@@ -278,7 +321,7 @@ function App() {
 
     const { data: membershipData, error: membershipError } = await supabase
       .from('team_members')
-      .select('team_id, role, user_id')
+      .select('team_id, role, user_id, is_head_coach')
 
     if (membershipError) {
       console.error(membershipError)
@@ -289,22 +332,53 @@ function App() {
 
     const memberships = membershipData || []
     const accessibleTeamIds = memberships.map((membership) => membership.team_id)
+    const { data: accessibleTeamsForSelection, error: accessibleTeamsSelectionError } = accessibleTeamIds.length > 0
+      ? await supabase
+          .from('teams')
+          .select('*')
+          .in('id', accessibleTeamIds)
+          .eq('archived', false)
+          .order('name', { ascending: true })
+      : { data: [], error: null }
+
+    if (accessibleTeamsSelectionError) {
+      console.error(accessibleTeamsSelectionError)
+      alert(`Could not load your teams: ${accessibleTeamsSelectionError.message}`)
+      setLoading(false)
+      return
+    }
+
+    const activeTeamIds = (accessibleTeamsForSelection || []).map((availableTeam) => availableTeam.id)
+    const archivedTeamIds = accessibleTeamIds.filter((teamId) => !(activeTeamIds.includes(teamId)))
+    const { data: archivedTeamsData } = archivedTeamIds.length > 0
+      ? await supabase.from('teams').select('*').in('id', archivedTeamIds).order('name', { ascending: true })
+      : { data: [] }
+
+    setArchivedTeams(archivedTeamsData || [])
 
 
-    if (accessibleTeamIds.length === 0) {
+    if (activeTeamIds.length === 0) {
+      const { data: { user } } = await supabase.auth.getUser()
+      setCurrentUserEmail(user?.email || '')
+      setCurrentUserName(user?.user_metadata?.display_name || user?.user_metadata?.full_name || '')
+      setCurrentUserId(user?.id || '')
+      setCurrentUserRole(memberships.find((membership) => membership.role === 'owner')?.role || memberships[0]?.role || null)
       setTeams([])
       setTeam(null)
       setPlayers([])
       setGames([])
       setGameEvents([])
       setSeasonLineups([])
+      setShowNewUserOnboarding(true)
       setLoading(false)
       return
     }
 
-    const activeTeamId = accessibleTeamIds.includes(teamId)
+    setShowNewUserOnboarding(false)
+
+    const activeTeamId = activeTeamIds.includes(teamId)
       ? teamId
-      : accessibleTeamIds[0]
+      : activeTeamIds[0]
 
     if (activeTeamId !== selectedTeamId) {
       setSelectedTeamId(activeTeamId)
@@ -317,7 +391,7 @@ function App() {
         supabase.from('players').select('*').eq('team_id', activeTeamId)
           .order('jersey_number', { ascending: true, nullsFirst: false }),
         supabase.from('games').select('*').eq('team_id', activeTeamId).order('game_date', { ascending: true }),
-        supabase.from('teams').select('*').in('id', accessibleTeamIds).order('name', { ascending: true }),
+        supabase.from('teams').select('*').in('id', accessibleTeamIds).eq('archived', false).order('name', { ascending: true }),
       ])
 
     const loadedGames = gameData || []
@@ -404,6 +478,7 @@ function App() {
         return {
           user_id: membership.user_id,
           role: membership.role as 'owner' | 'coach' | 'viewer',
+          is_head_coach: membership.is_head_coach === true,
           full_name:
             profile?.full_name ||
             (isCurrentUser ? currentUserNameFromAuth : '') ||
@@ -434,6 +509,53 @@ function App() {
     setLoading(false)
   }
 
+  async function viewArchivedTeam(archivedTeam: Team) {
+    setLoading(true)
+
+    const [{ data: playerData, error: playerError }, { data: gameData, error: gameError }] =
+      await Promise.all([
+        supabase
+          .from('players')
+          .select('*')
+          .eq('team_id', archivedTeam.id)
+          .order('jersey_number', { ascending: true, nullsFirst: false }),
+        supabase
+          .from('games')
+          .select('*')
+          .eq('team_id', archivedTeam.id)
+          .order('game_date', { ascending: true }),
+      ])
+
+    if (playerError || gameError) {
+      console.error(playerError || gameError)
+      alert(`Could not load archived season: ${(playerError || gameError)?.message || 'Unknown error'}`)
+      setLoading(false)
+      return
+    }
+
+    const archivedGameIds = (gameData || []).map((game) => game.id)
+    const { data: archivedEventData, error: archivedEventError } = archivedGameIds.length > 0
+      ? await supabase
+          .from('game_events')
+          .select('*')
+          .in('game_id', archivedGameIds)
+          .order('created_at', { ascending: true })
+      : { data: [], error: null }
+
+    if (archivedEventError) {
+      console.error(archivedEventError)
+      alert(`Could not load archived game results: ${archivedEventError.message}`)
+      setLoading(false)
+      return
+    }
+
+    setArchivedViewTeam(archivedTeam)
+    setArchivedViewPlayers(playerData || [])
+    setArchivedViewGames(gameData || [])
+    setGameEvents((archivedEventData || []) as GameEvent[])
+    setShowNewUserOnboarding(false)
+    setLoading(false)
+  }
   async function createTeam() {
     const name = newTeamName.trim()
     if (!name) {
@@ -447,7 +569,7 @@ function App() {
         name,
         age_group: newTeamAgeGroup,
         format: newTeamFormat,
-        season: newTeamSeason.trim() || 'Fall 2026',
+        season: `${newTeamSeasonType} ${newTeamSeasonYear}`.trim(),
         max_gk_quarters: 2,
         max_bench_quarters: 2,
         min_quarters_played: 0,
@@ -478,6 +600,7 @@ function App() {
         team_id: data.id,
         user_id: userId,
         role: 'owner',
+        is_head_coach: true,
       })
 
     if (membershipInsertError) {
@@ -521,6 +644,28 @@ function App() {
     alert('Team Rules saved.')
   }
 
+  async function toggleTeamArchived() {
+    if (currentUserRole !== 'owner' || !team) return
+
+    const nextArchived = !team.archived
+    const action = nextArchived ? 'archive' : 'unarchive'
+
+    if (!window.confirm(`Are you sure you want to ${action} ${team.name}?`)) return
+
+    const { error } = await supabase
+      .from('teams')
+      .update({ archived: nextArchived })
+      .eq('id', team.id)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not ${action} team: ${error.message}`)
+      return
+    }
+
+    await loadApp()
+    alert(nextArchived ? 'Team archived.' : 'Team unarchived.')
+  }
   async function addOrUpdatePlayer() {
     const firstName = newPlayerFirstName.trim()
     const lastName = newPlayerLastName.trim()
@@ -1142,7 +1287,7 @@ function playerAtPosition(position: string) {
   function renderCoaches() {
     return (
       <>
-        <button className="back-button" onClick={async () => { await loadApp(); setScreen('home') }}>
+        <button className="back-button" onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
           Back
         </button>
 
@@ -1156,7 +1301,36 @@ function playerAtPosition(position: string) {
           </div>
 
           <div style={{ display: 'grid', gap: '10px', marginTop: '14px' }}>
-            {staff.filter((member) => member.role !== 'owner').map((member) => {
+            {currentUserRole === 'owner' && joinRequests.length > 0 && (
+              <div style={{ marginBottom: '18px', padding: '14px', border: '1px solid #ddd', borderRadius: '10px' }}>
+                <strong>Join Requests</strong>
+                <p style={{ margin: '6px 0 12px', fontSize: '13px', opacity: 0.75 }}>
+                  People requesting access to {team?.name || 'this team'}.
+                </p>
+
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  {joinRequests.map((request) => (
+                    <div key={request.id} style={{ border: '1px solid #ddd', borderRadius: '10px', padding: '12px', display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <strong style={{ display: 'block' }}>{request.full_name}</strong>
+                        {request.email && <span style={{ fontSize: '12px', opacity: 0.7 }}>{request.email}</span>}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button className="primary-button" onClick={() => approveJoinRequest(request)}>
+                          Approve
+                        </button>
+                        <button className="secondary-button" onClick={() => denyJoinRequest(request)}>
+                          Deny
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {staff.map((member) => {
               const isCurrentUser = member.user_id === currentUserId
               return (
                 <div key={member.user_id} style={{ border: '1px solid #ddd', borderRadius: '10px', padding: '14px', display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1164,30 +1338,58 @@ function playerAtPosition(position: string) {
                     <strong style={{ display: 'block' }}>{member.full_name}</strong>
                     {member.email && <span style={{ fontSize: '12px', opacity: 0.7 }}>{member.email}</span>}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {member.role === 'owner' ? (
-                      <span style={{ fontSize: '12px', fontWeight: 700 }}>HEAD COACH</span>
-                    ) : currentUserRole === 'owner' && !isCurrentUser ? (
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700 }}>
+                        {member.role === 'owner' ? 'OWNER' : member.is_head_coach ? 'HEAD COACH' : member.role === 'coach' ? 'ASSISTANT COACH' : 'VIEWER'}
+                      </span>
+                      {member.role === 'owner' && (
+                        <span style={{ fontSize: '12px', fontWeight: 700 }}>{member.is_head_coach ? 'HEAD COACH' : 'ASSISTANT COACH'}</span>
+                      )}
+                    </div>
+
+                    {currentUserRole === 'owner' && (
                       <>
-                        <select
-                          value={member.role}
-                          onChange={(e) => updateStaffRole(member, e.target.value as 'coach' | 'viewer')}
-                          aria-label={`Role for ${member.full_name}`}
-                        >
-                          <option value="coach">Assistant Coach</option>
-                          <option value="viewer">Viewer</option>
-                        </select>
-                        <button className="secondary-button" onClick={() => removeStaffMember(member)}>Remove</button>
+                        {!isCurrentUser && member.role !== 'owner' && (
+                          <select
+                            value={member.role}
+                            onChange={(e) => updateStaffRole(member, e.target.value as 'coach' | 'viewer')}
+                            aria-label={`Role for ${member.full_name}`}
+                          >
+                            <option value="coach">Assistant Coach</option>
+                            <option value="viewer">Viewer</option>
+                          </select>
+                        )}
+
+                        {member.role !== 'viewer' && (
+                          <button
+                            className="secondary-button"
+                            onClick={() => setHeadCoach(member, !member.is_head_coach)}
+                          >
+                            {member.is_head_coach ? 'Make Assistant Coach' : 'Make Head Coach'}
+                          </button>
+                        )}
+
+                        {!isCurrentUser && member.role !== 'owner' && (
+                          <button
+                            className="secondary-button"
+                            onClick={() => removeStaffMember(member)}
+                          >
+                            Remove
+                          </button>
+                        )}
+
+                        {isCurrentUser && (
+                          <span style={{ fontSize: '12px', opacity: 0.7 }}>You</span>
+                        )}
                       </>
-                    ) : (
-                      <span style={{ fontSize: '12px', fontWeight: 700 }}>{member.role === 'coach' ? 'ASSISTANT COACH' : 'VIEWER'}</span>
                     )}
                   </div>
                 </div>
               )
             })}
           </div>
-
           {currentUserRole === 'owner' && (
           <div style={{ marginTop: '18px', padding: '14px', border: '1px solid #ddd', borderRadius: '10px' }}>
             <strong>Invite a Coach</strong>
@@ -1237,7 +1439,7 @@ function playerAtPosition(position: string) {
   function renderTeamRules() {
     return (
       <>
-        <button className="back-button" onClick={async () => { await loadApp(); setScreen('home') }}>
+        <button className="back-button" onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
           Back
         </button>
 
@@ -1293,6 +1495,13 @@ function playerAtPosition(position: string) {
 
           <button className="primary-button" onClick={saveTeamRules} style={{ marginTop: '16px' }}>
             Save Team Rules
+          {currentUserRole === 'owner' && (
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+            <button className="secondary-button" onClick={toggleTeamArchived}>
+              {team?.archived ? 'Unarchive Team' : 'Archive Team'}
+            </button>
+          </div>
+          )}
           </button>
         </section>
       </>
@@ -1339,6 +1548,553 @@ function playerAtPosition(position: string) {
     }
   }
 
+  async function searchTeamsToJoin() {
+    const search = joinTeamSearch.trim()
+
+    if (search.length < 2) {
+      setJoinTeamResults([])
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('teams')
+      .select('id, name, age_group, format, season, max_gk_quarters, max_bench_quarters, min_quarters_played, target_quarters_played, require_everyone_play, default_formation, archived')
+      .ilike('name', `%${search}%`)
+      .eq('archived', false)
+      .order('name')
+      .limit(20)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not search teams: `)
+      return
+    }
+
+    setJoinTeamResults(data || [])
+  }
+
+  async function loadJoinRequests() {
+    const { data, error } = await supabase
+      .from('team_join_requests')
+      .select('team_id')
+      .eq('user_id', (await supabase.auth.getUser()).data.user?.id || '')
+      .eq('status', 'pending')
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setJoinRequestTeamIds((data || []).map((request) => request.team_id))
+  }
+
+  async function loadOwnerJoinRequests() {
+    if (currentUserRole !== 'owner' || !selectedTeamId) {
+      setJoinRequests([])
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('team_join_requests')
+      .select('id, team_id, user_id, status, created_at')
+      .eq('team_id', selectedTeamId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error(error)
+      alert(`Could not load join requests: ${error.message}`)
+      return
+    }
+
+    const requests = await Promise.all(
+      (data || []).map(async (request) => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', request.user_id)
+          .maybeSingle()
+
+        return {
+          ...request,
+          full_name: profile?.full_name || 'Unknown User',
+          email: profile?.email || '',
+        }
+      })
+    )
+
+    setJoinRequests(requests)
+  }
+  async function approveJoinRequest(request: {
+    id: string
+    team_id: string
+    user_id: string
+    status: 'pending' | 'approved' | 'denied'
+    created_at: string
+    full_name: string
+    email: string
+  }) {
+    if (currentUserRole !== 'owner' || !selectedTeamId) return
+
+    const { error: memberError } = await supabase
+      .from('team_members')
+      .insert({
+        team_id: request.team_id,
+        user_id: request.user_id,
+        role: 'coach',
+        is_head_coach: false,
+      })
+
+    if (memberError && memberError.code !== '23505') {
+      console.error(memberError)
+      alert(`Could not approve ${request.full_name}: ${memberError.message}`)
+      return
+    }
+
+    const { error: requestError } = await supabase
+      .from('team_join_requests')
+      .update({
+        status: 'approved',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', request.id)
+
+    if (requestError) {
+      console.error(requestError)
+      alert(`The team member was added, but the join request could not be updated: ${requestError.message}`)
+      return
+    }
+
+    await loadOwnerJoinRequests()
+    await loadApp(selectedTeamId)
+  }
+
+  async function denyJoinRequest(request: {
+    id: string
+    team_id: string
+    user_id: string
+    status: 'pending' | 'approved' | 'denied'
+    created_at: string
+    full_name: string
+    email: string
+  }) {
+    if (currentUserRole !== 'owner' || !selectedTeamId) return
+
+    const { error } = await supabase
+      .from('team_join_requests')
+      .update({
+        status: 'denied',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', request.id)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not deny ${request.full_name}'s request: ${error.message}`)
+      return
+    }
+
+    await loadOwnerJoinRequests()
+  }
+  async function requestToJoinTeam(teamToJoin: Team) {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+      if (userError) {
+        console.error(userError)
+        alert(`Could not identify the signed-in user: ${userError.message}`)
+        return
+      }
+
+      const userId = user?.id
+
+      if (!userId) {
+        alert('Could not identify the signed-in user. Please sign out and sign back in.')
+        return
+      }
+
+      if (joinRequestTeamIds.includes(teamToJoin.id)) {
+        return
+      }
+
+      const { error } = await supabase
+        .from('team_join_requests')
+        .insert({
+          team_id: teamToJoin.id,
+          user_id: userId,
+          status: 'pending',
+        })
+
+      if (error) {
+        if (error.code === '23505') {
+          await loadJoinRequests()
+          return
+        }
+
+        console.error(error)
+        alert(`Could not request to join ${teamToJoin.name}: ${error.message}`)
+        return
+      }
+
+      setJoinRequestTeamIds((current) => [...current, teamToJoin.id])
+    } catch (error) {
+      console.error(error)
+      alert(`Join request failed: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+  function renderNewUserOnboarding() {
+    return (
+      <section className="team-card" style={{ maxWidth: '620px', margin: '40px auto' }}>
+        <div className="section-header">
+          <h2>Welcome to Beautiful Game IQ</h2>
+        </div>
+
+        <p style={{ marginTop: '12px', lineHeight: 1.6 }}>
+          Let's get your team set up. You can create a new team or join an existing team.
+        </p>
+
+        <div style={{ display: 'grid', gap: '12px', marginTop: '24px' }}>
+          <button
+            className="primary-button"
+            onClick={() => setShowNewTeamForm(true)}
+          >
+            Create Your Team
+          </button>
+
+          <button
+            className="secondary-button"
+            onClick={async () => {
+                setShowJoinTeam(true)
+                setJoinTeamSearch('')
+                setJoinTeamResults([])
+                await loadJoinRequests()
+              }}
+          >
+            Join an Existing Team
+          </button>
+        </div>
+
+        {showJoinTeam && (
+          <div style={{ marginTop: '24px' }}>
+            <h3>Join an Existing Team</h3>
+
+            <div style={{ display: 'grid', gap: '12px', marginTop: '16px' }}>
+              <label>
+                Search by Team Name
+                <input
+                  value={joinTeamSearch}
+                  onChange={(e) => setJoinTeamSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      searchTeamsToJoin()
+                    }
+                  }}
+                  placeholder="Enter team name"
+                />
+              </label>
+
+              <button
+                className="primary-button"
+                onClick={searchTeamsToJoin}
+                disabled={joinTeamSearch.trim().length < 2}
+              >
+                Search Teams
+              </button>
+            </div>
+
+            {joinTeamResults.length > 0 && (
+              <div style={{ display: 'grid', gap: '12px', marginTop: '20px' }}>
+                {joinTeamResults.map((teamToJoin) => {
+                  const requestPending = joinRequestTeamIds.includes(teamToJoin.id)
+
+                  return (
+                    <div
+                      key={teamToJoin.id}
+                      className="team-card"
+                      style={{ padding: '16px' }}
+                    >
+                      <strong>{teamToJoin.name}</strong>
+
+                      <div style={{ marginTop: '6px', color: '#666' }}>
+                        {teamToJoin.age_group} | {teamToJoin.format} | {teamToJoin.season}
+                      </div>
+
+                      <button
+                        type="button"
+                        className={requestPending ? 'secondary-button' : 'primary-button'}
+                        style={{ marginTop: '12px' }}
+                        onClick={() => requestToJoinTeam(teamToJoin)}
+                      >
+                        {requestPending ? 'Request Sent' : 'Request to Join'}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {joinTeamSearch.trim().length >= 2 && joinTeamResults.length === 0 && (
+              <p style={{ marginTop: '16px', color: '#666' }}>
+                No teams found. Check the team name and try again.
+              </p>
+            )}
+          </div>
+        )}
+        {showNewTeamForm && (
+          <div style={{ marginTop: '24px' }}>
+            <h3>Create Your Team</h3>
+
+            <div className="form-grid">
+              <label>
+                Team Name
+                <input
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                  placeholder="Enter team name"
+                />
+              </label>
+
+              <label>
+                Age Group
+                <select
+                  value={newTeamAgeGroup}
+                  onChange={(e) => setNewTeamAgeGroup(e.target.value)}
+                >
+                  {['U08','U09','U10','U11','U12','U13','U14','U15','U16','U17','U18'].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Format
+                <select
+                  value={newTeamFormat}
+                  onChange={(e) => setNewTeamFormat(e.target.value)}
+                >
+                  <option value="6v6">6v6</option>
+                  <option value="7v7">7v7</option>
+                  <option value="9v9">9v9</option>
+                  <option value="11v11">11v11</option>
+                </select>
+              </label>
+
+              <label>
+                Season
+                <select
+                  value={newTeamSeasonType}
+                  onChange={(e) => setNewTeamSeasonType(e.target.value)}
+                >
+                  {['Fall','Winter','Spring','Summer','Year Round'].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Year
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={newTeamSeasonYear}
+                  onChange={(e) => setNewTeamSeasonYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="YYYY"
+                />
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+              <button className="primary-button" onClick={createTeam}>
+                Create Team
+              </button>
+
+              <button
+                className="secondary-button"
+                onClick={() => setShowNewTeamForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}        {archivedTeams.length > 0 && (
+          <>
+            <button
+              className="secondary-button"
+              style={{ marginTop: '24px', width: '100%' }}
+              onClick={() => setShowArchivedTeams((value) => !value)}
+            >
+              {showArchivedTeams ? 'Hide Archived Teams' : 'Show Archived Teams'}
+            </button>
+
+            {showArchivedTeams && (
+              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+                {archivedTeams.map((archivedTeam) => (
+                  <div key={archivedTeam.id} className="team-card" style={{ padding: '16px', marginTop: '12px' }}>
+                    <strong>{archivedTeam.name}</strong>
+                    <div style={{ marginTop: '6px', color: '#666' }}>
+                      {archivedTeam.age_group} | {archivedTeam.format} | {archivedTeam.season}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+                      <button className="secondary-button" onClick={() => viewArchivedTeam(archivedTeam)}>
+                        View Season
+                      </button>
+                      {currentUserRole === 'owner' && (
+                        <button className="primary-button" onClick={async () => {
+                          const { error } = await supabase
+                            .from('teams')
+                            .update({ archived: false })
+                            .eq('id', archivedTeam.id)
+
+                          if (error) {
+                            console.error(error)
+                            alert(`Could not unarchive team: ${error.message}`)
+                            return
+                          }
+
+                          await loadApp(archivedTeam.id)
+                        }}>
+                          Unarchive Team
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+    )
+  }
+  function renderArchivedTeamView() {
+    if (!archivedViewTeam) return null
+
+    const archivedCompletedGames = archivedViewGames.filter((game) => game.status === 'Completed')
+
+    const archivedGameIds = archivedCompletedGames.map((game) => game.id)
+    const archivedEvents = gameEvents.filter((event) => archivedGameIds.includes(event.game_id))
+
+    let wins = 0
+    let losses = 0
+    let draws = 0
+    let goalsFor = 0
+    let goalsAgainst = 0
+
+    const archivedResults = archivedCompletedGames.map((game) => {
+      const events = archivedEvents.filter((event) => event.game_id === game.id)
+      const forGoals = events.filter((event) => event.event_type === 'our_goal').length
+      const againstGoals = events.filter((event) => event.event_type === 'their_goal').length
+
+      goalsFor += forGoals
+      goalsAgainst += againstGoals
+
+      let result = 'D'
+      if (forGoals > againstGoals) {
+        wins += 1
+        result = 'W'
+      } else if (forGoals < againstGoals) {
+        losses += 1
+        result = 'L'
+      } else {
+        draws += 1
+      }
+
+      return { game, forGoals, againstGoals, result }
+    })
+
+    return (
+      <section className="team-card" style={{ maxWidth: '900px', margin: '24px auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
+          <div>
+            <p className="eyebrow">ARCHIVED SEASON Ã¯Â¿Â½ READ ONLY</p>
+            <h2 style={{ marginBottom: '6px' }}>{archivedViewTeam.name}</h2>
+            <div style={{ color: '#666' }}>
+              {archivedViewTeam.age_group} | {archivedViewTeam.format} | {archivedViewTeam.season}
+            </div>
+          </div>
+          <button
+            className="secondary-button"
+            onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}
+          >
+            Back
+          </button>
+        </div>
+
+        <div className="home-record-card" style={{ marginTop: '24px' }}>
+          <div className="record-main">
+            <p className="eyebrow">SEASON RECORD</p>
+            <div className="home-record">{wins}-{losses}-{draws}</div>
+            <span>W - L - D</span>
+          </div>
+          <div className="home-record-meta">
+            <div><strong>{archivedCompletedGames.length}</strong><span>Games</span></div>
+            <div><strong>{goalsFor}</strong><span>Goals For</span></div>
+            <div><strong>{goalsAgainst}</strong><span>Goals Against</span></div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '28px' }}>
+          <h3>Game Results</h3>
+          {archivedResults.length === 0 ? (
+            <p style={{ color: '#666' }}>No completed games recorded for this season.</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Opponent</th>
+                    <th>Result</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {archivedResults.map(({ game, forGoals, againstGoals, result }) => (
+                    <tr key={game.id}>
+                      <td>{game.game_date || '-'}</td>
+                      <td>{game.opponent || '-'}</td>
+                      <td><strong>{result}</strong></td>
+                      <td>{forGoals}-{againstGoals}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginTop: '28px' }}>
+          <h3>Roster</h3>
+          {archivedViewPlayers.length === 0 ? (
+            <p style={{ color: '#666' }}>No players recorded for this season.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {archivedViewPlayers.map((player) => (
+                <div
+                  key={player.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    padding: '10px 12px',
+                    borderBottom: '1px solid #e5e7eb',
+                  }}
+                >
+                  <span>
+                    <strong>{player.name}</strong>
+                  </span>
+                  <span style={{ color: '#666' }}>
+                    #{player.jersey_number ?? '-'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
   function renderHome() {
     const nextGame = upcomingGames[0]
 
@@ -1351,10 +2107,10 @@ function playerAtPosition(position: string) {
             <div className="home-coaches">
               <span className="home-coaches-label">COACHES</span>
               <div className="home-coach-list">
-                {staff.filter((member) => member.role === 'coach').map((member, index) => (
+                {staff.filter((member) => member.role === 'owner' || member.role === 'coach').sort((a, b) => Number(b.is_head_coach) - Number(a.is_head_coach)).map((member) => (
                   <span key={member.user_id} className="home-coach">
                     <strong>{member.full_name}</strong>
-                    <span>{index === 0 ? 'Head Coach' : 'Assistant Coach'}</span>
+                    <span>{member.is_head_coach ? 'Head Coach' : member.role === 'owner' || member.role === 'coach' ? 'Assistant Coach' : ''}</span>
                   </span>
                 ))}
               </div>
@@ -1380,33 +2136,90 @@ function playerAtPosition(position: string) {
                   </option>
                 ))}
               </select>
-            </label>
-            {currentUserRole === 'owner' && (
-              <button className="secondary-button" onClick={() => setShowNewTeamForm((value) => !value)}>
-                + New Team
-              </button>
-            )}
+            </label>            <button className="secondary-button" onClick={() => setShowNewTeamForm((value) => !value)}>
+              + New Team
+            </button>
+            <button
+              className="secondary-button"
+              onClick={async () => {
+                setShowJoinTeam(true)
+                setJoinTeamSearch('')
+                setJoinTeamResults([])
+                await loadJoinRequests()
+              }}
+            >
+              Join Existing Team
+            </button>
           </div>
 
-          {showNewTeamForm && (
-            <section className="team-card create-team-card">
-              <div className="section-header">
-                <div>
-                  <h3>Create Team</h3>
-                  <span>Add another team without affecting the current team's roster or games.</span>
+          {showJoinTeam && (
+            <div style={{ marginTop: '24px' }}>
+              <h3>Join an Existing Team</h3>
+              <input
+                type="text"
+                value={joinTeamSearch}
+                onChange={(e) => setJoinTeamSearch(e.target.value)}
+                placeholder="Search by team name"
+              />
+              <button className="secondary-button" onClick={searchTeamsToJoin}>
+                Search
+              </button>
+              {joinTeamResults.map((teamToJoin) => (
+                <div key={teamToJoin.id}>
+                  <strong>{teamToJoin.name}</strong>
+                  <span> {teamToJoin.age_group} | {teamToJoin.format} | {teamToJoin.season}</span>
+                  <button
+                    className="secondary-button"
+                    onClick={() => requestToJoinTeam(teamToJoin)}
+                    disabled={joinRequestTeamIds.includes(teamToJoin.id)}
+                  >
+                    {joinRequestTeamIds.includes(teamToJoin.id) ? 'Request Sent' : 'Request to Join'}
+                  </button>
                 </div>
+              ))}
+            </div>
+          )}
+
+
+          {currentUserRole === 'owner' && archivedTeams.length > 0 && (
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px', opacity: 0.65 }}>
+                Archived Teams
               </div>
-              <div className="create-team-grid">
-                <label><span>Team Name</span><input value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="Blue Tigers" /></label>
-                <label><span>Age Group</span><select value={newTeamAgeGroup} onChange={(e) => setNewTeamAgeGroup(e.target.value)}>{['U08','U09','U10','U11','U12','U13','U14','U15','U16','U17','U18'].map((value) => <option key={value}>{value}</option>)}</select></label>
-                <label><span>Format</span><select value={newTeamFormat} onChange={(e) => setNewTeamFormat(e.target.value)}>{['6v6','7v7','9v9','11v11'].map((value) => <option key={value}>{value}</option>)}</select></label>
-                <label><span>Season</span><input value={newTeamSeason} onChange={(e) => setNewTeamSeason(e.target.value)} /></label>
-              </div>
-              <div className="form-buttons">
-                <button className="primary-button" onClick={createTeam}>Create Team</button>
-                <button className="secondary-button" onClick={() => setShowNewTeamForm(false)}>Cancel</button>
-              </div>
-            </section>
+              {archivedTeams.map((archivedTeam) => (
+                <div key={archivedTeam.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '8px 0' }}>
+                  <span>
+                    <strong>{archivedTeam.name}</strong>
+                    <span style={{ marginLeft: '6px', fontSize: '12px', opacity: 0.7 }}>
+                      {archivedTeam.age_group} | {archivedTeam.format} | {archivedTeam.season}
+                    </span>
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button className="secondary-button" onClick={() => viewArchivedTeam(archivedTeam)}>
+                      View Season
+                    </button>
+                    {currentUserRole === 'owner' && (
+                      <button className="secondary-button" onClick={async () => {
+                        const { error } = await supabase
+                          .from('teams')
+                          .update({ archived: false })
+                          .eq('id', archivedTeam.id)
+
+                        if (error) {
+                          console.error(error)
+                          alert(`Could not unarchive team: ${error.message}`)
+                          return
+                        }
+
+                        await loadApp(archivedTeam.id)
+                      }}>
+                        Unarchive
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </section>
 
@@ -1452,7 +2265,17 @@ function playerAtPosition(position: string) {
           {currentUserRole === 'owner' && (
             <button onClick={() => setScreen('team-rules')}>Team Rules</button>
           )}
-          <button type="button" onPointerDown={(e) => { e.preventDefault(); setScreen('coaches'); window.scrollTo(0, 0) }}>Coaches & Staff</button>
+          <button
+              type="button"
+              onPointerDown={async (e) => {
+                e.preventDefault()
+                setScreen('coaches')
+                window.scrollTo(0, 0)
+                await loadOwnerJoinRequests()
+              }}
+            >
+              Coaches & Staff
+            </button>
         </div>
 
         <section className="team-card home-team-summary">
@@ -2931,36 +3754,51 @@ function playerAtPosition(position: string) {
       )}
 
       <main className="main-content">
-        {screen === 'home' && renderHome()}
-        {screen === 'roster' && renderRoster()}
-        {screen === 'new-game' && renderNewGame()}
-        {screen === 'lineup' && renderLineup()}
-        {screen === 'live-game' && renderLiveGame()}
-        {screen === 'games' && renderGames()}
-        {screen === 'team-rules' && renderTeamRules()}
-        {screen === 'coaches' && renderCoaches()}
+        {archivedViewTeam ? (
+          renderArchivedTeamView()
+        ) : showNewUserOnboarding ? (
+          renderNewUserOnboarding()
+        ) : (
+          <>
+            {screen === 'home' && renderHome()}
+            {screen === 'roster' && renderRoster()}
+            {screen === 'new-game' && renderNewGame()}
+            {screen === 'lineup' && renderLineup()}
+            {screen === 'live-game' && renderLiveGame()}
+            {screen === 'games' && renderGames()}
+            {screen === 'team-rules' && renderTeamRules()}
+            {screen === 'coaches' && renderCoaches()}
+          </>
+        )}
       </main>
 
-      <nav className="bottom-nav">
-        <button onClick={async () => { await loadApp(); setScreen('home') }}>
+      {!showNewUserOnboarding && (
+        <nav className="bottom-nav">
+          <button onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
+            <span>Home</span>
+          </button>
 
-          <span>Home</span>
-        </button>
+          <button onClick={() => setScreen('roster')}>
+            <span>Roster</span>
+          </button>
 
-        <button onClick={() => setScreen('roster')}>
+          <button onClick={() => setScreen('games')}>
+            <span>Games</span>
+          </button>
+        </nav>
+      )}
 
-          <span>Roster</span>
-        </button>
 
-        <button onClick={() => setScreen('games')}>
-          <span>Games</span>
-        </button>
-      </nav>
+
     </div>
   )
 }
 
 export default App
+
+
+
+
 
 
 
