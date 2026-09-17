@@ -1585,7 +1585,7 @@ function playerAtPosition(position: string) {
                   return (
                     <tr key={player.id}>
                       <td className="player-col" style={{ fontWeight: 700 }}>
-                        #{player.jersey_number ?? '-'} {player.name}
+                        #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
                       </td>
                       <td>{played}</td>
                       <td>{roleCounts.GK}</td>
@@ -1758,7 +1758,7 @@ function playerAtPosition(position: string) {
                 return (
                   <div key={player.id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '10px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                      <strong>#{player.jersey_number ?? '-'} {player.name}</strong>
+                      <strong>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
                       <button onClick={open ? cancelEdit : startEdit}>
                         {open ? 'Close' : 'Edit Coach Input'}
                       </button>
@@ -2961,6 +2961,7 @@ function playerAtPosition(position: string) {
 }
 
 export default App
+
 
 
 

@@ -625,6 +625,28 @@ textarea {
   border-bottom: 0;
 }
 
+@media (max-width: 600px) {
+  .analytics-table {
+    min-width: 520px;
+    width: max-content;
+  }
+
+  .analytics-table th,
+  .analytics-table td {
+    padding: 8px 6px;
+  }
+
+  .analytics-table .player-col {
+    width: 105px;
+    min-width: 105px;
+  }
+
+  .analytics-table th:not(.player-col),
+  .analytics-table td:not(.player-col) {
+    width: 50px;
+    min-width: 50px;
+  }
+}
 .analytics-table tbody tr:hover td {
   background: #fafbfd;
 }
@@ -777,5 +799,6 @@ textarea {
 @media (max-width: 600px) {
   .team-card select { min-width: 0; max-width: 100%; }
 }
+
 
 
