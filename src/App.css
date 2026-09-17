@@ -793,7 +793,7 @@ textarea {
 
 @media (max-width: 600px) {
   .inline-player-fields { grid-template-columns: 1fr; }
-  .coach-knowledge-card select, .inline-player-fields select { min-width: 0; max-width: 100%; }
+  .coach-knowledge-card select, .inline-player-fields select { min-width: 120px; max-width: 100%; }
 }
 
 @media (max-width: 600px) {
