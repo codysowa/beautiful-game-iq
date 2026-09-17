@@ -2181,46 +2181,6 @@ function playerAtPosition(position: string) {
           )}
 
 
-          {currentUserRole === 'owner' && archivedTeams.length > 0 && (
-            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px', opacity: 0.65 }}>
-                Archived Teams
-              </div>
-              {archivedTeams.map((archivedTeam) => (
-                <div key={archivedTeam.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '8px 0' }}>
-                  <span>
-                    <strong>{archivedTeam.name}</strong>
-                    <span style={{ marginLeft: '6px', fontSize: '12px', opacity: 0.7 }}>
-                      {archivedTeam.age_group} | {archivedTeam.format} | {archivedTeam.season}
-                    </span>
-                  </span>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button className="secondary-button" onClick={() => viewArchivedTeam(archivedTeam)}>
-                      View Season
-                    </button>
-                    {currentUserRole === 'owner' && (
-                      <button className="secondary-button" onClick={async () => {
-                        const { error } = await supabase
-                          .from('teams')
-                          .update({ archived: false })
-                          .eq('id', archivedTeam.id)
-
-                        if (error) {
-                          console.error(error)
-                          alert(`Could not unarchive team: ${error.message}`)
-                          return
-                        }
-
-                        await loadApp(archivedTeam.id)
-                      }}>
-                        Unarchive
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </section>
 
         <section className="home-next-game">
@@ -2425,6 +2385,46 @@ function playerAtPosition(position: string) {
             </table>
           </div>
         </section>
+          {currentUserRole === 'owner' && archivedTeams.length > 0 && (
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px', opacity: 0.65 }}>
+                Archived Teams
+              </div>
+              {archivedTeams.map((archivedTeam) => (
+                <div key={archivedTeam.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '8px 0' }}>
+                  <span>
+                    <strong>{archivedTeam.name}</strong>
+                    <span style={{ marginLeft: '6px', fontSize: '12px', opacity: 0.7 }}>
+                      {archivedTeam.age_group} | {archivedTeam.format} | {archivedTeam.season}
+                    </span>
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button className="secondary-button" onClick={() => viewArchivedTeam(archivedTeam)}>
+                      View Season
+                    </button>
+                    {currentUserRole === 'owner' && (
+                      <button className="secondary-button" onClick={async () => {
+                        const { error } = await supabase
+                          .from('teams')
+                          .update({ archived: false })
+                          .eq('id', archivedTeam.id)
+
+                        if (error) {
+                          console.error(error)
+                          alert(`Could not unarchive team: ${error.message}`)
+                          return
+                        }
+
+                        await loadApp(archivedTeam.id)
+                      }}>
+                        Unarchive
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
       </>
     )
   }
