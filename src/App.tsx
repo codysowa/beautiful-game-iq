@@ -2289,41 +2289,7 @@ function playerAtPosition(position: string) {
                 <th onClick={() => handleAnalyticsSort('captain')}>Captain<br /><span>Gms</span></th>
               </tr></thead>
               <tbody>
-                {[...players].sort((a, b) => {
-                    if (analyticsSort === 'player') {
-                      const result = a.name.localeCompare(b.name)
-                      return analyticsSortAsc ? result : -result
-                    }
-
-                    const getValue = (player: typeof players[number]) => {
-                      const playerEvents = completedGameEvents.filter((event) => event.player_id === player.id)
-                      const playerAssists = completedGameEvents.filter((event) => event.assister_id === player.id).length
-                      const playerGoals = playerEvents.filter((event) => event.event_type === 'our_goal').length
-                      const playerLineups = actualSeasonLineups.filter((lineup) => lineup.player_id === player.id)
-                      const playerPlayed = playerLineups.length
-                      const playerGk = playerLineups.filter((lineup) => lineup.position === 'Goalkeeper').length
-                      const playerStr = playerLineups.filter((lineup) => lineup.position === 'Center Striker').length
-                      const playerCaptain = completedGames.filter(
-                        (game) => game.captain_1_id === player.id || game.captain_2_id === player.id
-                      ).length
-                      const playerBench = Math.max(0, completedGames.length * 4 - playerPlayed)
-
-                      return {
-                        played: playerPlayed,
-                        gk: playerGk,
-                        str: playerStr,
-                        bench: playerBench,
-                        goals: playerGoals,
-                        assists: playerAssists,
-                        captain: playerCaptain,
-                      }[analyticsSort]
-                    }
-
-                    const aValue = getValue(a) as number
-                    const bValue = getValue(b) as number
-                    const result = bValue - aValue
-                    return analyticsSortAsc ? -result : result
-                  }).map((player) => {
+                {players.map((player) => {
                   const rows = completedSeasonLineups.filter(
                     (item) => item.player_id === player.id
                   )
@@ -2620,7 +2586,7 @@ function playerAtPosition(position: string) {
                         <div>
                           <strong>Role Strength</strong>
                           <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '3px', marginBottom: '6px' }}>1 = weak fit, 5 = excellent fit</div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 90px)', gap: '8px', marginTop: '8px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 140px)', gap: '8px', marginTop: '8px' }}>
                             {['GK', 'DEF', 'MID', 'STR'].map((role) => (
                               <label key={role} style={{ display: 'contents' }}>
                                 <span style={{ alignSelf: 'center', fontWeight: 600 }}>{role}</span>
