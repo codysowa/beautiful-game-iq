@@ -613,6 +613,11 @@ textarea {
 }
 
 .analytics-table .player-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #f6f8fb;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.06);
   text-align: left;
 }
 
@@ -772,4 +777,5 @@ textarea {
 @media (max-width: 600px) {
   .team-card select { min-width: 0; max-width: 100%; }
 }
+
 

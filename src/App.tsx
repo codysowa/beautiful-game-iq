@@ -1994,6 +1994,11 @@ function playerAtPosition(position: string) {
                   style={{
                     textAlign: 'left',
                     padding: '8px 6px',
+                    position: 'sticky',
+                    left: 0,
+                    zIndex: 2,
+                    background: '#fff',
+                    boxShadow: '2px 0 4px rgba(0,0,0,0.06)',
                   }}
                 >
                   Player
@@ -2020,6 +2025,11 @@ function playerAtPosition(position: string) {
                     style={{
                       padding: '8px 6px',
                       fontWeight: 600,
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 1,
+                      background: '#fff',
+                      boxShadow: '2px 0 4px rgba(0,0,0,0.06)',
                     }}
                   >
                     {player.jersey_number !== null
@@ -2951,6 +2961,7 @@ function playerAtPosition(position: string) {
 }
 
 export default App
+
 
 
 
