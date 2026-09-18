@@ -1519,35 +1519,40 @@ function playerAtPosition(position: string) {
     )
   }
 
-  function submitBugReport() {
-    const owner = staff.find((member) => member.role === 'owner')
-    const reporter = staff.find((member) => member.user_id === currentUserId)
-    const recipient = owner?.email || ''
-    const subject = `[Beautiful Game IQ Bug] ${bugReport.summary || 'Bug report'}`
-    const body = [
-      `Beautiful Game IQ bug report`,
-      `Team: ${team?.name || 'Unknown'}`,
-      `Format: ${team?.format || 'Unknown'}`,
-      `Reported by: ${reporter?.email || currentUserName || 'Unknown'}`,
-      `Severity: ${bugReport.severity}`,
-      `Screen: ${screen}`,
-      `URL: ${window.location.href}`,
-      '',
-      `Summary: ${bugReport.summary}`,
-      '',
-      `What happened:`,
-      bugReport.details,
-    ].join('\n')
+  async function submitBugReport() {
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!recipient) {
-      navigator.clipboard?.writeText(body)
-      alert('Bug report copied to your clipboard. The team owner email is not available yet.')
+    if (!user) {
+      alert('Please sign in again before sending a bug report.')
       return
     }
 
-    window.location.href = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    const { data, error } = await supabase.functions.invoke('report-bug', {
+      body: {
+        team_id: team?.id || selectedTeamId || null,
+        severity: bugReport.severity,
+        summary: bugReport.summary.trim(),
+        details: bugReport.details.trim(),
+        screen,
+        page_url: window.location.href,
+        app_version: '1.0.0',
+        platform: 'web',
+        user_agent: navigator.userAgent,
+      },
+    })
+
+    if (error) {
+      console.error(error)
+      alert(`Could not send bug report: ${error.message}`)
+      return
+    }
+
+    const reportId = data?.report_id
     setBugReportOpen(false)
     setBugReport({ severity: 'Normal', summary: '', details: '' })
+    alert(reportId
+      ? `Bug report submitted. Reference #${String(reportId).slice(0, 8)}.`
+      : 'Bug report submitted. Thank you.')
   }
 
   function handleAnalyticsSort(field: 'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'captain') {
