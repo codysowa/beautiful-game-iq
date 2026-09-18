@@ -980,47 +980,34 @@ function App() {
     return attendance.available_quarters.includes(quarter)
   }
 
-  function assignPlayer(playerId: string, position: string) {
+  async function assignPlayer(playerId: string, position: string) {
     if (!playerAvailableForQuarter(playerId, selectedQuarter)) {
-
       alert(`${playerName(playerId)} is not marked available for Q${selectedQuarter}.`)
-
-      return
-    }
-    if (
-      position === 'Goalkeeper' &&
-      goalkeeperQuarterCount(playerId) >= 2
-    ) {
-      alert(
-        `${playerName(playerId)} has already played 2 goalkeeper quarters.`
-      )
       return
     }
 
-    setLineup((current) => {
-      const withoutPlayer = current.filter(
-        (item) => item.player_id !== playerId
-      )
+    if (position === 'Goalkeeper' && goalkeeperQuarterCount(playerId) >= 2) {
+      alert(`${playerName(playerId)} has already played 2 goalkeeper quarters.`)
+      return
+    }
 
-      const withoutPosition = withoutPlayer.filter(
-        (item) => item.position !== position
-      )
+    const nextLineup = [
+      ...lineup.filter((item) => item.player_id !== playerId && item.position !== position),
+      {
+        player_id: playerId,
+        quarter: selectedQuarter,
+        position,
+      },
+    ]
 
-      return [
-        ...withoutPosition,
-        {
-          player_id: playerId,
-          quarter: selectedQuarter,
-          position,
-        },
-      ]
-    })
+    const saved = await saveLineupData(nextLineup, selectedQuarter)
+    if (saved) setLineup(nextLineup)
   }
 
-  function removePlayerFromPosition(position: string) {
-    setLineup((current) =>
-      current.filter((item) => item.position !== position)
-    )
+  async function removePlayerFromPosition(position: string) {
+    const nextLineup = lineup.filter((item) => item.position !== position)
+    const saved = await saveLineupData(nextLineup, selectedQuarter)
+    if (saved) setLineup(nextLineup)
   }
 
 function playerName(playerId: string) {
@@ -1155,13 +1142,15 @@ function playerAtPosition(position: string) {
       if (!confirmed) return
     }
 
-    setLineup(
-      advice.suggestedLineup.map(({ position, player }) => ({
-        player_id: player.id,
-        quarter: selectedQuarter,
-        position,
-      }))
-    )
+    const suggestedLineup = advice.suggestedLineup.map(({ position, player }) => ({
+      player_id: player.id,
+      quarter: selectedQuarter,
+      position,
+    }))
+
+    void saveLineupData(suggestedLineup, selectedQuarter).then((saved) => {
+      if (saved) setLineup(suggestedLineup)
+    })
   }
 
   const upcomingGames = useMemo(() => {
@@ -3014,72 +3003,71 @@ function playerAtPosition(position: string) {
     alert('Captains saved.')
   }
 
-  async function saveLineup(showSuccess = true) {
+  async function saveLineupData(nextLineup: LineupItem[], quarter: number, showSuccess = false) {
     if (!selectedGame) return false
 
-    // Validate lineup data before sending anything to Supabase.
-    // player_id MUST be an actual player UUID; position is the position string.
-    const validRows = lineup
-      .filter((item) => {
-        const player = players.find((p) => p.id === item.player_id)
-        const validPosition = typeof item.position === 'string' && item.position.length > 0
+    const invalidItem = nextLineup.find((item) => {
+      const player = players.find((p) => p.id === item.player_id)
+      return !player || typeof item.position !== 'string' || item.position.length === 0
+    })
 
-        if (!player || !validPosition) {
-          console.warn('Skipping invalid lineup item:', item)
-          return false
-        }
-
-        return true
-      })
-      .map((item) => ({
-        game_id: selectedGame.id,
-        quarter: selectedQuarter,
-        player_id: item.player_id,
-        position: item.position,
-      }))
-
-    // If the UI somehow created a malformed lineup, stop before deleting
-    // the existing saved lineup so we never destroy good data.
-    if (validRows.length !== lineup.length) {
-      console.error('Invalid lineup data:', lineup)
+    if (invalidItem) {
+      console.error('Invalid lineup data:', invalidItem)
       alert('Could not save lineup: one or more player assignments are invalid. Please reassign the affected position.')
       return false
     }
 
-    const { error: deleteError } = await supabase
-      .from('game_lineups')
-      .delete()
-      .eq('game_id', selectedGame.id)
-      .eq('quarter', selectedQuarter)
+    const rows = nextLineup.map((item) => ({
+      game_id: selectedGame.id,
+      quarter,
+      player_id: item.player_id,
+      position: item.position,
+    }))
 
-    if (deleteError) {
-      console.error(deleteError)
-      alert(`Could not save lineup: ${deleteError.message}`)
-      return false
-    }
+    setSavingLineup(true)
 
-    if (validRows.length > 0) {
-      const { error: insertError } = await supabase
+    try {
+      const { error: deleteError } = await supabase
         .from('game_lineups')
-        .insert(validRows)
+        .delete()
+        .eq('game_id', selectedGame.id)
+        .eq('quarter', quarter)
 
-      if (insertError) {
-        console.error(insertError)
-        alert(`Could not save lineup: ${insertError.message}`)
+      if (deleteError) {
+        console.error(deleteError)
+        alert(`Could not save lineup: ${deleteError.message}`)
         return false
       }
+
+      if (rows.length > 0) {
+        const { error: insertError } = await supabase
+          .from('game_lineups')
+          .insert(rows)
+
+        if (insertError) {
+          console.error(insertError)
+          alert(`Could not save lineup: ${insertError.message}`)
+          return false
+        }
+      }
+
+      setAllGameLineups((current) => [
+        ...current.filter((item) => item.quarter !== quarter),
+        ...nextLineup,
+      ])
+
+      if (showSuccess) {
+        alert(`Q${quarter} lineup saved successfully.`)
+      }
+
+      return true
+    } finally {
+      setSavingLineup(false)
     }
+  }
 
-    setAllGameLineups((current) => [
-      ...current.filter((item) => item.quarter !== selectedQuarter),
-      ...lineup,
-    ])
-
-    if (showSuccess) {
-      alert(`Q${selectedQuarter} lineup saved successfully.`)
-    }
-
-    return true
+  async function saveLineup(showSuccess = true) {
+    return saveLineupData(lineup, selectedQuarter, showSuccess)
   }
   function renderLineup() {
     if (!selectedGame) return null
@@ -3131,9 +3119,10 @@ function playerAtPosition(position: string) {
           <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
             <button
               className="secondary-button"
-              onClick={() => {
+              onClick={async () => {
                 if (confirm("Clear current quarter lineup?")) {
-                  setLineup([])
+                  const saved = await saveLineupData([], selectedQuarter)
+                  if (saved) setLineup([])
                 }
               }}
               disabled={savingLineup || !canManageGame}
