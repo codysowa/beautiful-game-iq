@@ -108,12 +108,18 @@ export default function Monetization({ userId }: Props) {
   }
 
   useEffect(() => {
-    void initialize()
+    let active = true
+
+    async function start() {
+      await initialize()
+      if (!active) return
+    }
+
+    void start()
 
     return () => {
-      if (isNativeIos) {
-        void hideAds()
-      }
+      active = false
+      if (isNativeIos) void hideAds()
     }
   }, [userId])
 
