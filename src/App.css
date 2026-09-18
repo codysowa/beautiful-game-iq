@@ -948,3 +948,9 @@ body {
     font-size: 12px;
   }
 }
+
+.premium-modal-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
