@@ -83,12 +83,14 @@ export default function Monetization({ userId }: Props) {
     }
 
     try {
+      let activePremium = false
+
       if (revenueCatIosKey) {
         await Purchases.configure({
           apiKey: revenueCatIosKey,
           appUserID: userId || undefined,
         })
-        await refreshCustomerInfo()
+        activePremium = await refreshCustomerInfo()
 
         const offerings = await Purchases.getOfferings()
         setPackages(offerings.current?.availablePackages || [])
@@ -96,7 +98,7 @@ export default function Monetization({ userId }: Props) {
 
       setReady(true)
 
-      if (!premium) {
+      if (!activePremium) {
         await setupAds()
       }
     } catch (error) {
@@ -231,7 +233,7 @@ export default function Monetization({ userId }: Props) {
                     onClick={() => void buyPremium(pkg)}
                   >
                     <strong>{pkg.product?.title || 'Premium'}</strong>
-                    <span>{pkg.product?.price?.formatted || 'Subscribe'}</span>
+                    <span>{pkg.product?.priceString || 'Subscribe'}</span>
                   </button>
                 ))}
               </div>
@@ -241,14 +243,24 @@ export default function Monetization({ userId }: Props) {
               </div>
             )}
 
-            <button
-              type="button"
-              className="secondary-button premium-restore"
-              disabled={busy || !revenueCatIosKey}
-              onClick={() => void restorePremium()}
-            >
-              Restore Purchases
-            </button>
+            <div className="premium-modal-actions">
+              <button
+                type="button"
+                className="secondary-button premium-restore"
+                disabled={busy || !revenueCatIosKey}
+                onClick={() => void restorePremium()}
+              >
+                Restore Purchases
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button premium-restore"
+                onClick={() => void AdMob.showPrivacyOptionsForm()}
+              >
+                Privacy Choices
+              </button>
+            </div>
 
             {message && <p className="premium-message">{message}</p>}
 
