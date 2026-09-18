@@ -3527,7 +3527,11 @@ function playerAtPosition(position: string) {
                                   type="button"
                                   className="secondary-button"
                                   disabled={!playerAvailableForQuarter(player.id, selectedQuarter)}
-                                  onClick={() => assignToPosition(selectedPreplanPlayerId.replace('__empty__:', ''))}
+                                  onClick={() => {
+                                    const position = selectedPreplanPlayerId.replace('__empty__:', '')
+                                    assignPlayer(player.id, position)
+                                    setSelectedPreplanPlayerId(null)
+                                  }}
                                 >
                                   #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
                                 </button>
