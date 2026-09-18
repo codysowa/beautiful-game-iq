@@ -18,6 +18,8 @@ function Root() {
   useEffect(() => {
     let mounted = true
 
+    let appUrlOpenListener: { remove: () => Promise<void> } | null = null
+
     if (Capacitor.isNativePlatform()) {
       const listener = CapacitorApp.addListener('appUrlOpen', ({ url }) => {
         try {
@@ -40,7 +42,9 @@ function Root() {
         }
       })
 
-      void listener
+      void listener.then((handle) => {
+        appUrlOpenListener = handle
+      })
     }
 
     supabase.auth.getSession().then(({ data }) => {
@@ -63,6 +67,9 @@ function Root() {
     return () => {
       mounted = false
       subscription.unsubscribe()
+      if (appUrlOpenListener) {
+        void appUrlOpenListener.remove()
+      }
     }
   }, [])
 
