@@ -230,6 +230,14 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
             Back to sign in
           </button>
         )}
+
+        <div style={{ marginTop: '18px', textAlign: 'center', fontSize: '12px', color: '#667085' }}>
+          <a href="/privacy.html" target="_blank" rel="noreferrer">Privacy</a>
+          <span style={{ margin: '0 8px' }}>•</span>
+          <a href="/terms.html" target="_blank" rel="noreferrer">Terms</a>
+          <span style={{ margin: '0 8px' }}>•</span>
+          <a href="/support.html" target="_blank" rel="noreferrer">Support</a>
+        </div>
       </div>
     </div>
   )
