@@ -3,6 +3,7 @@ import './App.css'
 import { supabase } from './supabase'
 import LiveGame from './LiveGame'
 import Monetization from './Monetization'
+import { APP_PLATFORM, APP_VERSION } from './appInfo'
 import {
   getRotationAdvice as getSharedRotationAdvice,
   optimizationFormations,
@@ -1525,8 +1526,8 @@ function playerAtPosition(position: string) {
         details: bugReport.details.trim(),
         screen,
         page_url: window.location.href,
-        app_version: 'web',
-        platform: navigator.platform || 'web',
+        app_version: APP_VERSION,
+        platform: APP_PLATFORM,
         user_agent: navigator.userAgent,
       },
     })
