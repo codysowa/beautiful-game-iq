@@ -802,3 +802,20 @@ textarea {
 
 
 
+
+
+/* iOS safe-area support for the Capacitor shell. */
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (max-width: 700px) {
+  .bottom-nav {
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+}
