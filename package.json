@@ -16,7 +16,9 @@
     "@supabase/supabase-js": "^2.115.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "@capacitor/core": "^8.5.2"
+    "@capacitor/core": "^8.5.2",
+    "@capacitor-community/admob": "^8.1.0",
+    "@revenuecat/purchases-capacitor": "^13.6.0"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
