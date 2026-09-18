@@ -822,12 +822,17 @@ body {
 
 
 /* Native Premium / subscription UI */
-.premium-launch-button,
-.premium-active-badge {
-  position: fixed;
-  right: 14px;
-  top: 14px;
-  z-index: 40;
+.header-account-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.header-account-actions .premium-launch-button,
+.header-account-actions .premium-active-badge {
+  position: static;
 }
 
 .premium-launch-button {
@@ -937,13 +942,11 @@ body {
 }
 
 @media (max-width: 600px) {
-  .premium-launch-button,
-  .premium-active-badge {
-    top: 8px;
-    right: 8px;
+  .header-account-actions {
+    gap: 6px;
   }
 
-  .premium-launch-button {
+  .header-account-actions .premium-launch-button {
     padding: 8px 10px;
     font-size: 12px;
   }
