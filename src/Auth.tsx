@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from './supabase'
+import { Capacitor } from '@capacitor/core'
 
 export default function Auth({ passwordRecovery = false }: { passwordRecovery?: boolean }) {
   const [email, setEmail] = useState('')
@@ -85,10 +86,14 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
     setMessage('')
     setError('')
 
+    const redirectTo = Capacitor.isNativePlatform()
+      ? 'beautifulgameiq://auth'
+      : 'https://beautiful-game-iq.pages.dev/'
+
     const { error } = await supabase.auth.resetPasswordForEmail(
       trimmedEmail,
       {
-        redirectTo: 'https://beautiful-game-iq.pages.dev/',
+        redirectTo,
       }
     )
 
