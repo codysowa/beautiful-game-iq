@@ -898,6 +898,17 @@ function App() {
   async function changeQuarter(quarter: number) {
     if (!selectedGame || quarter === selectedQuarter) return
 
+    // Save the quarter currently on screen before loading the next one.
+    // Coaches should be able to move Q1 -> Q2 without losing unsaved changes.
+    if (currentUserRole === 'owner' || currentUserRole === 'coach') {
+      const saved = await saveLineup(false)
+
+      if (!saved) {
+        alert(`Could not save Q${selectedQuarter}. The quarter was not changed.`)
+        return
+      }
+    }
+
     const { data, error } = await supabase
       .from('game_lineups')
       .select('*')
@@ -2998,7 +3009,7 @@ function playerAtPosition(position: string) {
     alert('Captains saved.')
   }
 
-  async function saveLineup() {
+  async function saveLineup(showSuccess = true) {
     if (!selectedGame) return false
 
     // Validate lineup data before sending anything to Supabase.
@@ -3054,7 +3065,15 @@ function playerAtPosition(position: string) {
       }
     }
 
-    alert(`Q${selectedQuarter} lineup saved successfully.`)
+    setAllGameLineups((current) => [
+      ...current.filter((item) => item.quarter !== selectedQuarter),
+      ...lineup,
+    ])
+
+    if (showSuccess) {
+      alert(`Q${selectedQuarter} lineup saved successfully.`)
+    }
+
     return true
   }
   function renderLineup() {
