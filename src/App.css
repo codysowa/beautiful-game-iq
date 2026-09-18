@@ -819,3 +819,132 @@ body {
     padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
 }
+
+
+/* Native Premium / subscription UI */
+.premium-launch-button,
+.premium-active-badge {
+  position: fixed;
+  right: 14px;
+  top: 14px;
+  z-index: 40;
+}
+
+.premium-launch-button {
+  background: #1f6f4a;
+  color: white;
+  box-shadow: 0 5px 16px rgba(20, 30, 50, 0.18);
+}
+
+.premium-active-badge {
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #edf6f1;
+  color: #1f6f4a;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 3px 12px rgba(20, 30, 50, 0.12);
+}
+
+.premium-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.premium-modal {
+  position: relative;
+  width: min(480px, 100%);
+  padding: 26px;
+  border-radius: 18px;
+  background: white;
+  color: #172033;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.premium-modal h2 {
+  margin: 4px 0 8px;
+  font-size: 28px;
+}
+
+.premium-modal > p:not(.eyebrow):not(.premium-message):not(.premium-footnote) {
+  color: #667085;
+  line-height: 1.5;
+}
+
+.premium-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  background: transparent;
+  font-size: 24px;
+  box-shadow: none;
+}
+
+.premium-package-list {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 12px;
+}
+
+.premium-package {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #d7dce5;
+  background: #f8fafc;
+}
+
+.premium-package span {
+  color: #1f6f4a;
+  font-weight: 800;
+}
+
+.premium-restore {
+  width: 100%;
+}
+
+.premium-not-configured {
+  margin: 18px 0 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f6f8fb;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.premium-message {
+  margin: 12px 0 0;
+  color: #344054;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.premium-footnote {
+  margin: 16px 0 0;
+  color: #98a2b3;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+@media (max-width: 600px) {
+  .premium-launch-button,
+  .premium-active-badge {
+    top: 8px;
+    right: 8px;
+  }
+
+  .premium-launch-button {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
