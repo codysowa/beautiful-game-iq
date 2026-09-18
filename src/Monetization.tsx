@@ -266,6 +266,10 @@ export default function Monetization({ userId }: Props) {
 
             <p className="premium-footnote">
               Subscription pricing and billing are handled by Apple.
+              <br />
+              <a href="/terms.html" target="_blank" rel="noreferrer">Terms of Use</a>
+              {' · '}
+              <a href="/privacy.html" target="_blank" rel="noreferrer">Privacy Policy</a>
             </p>
           </section>
         </div>
