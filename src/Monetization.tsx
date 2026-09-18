@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
+import { App as CapacitorApp } from '@capacitor/app'
 import {
   AdMob,
   AdmobConsentStatus,
@@ -132,6 +133,35 @@ export default function Monetization({ userId }: Props) {
       void setupAds().catch((error) => console.error('Could not show ads:', error))
     }
   }, [premium, ready])
+
+  useEffect(() => {
+    if (!isNativeIos || !ready) return
+
+    let mounted = true
+    const listenerPromise = CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      if (!mounted || !isActive) return
+
+      void (async () => {
+        try {
+          const activePremium = await refreshCustomerInfo()
+          if (!mounted) return
+
+          if (activePremium) {
+            await hideAds()
+          } else {
+            await setupAds()
+          }
+        } catch (error) {
+          console.error('Could not refresh monetization after returning to the app:', error)
+        }
+      })()
+    })
+
+    return () => {
+      mounted = false
+      void listenerPromise.then((listener) => listener.remove())
+    }
+  }, [isNativeIos, ready, userId])
 
   async function buyPremium(pkg: any) {
     if (!revenueCatIosKey || !pkg) return
