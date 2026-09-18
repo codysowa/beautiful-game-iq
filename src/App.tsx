@@ -3647,12 +3647,11 @@ function playerAtPosition(position: string) {
           <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>Signed in as: {currentUserEmail}</p>
           <div className="header-account-actions">
             <button
-            type="button"
-            onClick={signOut}
-            style={{ marginTop: '10px' }}
-          >
-            Sign Out
-          </button>
+              type="button"
+              onClick={signOut}
+            >
+              Sign Out
+            </button>
             <button
               type="button"
               onClick={() => setBugReportOpen(true)}
