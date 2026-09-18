@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { supabase } from './supabase'
 import LiveGame from './LiveGame'
+import Monetization from './Monetization'
 import {
   getRotationAdvice as getSharedRotationAdvice,
   optimizationFormations,
@@ -1276,6 +1277,8 @@ function playerAtPosition(position: string) {
           </section>
         </div>
       )}
+
+      <Monetization userId={currentUserId} />
 
       <main className="main-content">
           <p>Loading...</p>
