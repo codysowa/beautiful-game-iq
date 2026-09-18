@@ -5,6 +5,9 @@ const config: CapacitorConfig = {
   appName: 'Beautiful Game IQ',
   webDir: 'dist',
   bundledWebRuntime: false,
+  ios: {
+    scheme: 'beautifulgameiq',
+  },
 }
 
 export default config
