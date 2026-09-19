@@ -949,10 +949,35 @@ function App() {
     }
     setGameAttendance((current) => ({ ...current, [playerId]: nextAttendance }))
 
-    if (!normalized.includes(selectedQuarter)) {
-      setLineup((current) => current.filter((item) => item.player_id !== playerId))
-      setAllGameLineups((current) => current.filter((item) => !(item.player_id === playerId && item.quarter === selectedQuarter)))
+    const unavailableQuarters = [1, 2, 3, 4].filter((quarter) => !normalized.includes(quarter))
+
+    if (unavailableQuarters.length > 0) {
+      const { error: lineupDeleteError } = await supabase
+        .from('game_lineups')
+        .delete()
+        .eq('game_id', selectedGame.id)
+        .eq('player_id', playerId)
+        .in('quarter', unavailableQuarters)
+
+      if (lineupDeleteError) {
+        console.error(lineupDeleteError)
+        alert('Could not remove the player from unavailable quarters: ' + lineupDeleteError.message)
+        return
+      }
     }
+
+    setLineup((current) =>
+      current.filter(
+        (item) => item.player_id !== playerId || normalized.includes(item.quarter)
+      )
+    )
+    setAllGameLineups((current) =>
+      current.filter(
+        (item) => item.player_id !== playerId || normalized.includes(item.quarter)
+      )
+    )
+    setQuarterSuggestion(null)
+    setWholeGameSuggestion(null)
   }
 
   function goalkeeperQuarterCount(playerId: string) {
