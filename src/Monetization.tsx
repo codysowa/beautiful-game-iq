@@ -31,7 +31,7 @@ export default function Monetization({ userId }: Props) {
   async function refreshCustomerInfo() {
     if (!isNativeIos || !revenueCatIosKey) return false
 
-    const customerInfo = await Purchases.getCustomerInfo()
+    const { customerInfo } = await Purchases.getCustomerInfo()
     const active = Boolean(customerInfo.entitlements.active[PREMIUM_ENTITLEMENT])
     setPremium(active)
     return active
