@@ -230,7 +230,7 @@ function App() {
   const [newTeamSeasonType, setNewTeamSeasonType] = useState('Fall')
   const [newTeamSeasonYear, setNewTeamSeasonYear] = useState('2026')
   const [staff, setStaff] = useState<Array<{ user_id: string; role: 'owner' | 'coach' | 'viewer'; is_head_coach: boolean; full_name: string; email: string }>>([])
-  const [currentUserName, setCurrentUserName] = useState('')
+  const [, setCurrentUserName] = useState('')
   const [currentUserEmail, setCurrentUserEmail] = useState('')
   const [currentUserId, setCurrentUserId] = useState('')
   const [currentUserRole, setCurrentUserRole] = useState<'owner' | 'coach' | 'viewer' | null>(null)
