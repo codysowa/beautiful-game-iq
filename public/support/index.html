@@ -4,10 +4,83 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Beautiful Game IQ Support</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 680px; margin: 0 auto; padding: 40px 20px; color: #111; }
+    h1 { margin-bottom: 8px; }
+    p { line-height: 1.5; }
+    form { display: grid; gap: 14px; margin-top: 28px; }
+    label { display: grid; gap: 6px; font-weight: 600; }
+    input, textarea { font: inherit; padding: 10px; border: 1px solid #bbb; border-radius: 6px; box-sizing: border-box; width: 100%; }
+    textarea { min-height: 160px; resize: vertical; }
+    button { font: inherit; font-weight: 700; padding: 11px 18px; border: 0; border-radius: 6px; cursor: pointer; background: #111; color: #fff; width: fit-content; }
+    button:disabled { opacity: .6; cursor: wait; }
+    #status { min-height: 24px; font-weight: 600; }
+    .honeypot { position: absolute; left: -9999px; }
+  </style>
 </head>
 <body>
   <h1>Beautiful Game IQ Support</h1>
-  <p>Need help with Beautiful Game IQ? Contact us for support with your account, team, roster, lineup, or game-day tools.</p>
-  <p>Email: support@beautifulgameiq.com</p>
+  <p>Need help with Beautiful Game IQ? Send us a support request and we'll get back to you by email.</p>
+
+  <form id="support-form">
+    <label>
+      Name
+      <input name="name" type="text" maxlength="100" required autocomplete="name">
+    </label>
+
+    <label>
+      Email
+      <input name="email" type="email" maxlength="254" required autocomplete="email">
+    </label>
+
+    <label class="honeypot" aria-hidden="true">
+      Website
+      <input name="website" type="text" tabindex="-1" autocomplete="off">
+    </label>
+
+    <label>
+      What can we help with?
+      <textarea name="message" maxlength="5000" required></textarea>
+    </label>
+
+    <button id="submit-button" type="submit">Send Support Request</button>
+    <div id="status" role="status" aria-live="polite"></div>
+  </form>
+
+  <script>
+    const form = document.getElementById("support-form");
+    const button = document.getElementById("submit-button");
+    const status = document.getElementById("status");
+    const endpoint = "https://itwydqejjyllnpvapuce.supabase.co/functions/v1/support-request";
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      button.disabled = true;
+      status.textContent = "Sending...";
+
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Unable to send request.");
+        }
+
+        form.reset();
+        status.textContent = "Thanks — your support request was sent.";
+      } catch (error) {
+        status.textContent = error.message || "Unable to send request. Please try again.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
