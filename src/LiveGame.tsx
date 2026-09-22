@@ -373,6 +373,41 @@ export default function LiveGame({
     return player ? `#${player.jersey_number ?? ''} ${player.first_name || player.name.split(' ')[0]}` : '-'
   }
 
+  function getPlannedLineupForQuarter(targetQuarter: number) {
+    const actual = actualLiveLineups.filter((item) => item.quarter === targetQuarter)
+    return actual.length > 0
+      ? actual
+      : lineups.filter((item) => item.quarter === targetQuarter)
+  }
+
+  function getBenchConflictWarning(playerId: string, nextLineup: Lineup[]) {
+    const maxBench = teamRules?.max_bench_quarters
+    if (maxBench == null) return null
+
+    const benchQuarters: number[] = []
+
+    for (let q = 1; q <= 4; q += 1) {
+      const quarterLineup = q === quarter
+        ? nextLineup
+        : getPlannedLineupForQuarter(q)
+
+      if (!quarterLineup.some((item) => item.player_id === playerId)) {
+        benchQuarters.push(q)
+      }
+
+      if (benchQuarters.length > maxBench && q > quarter) {
+        const name = playerName(playerId).replace(/^#\\S+\\s+/, '')
+        return '⚠️ Lineup Change Warning\\n\\n' +
+          name + ' was already planned to sit Q' + q + '. Substituting ' + name +
+          ' out now would give them more than the maximum ' + maxBench +
+          ' bench quarters. Your Q' + q +
+          ' lineup will need to change to keep the current rotation plan.\\n\\nMake this lineup change anyway?'
+      }
+    }
+
+    return null
+  }
+
   function assignPlayerToPosition(playerId: string, position: string) {
     if (!canManageGame || gameStatus !== 'Live') return
 
@@ -394,6 +429,11 @@ export default function LiveGame({
         ...activeLineup.filter((item) => item.player_id !== occupant?.player_id),
         { quarter, player_id: playerId, position },
       ]
+    }
+
+    if (!source && occupant) {
+      const warning = getBenchConflictWarning(occupant.player_id, nextLineup)
+      if (warning && !confirm(warning)) return
     }
 
     setLiveLineup(nextLineup)
