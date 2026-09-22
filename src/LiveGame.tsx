@@ -380,11 +380,12 @@ export default function LiveGame({
       : lineups.filter((item) => item.quarter === targetQuarter)
   }
 
-  function getBenchConflictWarning(playerId: string, nextLineup: Lineup[]) {
+  function getLineupConflictWarning(playerId: string, nextLineup: Lineup[], nextPosition: string) {
+    const name = playerName(playerId).replace(/^#\\S+\\s+/, '')
     const maxBench = teamRules?.max_bench_quarters
-    if (maxBench == null) return null
-
+    const maxGk = teamRules?.max_gk_quarters
     const benchQuarters: number[] = []
+    const gkQuarters: number[] = []
 
     for (let q = 1; q <= 4; q += 1) {
       const quarterLineup = q === quarter
@@ -394,15 +395,32 @@ export default function LiveGame({
       if (!quarterLineup.some((item) => item.player_id === playerId)) {
         benchQuarters.push(q)
       }
-
-      if (benchQuarters.length > maxBench && q > quarter) {
-        const name = playerName(playerId).replace(/^#\\S+\\s+/, '')
-        return '⚠️ Lineup Change Warning\\n\\n' +
-          name + ' was already planned to sit Q' + q + '. Substituting ' + name +
-          ' out now would give them more than the maximum ' + maxBench +
-          ' bench quarters. Your Q' + q +
-          ' lineup will need to change to keep the current rotation plan.\\n\\nMake this lineup change anyway?'
+      if (quarterLineup.some((item) => item.player_id === playerId && item.position === 'Goalkeeper')) {
+        gkQuarters.push(q)
       }
+
+      if (q > quarter) {
+        if (maxBench != null && benchQuarters.length > maxBench) {
+          return '⚠️ Lineup Change Warning\\n\\n' +
+            name + ' was already planned to sit Q' + q + '. Substituting ' + name +
+            ' out now would give them more than the maximum ' + maxBench +
+            ' bench quarters. Your Q' + q +
+            ' lineup will need to change to keep the current rotation plan.\\n\\nMake this lineup change anyway?'
+        }
+        if (maxGk != null && gkQuarters.length > maxGk) {
+          return '⚠️ Lineup Change Warning\\n\\n' +
+            name + ' was already planned to play GK in Q' + q + '. Moving ' + name +
+            ' into GK now would give them more than the maximum ' + maxGk +
+            ' GK quarters. Your Q' + q +
+            ' lineup will need to change to keep the current rotation plan.\\n\\nMake this lineup change anyway?'
+        }
+      }
+    }
+
+    if (nextPosition === 'Goalkeeper' && maxGk != null && gkQuarters.length > maxGk) {
+      return '⚠️ Lineup Change Warning\\n\\n' +
+        name + ' would exceed the maximum ' + maxGk +
+        ' GK quarters with this change.\\n\\nMake this lineup change anyway?'
     }
 
     return null
@@ -432,7 +450,11 @@ export default function LiveGame({
     }
 
     if (!source && occupant) {
-      const warning = getBenchConflictWarning(occupant.player_id, nextLineup)
+      const warning = getLineupConflictWarning(occupant.player_id, nextLineup, position)
+      if (warning && !confirm(warning)) return
+    }
+    if (!source && !occupant) {
+      const warning = getLineupConflictWarning(playerId, nextLineup, position)
       if (warning && !confirm(warning)) return
     }
 
