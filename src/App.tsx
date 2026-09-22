@@ -2506,7 +2506,7 @@ function playerAtPosition(position: string) {
             ))}
           </div>
 
-          <section style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #ddd' }}>
+          <section className="coach-knowledge-card" style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #ddd' }}>
             <div className="section-header">
               <div>
                 <h2>Coach Knowledge</h2>
