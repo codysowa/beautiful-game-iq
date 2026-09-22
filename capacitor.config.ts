@@ -8,17 +8,7 @@ const config: CapacitorConfig = {
   ios: {
     scheme: 'beautifulgameiq',
   },
-  experimental: {
-    ios: {
-      spm: {
-        packageOptions: {
-          '@capacitor/app': { symlink: true },
-          '@capacitor-community/admob': { symlink: true },
-          '@revenuecat/purchases-capacitor': { symlink: true },
-        },
-      },
-    },
-  },
+
 }
 
 export default config

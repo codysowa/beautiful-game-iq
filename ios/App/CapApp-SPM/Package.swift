@@ -12,9 +12,9 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.5.2"),
-        .package(name: "CapacitorCommunityAdmob", path: "symlinks/CapacitorCommunityAdmob"),
-        .package(name: "CapacitorApp", path: "symlinks/CapacitorApp"),
-        .package(name: "RevenuecatPurchasesCapacitor", path: "symlinks/RevenuecatPurchasesCapacitor")
+        .package(name: "CapacitorCommunityAdmob", path: "../../CapacitorPlugins/CapacitorCommunityAdmob"),
+        .package(name: "CapacitorApp", path: "../../CapacitorPlugins/CapacitorApp"),
+        .package(name: "RevenuecatPurchasesCapacitor", path: "../../CapacitorPlugins/RevenuecatPurchasesCapacitor")
     ],
     targets: [
         .target(
