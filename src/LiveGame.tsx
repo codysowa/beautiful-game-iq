@@ -324,8 +324,11 @@ export default function LiveGame({
     setSubInPlayerId('')
   }, [lineups, quarter, gameId, gameFormat])
 
-  const ourGoals = events.filter((event) => event.event_type === 'our_goal' && event.quarter <= quarter).length
-  const theirGoals = events.filter((event) => event.event_type === 'their_goal' && event.quarter <= quarter).length
+  const scoreEvents = gameStatus === 'Completed'
+    ? events
+    : events.filter((event) => event.quarter <= quarter)
+  const ourGoals = scoreEvents.filter((event) => event.event_type === 'our_goal').length
+  const theirGoals = scoreEvents.filter((event) => event.event_type === 'their_goal').length
 
   const currentLineup = useMemo(
     () => lineups.filter((item) => item.quarter === quarter),
