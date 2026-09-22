@@ -13,7 +13,6 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-
     setLoading(true)
     setMessage('')
     setError('')
@@ -25,9 +24,7 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
         return
       }
 
-      const { error } = await supabase.auth.updateUser({
-        password,
-      })
+      const { error } = await supabase.auth.updateUser({ password })
 
       if (error) {
         setError(error.message)
@@ -45,19 +42,13 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
       const { error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: {
-          data: {
-            display_name: displayName.trim(),
-          },
-        },
+        options: { data: { display_name: displayName.trim() } },
       })
 
       if (error) {
         setError(error.message)
       } else {
-        setMessage(
-          'Account created. Check your email if email confirmation is enabled.'
-        )
+        setMessage('Account created. Check your email if email confirmation is enabled.')
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
@@ -65,9 +56,7 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
         password,
       })
 
-      if (error) {
-        setError(error.message)
-      }
+      if (error) setError(error.message)
     }
 
     setLoading(false)
@@ -85,19 +74,14 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
     setMessage('')
     setError('')
 
-    const { error } = await supabase.auth.resetPasswordForEmail(
-      trimmedEmail,
-      {
-        redirectTo: 'https://beautiful-game-iq.pages.dev/',
-      }
-    )
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+      redirectTo: 'https://beautifulgameiq.com/',
+    })
 
     if (error) {
       setError(error.message)
     } else {
-      setMessage(
-        'Password reset email sent. Check your email and follow the link to create a new password.'
-      )
+      setMessage('Password reset email sent. Check your email and follow the link to create a new password.')
     }
 
     setLoading(false)
@@ -115,15 +99,9 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
       <div className="auth-card">
         <div className="auth-brand">
           <div className="auth-kicker">BEAUTIFUL GAME IQ</div>
-
           <h1>
-            {mode === 'reset'
-              ? 'Reset Password'
-              : mode === 'signup'
-                ? 'Create Account'
-                : 'Coach Sign In'}
+            {mode === 'reset' ? 'Reset Password' : mode === 'signup' ? 'Create Account' : 'Coach Sign In'}
           </h1>
-
           <p>
             {mode === 'reset'
               ? 'Create a new password for your Beautiful Game IQ account.'
@@ -135,66 +113,27 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
           {mode === 'signup' && (
             <label>
               Your Name
-              <input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your name"
-                autoComplete="name"
-                required
-              />
+              <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" autoComplete="name" required />
             </label>
           )}
 
           <label>
             Email
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              autoComplete="email"
-              required
-              disabled={mode === 'reset'}
-            />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required disabled={mode === 'reset'} />
           </label>
 
           <label>
             Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={
-                mode === 'reset'
-                  ? 'New password'
-                  : 'Your password'
-              }
-              autoComplete={
-                mode === 'reset' ? 'new-password' : 'current-password'
-              }
-              required
-              minLength={6}
-            />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === 'reset' ? 'New password' : 'Your password'} autoComplete={mode === 'reset' ? 'new-password' : 'current-password'} required minLength={6} />
           </label>
 
           <button type="submit" disabled={loading}>
-            {loading
-              ? 'PLEASE WAIT...'
-              : mode === 'reset'
-                ? 'UPDATE PASSWORD'
-                : mode === 'signup'
-                  ? 'CREATE ACCOUNT'
-                  : 'SIGN IN'}
+            {loading ? 'PLEASE WAIT...' : mode === 'reset' ? 'UPDATE PASSWORD' : mode === 'signup' ? 'CREATE ACCOUNT' : 'SIGN IN'}
           </button>
         </form>
 
         {mode === 'signin' && (
-          <button
-            type="button"
-            className="auth-switch"
-            onClick={handleForgotPassword}
-            disabled={loading}
-          >
+          <button type="button" className="auth-switch" onClick={handleForgotPassword} disabled={loading}>
             Forgot password?
           </button>
         )}
@@ -203,25 +142,13 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
         {error && <div className="auth-error">{error}</div>}
 
         {mode !== 'reset' && (
-          <button
-            type="button"
-            className="auth-switch"
-            onClick={() =>
-              switchMode(mode === 'signin' ? 'signup' : 'signin')
-            }
-          >
-            {mode === 'signin'
-              ? 'Need an account? Create one'
-              : 'Already have an account? Sign in'}
+          <button type="button" className="auth-switch" onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}>
+            {mode === 'signin' ? 'Need an account? Create one' : 'Already have an account? Sign in'}
           </button>
         )}
 
         {mode === 'reset' && (
-          <button
-            type="button"
-            className="auth-switch"
-            onClick={() => switchMode('signin')}
-          >
+          <button type="button" className="auth-switch" onClick={() => switchMode('signin')}>
             Back to sign in
           </button>
         )}
