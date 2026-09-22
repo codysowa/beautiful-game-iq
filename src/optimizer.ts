@@ -32,7 +32,7 @@ export type LineupItem = {
   position: string
 }
 
-export type GameSituation = 'Normal' | 'Protect Lead' | 'Need Goal' | 'Development' | 'Pull Back / AYSO Mode'
+export type GameSituation = 'Normal' | 'Protect Lead' | 'Need Goal' | 'Development' | 'Pull Back Mode'
 
 export type OptimizerInput = {
   players: Player[]
@@ -201,7 +201,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
     if (input.gameSituation === 'Protect Lead') return role === 'GK' ? 45 : role === 'DEF' ? 35 : role === 'MID' ? 10 : -10
     if (input.gameSituation === 'Need Goal') return role === 'STR' ? 110 : role === 'MID' ? 80 : role === 'DEF' ? -20 : -100
     if (input.gameSituation === 'Development') return role === 'GK' ? 5 : 0
-    if (input.gameSituation === 'Pull Back / AYSO Mode') return role === 'GK' ? 85 : role === 'DEF' ? 70 : role === 'MID' ? -15 : -95
+    if (input.gameSituation === 'Pull Back Mode') return role === 'GK' ? 85 : role === 'DEF' ? 70 : role === 'MID' ? -15 : -95
     return 0
   }
 
@@ -210,7 +210,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
       if (player.usage_priority === 'Development') return 55
       if (player.usage_priority === 'Core') return -15
     }
-    if (input.gameSituation === 'Pull Back / AYSO Mode') {
+    if (input.gameSituation === 'Pull Back Mode') {
       if (player.usage_priority === 'Core') return -15
       if (player.usage_priority === 'Development') return 45
       if (player.usage_priority === 'Regular') return 15
@@ -256,7 +256,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
     const needGoalScorerBonus = input.gameSituation === 'Need Goal' && recentGoalScorers.has(player.id)
       ? role === 'STR' ? 90 : role === 'MID' ? 50 : 0
       : 0
-    const pullBackRoleAdjustment = input.gameSituation === 'Pull Back / AYSO Mode'
+    const pullBackRoleAdjustment = input.gameSituation === 'Pull Back Mode'
       ? (() => {
           const attackFit = Math.max(
             Number(player.position_preferences?.STR || 0),
@@ -277,7 +277,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
         })()
       : 0
     const pullBackRecentScorerBlocked =
-      input.gameSituation === 'Pull Back / AYSO Mode' &&
+      input.gameSituation === 'Pull Back Mode' &&
       comfortablyAhead &&
       recentGoalScorers.has(player.id) &&
       role === 'STR'
@@ -310,7 +310,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
       if (input.gameSituation === 'Need Goal') {
         return role === 'STR' ? 0 : role === 'MID' ? 1 : role === 'DEF' ? 2 : 3
       }
-      if (input.gameSituation === 'Pull Back / AYSO Mode') {
+      if (input.gameSituation === 'Pull Back Mode') {
         return role === 'GK' ? 0 : role === 'DEF' ? 1 : role === 'MID' ? 2 : 3
       }
       if (input.gameSituation === 'Protect Lead') {
@@ -431,12 +431,12 @@ export function optimizeWholeGame(input: OptimizerInput): WholeGamePlan {
     const gk = roleRating(player, 'GK'), def = roleRating(player, 'DEF'), mid = roleRating(player, 'MID'), str = roleRating(player, 'STR')
     if (input.gameSituation === 'Need Goal') return role === 'STR' ? str * 85 + mid * 35 : role === 'MID' ? mid * 65 + str * 40 : role === 'DEF' ? def * 25 : gk * 45
     if (input.gameSituation === 'Protect Lead') return role === 'GK' ? gk * 50 + def * 20 : role === 'DEF' ? def * 50 + gk * 10 : role === 'MID' ? mid * 35 + def * 20 : str * 15 + def * 10
-    if (input.gameSituation === 'Pull Back / AYSO Mode') return role === 'GK' ? gk * 65 + def * 30 : role === 'DEF' ? def * 70 + gk * 15 : role === 'MID' ? mid * 20 + def * 35 : str * 10 + mid * 10 - def * 20
+    if (input.gameSituation === 'Pull Back Mode') return role === 'GK' ? gk * 65 + def * 30 : role === 'DEF' ? def * 70 + gk * 15 : role === 'MID' ? mid * 20 + def * 35 : str * 10 + mid * 10 - def * 20
     return roleRating(player, role) * 35
   }
   const playerSituationBonus = (player: Player) => {
     if (input.gameSituation === 'Development') return player.usage_priority === 'Development' ? 80 : player.usage_priority === 'Core' ? -20 : 0
-    if (input.gameSituation === 'Pull Back / AYSO Mode') return player.usage_priority === 'Core' ? -35 : player.usage_priority === 'Development' ? 45 : 0
+    if (input.gameSituation === 'Pull Back Mode') return player.usage_priority === 'Core' ? -35 : player.usage_priority === 'Development' ? 45 : 0
     return 0
   }
 
@@ -475,7 +475,7 @@ export function optimizeWholeGame(input: OptimizerInput): WholeGamePlan {
           if (role === 'MID') special += 50
         }
       }
-      if (input.gameSituation === 'Pull Back / AYSO Mode') {
+      if (input.gameSituation === 'Pull Back Mode') {
         if (role === 'GK' && roleRating(player, 'GK') >= 4) special += 100
         if (role === 'DEF' && roleRating(player, 'DEF') >= 4) special += 120
         if (role === 'STR' && roleRating(player, 'DEF') >= 4) special -= 140

@@ -183,7 +183,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [savingLineup, setSavingLineup] = useState(false)
   const [wholeGameSuggestion, setWholeGameSuggestion] = useState<LineupItem[] | null>(null)
-  const [gameSituation, setGameSituation] = useState<'Normal' | 'Protect Lead' | 'Need Goal' | 'Development' | 'Pull Back / AYSO Mode'>('Normal')
+  const [gameSituation, setGameSituation] = useState<'Normal' | 'Protect Lead' | 'Need Goal' | 'Development' | 'Pull Back Mode'>('Normal')
   const [optimizationFormation, setOptimizationFormation] = useState('3-2-1')
   const [defaultFormation, setDefaultFormation] = useState('3-2-1')
   const [quarterSuggestion, setQuarterSuggestion] = useState<ReturnType<typeof getSharedRotationAdvice> | null>(null)
@@ -3507,7 +3507,7 @@ function playerAtPosition(position: string) {
                       <option>Protect Lead</option>
                       <option>Need Goal</option>
                       <option>Development</option>
-                      <option>Pull Back / AYSO Mode</option>
+                      <option>Pull Back Mode</option>
                     </select>
                     <div style={{ marginTop: '10px' }}>
                       <strong>Formation</strong>

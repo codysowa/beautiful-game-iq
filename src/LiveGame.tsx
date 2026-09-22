@@ -363,9 +363,9 @@ export default function LiveGame({
     .filter((player) => player.goals > 0 || player.assists > 0)
 
   const formationSituationWarning =
-    nextQuarterSituation === 'Pull Back / AYSO Mode' && nextQuarterFormation !== '4-1-1'
+    nextQuarterSituation === 'Pull Back Mode' && nextQuarterFormation !== '4-1-1'
   const currentFormationSituationWarning =
-    currentQuarterSituation === 'Pull Back / AYSO Mode' && currentQuarterFormation !== '4-1-1'
+    currentQuarterSituation === 'Pull Back Mode' && currentQuarterFormation !== '4-1-1'
 
   function playerName(id: string | null) {
     if (!id) return '-'
@@ -1150,7 +1150,7 @@ export default function LiveGame({
                   <option>Protect Lead</option>
                   <option>Need Goal</option>
                   <option>Development</option>
-                  <option>Pull Back / AYSO Mode</option>
+                  <option>Pull Back Mode</option>
                 </select>
               </label>
               <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>
@@ -1239,7 +1239,7 @@ export default function LiveGame({
                   <option>Protect Lead</option>
                   <option>Need Goal</option>
                   <option>Development</option>
-                  <option>Pull Back / AYSO Mode</option>
+                  <option>Pull Back Mode</option>
                 </select>
               </label>
               <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>
