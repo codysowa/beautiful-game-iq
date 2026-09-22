@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import './App.css'
+import Marketing from './Marketing'
 import App from './App'
 import Auth from './Auth'
 import InviteOnboarding from './InviteOnboarding'
@@ -12,8 +13,14 @@ function Root() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [passwordRecovery, setPasswordRecovery] = useState(false)
+  const isMarketingPage = window.location.pathname === '/'
 
   useEffect(() => {
+    if (isMarketingPage) {
+      setLoading(false)
+      return
+    }
+
     let mounted = true
 
     supabase.auth.getSession().then(({ data }) => {
@@ -37,7 +44,11 @@ function Root() {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [isMarketingPage])
+
+  if (isMarketingPage) {
+    return <Marketing />
+  }
 
   if (loading) {
     return (
