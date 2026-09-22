@@ -3894,8 +3894,6 @@ function playerAtPosition(position: string) {
           <p>Know the game. Coach the moment.</p>
           <p style={{ marginTop: '4px', opacity: 0.85 }}>Your AI copilot for game day.</p>
           <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>Signed in as: {currentUserEmail}</p>
-          <button          <p style={{ marginTop: '4px', opacity: 0.85 }}>Your AI copilot for game day.</p>
-          <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>Signed in as: {currentUserEmail}</p>
           <button
             type="button"
             onClick={signOut}
