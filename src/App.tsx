@@ -3894,4 +3894,114 @@ function playerAtPosition(position: string) {
           <p>Know the game. Coach the moment.</p>
           <p style={{ marginTop: '4px', opacity: 0.85 }}>Your AI copilot for game day.</p>
           <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>Signed in as: {currentUserEmail}</p>
+          <button          <p style={{ marginTop: '4px', opacity: 0.85 }}>Your AI copilot for game day.</p>
+          <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>Signed in as: {currentUserEmail}</p>
           <button
+            type="button"
+            onClick={signOut}
+            style={{ marginTop: '10px' }}
+          >
+            Sign Out
+          </button>
+          <button
+            type="button"
+            onClick={() => setBugReportOpen(true)}
+            style={{ marginTop: '10px' }}
+          >
+            Report a Bug
+          </button>
+        </div>
+      </header>
+
+      {bugReportOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '20px' }}>
+          <section style={{ background: 'white', color: '#111', borderRadius: '16px', padding: '22px', width: 'min(560px, 100%)', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
+            <h2 style={{ marginTop: 0 }}>Report a Bug</h2>
+            <p style={{ marginTop: 0 }}>Tell me what went wrong. The report will include the team, screen, format, browser URL, and your account email.</p>
+            <label style={{ display: 'block', marginBottom: '12px' }}>
+              <span>Severity</span>
+              <select value={bugReport.severity} onChange={(e) => setBugReport({ ...bugReport, severity: e.target.value })} style={{ width: '100%' }}>
+                <option>Low</option><option>Normal</option><option>High</option><option>Game Day Critical</option>
+              </select>
+            </label>
+            <label style={{ display: 'block', marginBottom: '12px' }}>
+              <span>What is wrong?</span>
+              <input value={bugReport.summary} onChange={(e) => setBugReport({ ...bugReport, summary: e.target.value })} placeholder="Example: Save lineup button does nothing" style={{ width: '100%' }} />
+            </label>
+            <label style={{ display: 'block', marginBottom: '16px' }}>
+              <span>What happened?</span>
+              <textarea value={bugReport.details} onChange={(e) => setBugReport({ ...bugReport, details: e.target.value })} placeholder="What did you click, what did you expect, and what happened instead?" rows={6} style={{ width: '100%' }} />
+            </label>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setBugReportOpen(false)}>Cancel</button>
+              <button type="button" className="primary-button" disabled={!bugReport.summary.trim() || !bugReport.details.trim()} onClick={submitBugReport}>Send Bug Report</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      <main className="main-content">
+        {archivedViewTeam ? (
+          renderArchivedTeamView()
+        ) : showNewUserOnboarding ? (
+          renderNewUserOnboarding()
+        ) : (
+          <>
+            {screen === 'home' && renderHome()}
+            {screen === 'roster' && renderRoster()}
+            {screen === 'new-game' && renderNewGame()}
+            {screen === 'lineup' && renderLineup()}
+            {screen === 'live-game' && renderLiveGame()}
+            {screen === 'games' && renderGames()}
+            {screen === 'team-rules' && renderTeamRules()}
+            {screen === 'coaches' && renderCoaches()}
+          </>
+        )}
+      </main>
+
+      {!showNewUserOnboarding && (
+        <nav className="bottom-nav">
+          <button onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
+            <span>Home</span>
+          </button>
+
+          <button onClick={() => setScreen('roster')}>
+            <span>Roster</span>
+          </button>
+
+          <button onClick={() => setScreen('games')}>
+            <span>Games</span>
+          </button>
+        </nav>
+      )}
+
+
+
+    </div>
+  )
+}
+
+export default App
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
