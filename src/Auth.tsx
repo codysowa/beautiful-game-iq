@@ -75,7 +75,7 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
     setError('')
 
     const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-      redirectTo: 'https://beautifulgameiq.com/',
+      redirectTo: 'https://beautifulgameiq.com/login',
     })
 
     if (error) {
@@ -140,12 +140,6 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
 
         {message && <div className="auth-message">{message}</div>}
         {error && <div className="auth-error">{error}</div>}
-
-        {mode !== 'reset' && (
-          <button type="button" className="auth-switch" onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}>
-            {mode === 'signin' ? 'Need an account? Create one' : 'Already have an account? Sign in'}
-          </button>
-        )}
 
         {mode === 'reset' && (
           <button type="button" className="auth-switch" onClick={() => switchMode('signin')}>
