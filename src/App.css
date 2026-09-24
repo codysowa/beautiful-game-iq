@@ -986,3 +986,37 @@ body {
   background: #fff;
   min-height: 46px;
 }
+
+/* iOS post-auth viewport hardening. Keep the authenticated app shell constrained to the device width. */
+html,
+body,
+#root,
+.app {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.main-content,
+.app-header,
+.header-content,
+.welcome,
+.team-card,
+.next-game-card,
+.analytics-card,
+.section-card,
+.home-next-game,
+.home-record-card,
+.home-team-bar {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.home-coach,
+.home-coach-list,
+.home-coach strong,
+.home-coach > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
