@@ -975,3 +975,14 @@ body {
 .form-grid label > span {
   display: block;
 }
+
+.add-player-form input[type="text"][aria-label="Game Date"],
+.add-player-form input[type="text"][aria-label="Game Time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  opacity: 1;
+  color: #172033;
+  -webkit-text-fill-color: #172033;
+  background: #fff;
+  min-height: 46px;
+}

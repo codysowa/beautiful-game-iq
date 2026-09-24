@@ -22,7 +22,7 @@ function formatGameDateInput(value: string) {
 
 function normalizeGameDateInput(value: string) {
   const trimmed = value.trim()
-  const match = trimmed.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})$/)
+  const match = trimmed.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/)
   if (!match) return null
 
   const month = Number(match[1])
@@ -45,7 +45,7 @@ function normalizeGameTimeInput(value: string) {
   const trimmed = value.trim().toUpperCase()
   if (!trimmed) return null
 
-  const match = trimmed.match(/^(\\d{1,2}):([0-5]\\d)\\s*(AM|PM)$/)
+  const match = trimmed.match(/^(\d{1,2}):([0-5]\d)\s*(AM|PM)$/)
   if (match) {
     const hour = Number(match[1])
     const minute = Number(match[2])
@@ -55,7 +55,7 @@ function normalizeGameTimeInput(value: string) {
     return `${String(hour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
   }
 
-  const shortMatch = trimmed.match(/^(\\d{1,2}):([0-5]\\d)$/)
+  const shortMatch = trimmed.match(/^(\d{1,2}):([0-5]\d)$/)
   if (shortMatch) {
     const hour = Number(shortMatch[1])
     const minute = Number(shortMatch[2])
@@ -2307,6 +2307,21 @@ function playerAtPosition(position: string) {
     window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0)
   }
 
+  function openNewGameForm() {
+    setShowJoinTeam(false)
+    const today = localDateInputValue()
+    setGameDate(today)
+    setGameDateText(formatGameDateInput(today))
+    setGameTime('')
+    setGameTimeText('')
+    setOpponent('')
+    setLocation('')
+    setHomeAway('Home')
+    setGameNotes('')
+    setScreen('new-game')
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0)
+  }
+
   function renderHome() {
     const nextGame = upcomingGames[0]
 
@@ -2432,7 +2447,17 @@ function playerAtPosition(position: string) {
               </div>
             </>
           ) : (
-            <button className="primary-button" onClick={() => setScreen('new-game')}>+ Schedule Game</button>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={openNewGameForm}
+              onTouchEnd={(event) => {
+                event.preventDefault()
+                openNewGameForm()
+              }}
+            >
+              + Schedule Game
+            </button>
           )}
         </section>
 
@@ -2452,7 +2477,16 @@ function playerAtPosition(position: string) {
 
         <div className="quick-actions home-quick-actions">
           <button onClick={() => setScreen('roster')}>Roster</button>
-          <button onClick={() => setScreen('new-game')}>+ New Game</button>
+          <button
+            type="button"
+            onClick={openNewGameForm}
+            onTouchEnd={(event) => {
+              event.preventDefault()
+              openNewGameForm()
+            }}
+          >
+            + New Game
+          </button>
           <button onClick={() => nextGame ? openLineup(nextGame) : setScreen('new-game')}>Build Lineup</button>
           {currentUserRole === 'owner' && (
             <button onClick={() => setScreen('team-rules')}>Team Rules</button>
@@ -2905,7 +2939,7 @@ function playerAtPosition(position: string) {
                 inputMode="numeric"
                 aria-label="Game Date"
                 placeholder="MM/DD/YYYY"
-                value={gameDateText}
+                value={gameDateText || formatGameDateInput(gameDate)}
                 onChange={(e) => setGameDateText(e.target.value)}
                 onBlur={() => {
                   const normalized = normalizeGameDateInput(gameDateText)
