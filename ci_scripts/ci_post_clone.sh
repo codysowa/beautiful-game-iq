@@ -4,6 +4,10 @@ set -e
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
 npm ci
+npm run build
+
+rm -rf ios/App/App/public
+cp -R dist ios/App/App/public
 
 python3 - <<'PY'
 from pathlib import Path
