@@ -1871,7 +1871,7 @@ function playerAtPosition(position: string) {
           </div>
         )}
         {showNewTeamForm && (
-          <div style={{ marginTop: '24px' }}>
+          <div id="new-team-form" style={{ marginTop: '24px' }}>
             <h3>Create Your Team</h3>
 
             <div className="form-grid">
@@ -2166,7 +2166,18 @@ function playerAtPosition(position: string) {
                   </option>
                 ))}
               </select>
-            </label>            <button className="secondary-button" onClick={() => setShowNewTeamForm((value) => !value)}>
+            </label>            <button
+              type="button"
+              className="secondary-button"
+              onPointerUp={(event) => {
+                event.preventDefault()
+                setShowJoinTeam(false)
+                setShowNewTeamForm(true)
+                window.setTimeout(() => {
+                  document.getElementById('new-team-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }, 0)
+              }}
+            >
               + New Team
             </button>
             <button
@@ -2696,17 +2707,25 @@ function playerAtPosition(position: string) {
               onChange={(e) => setOpponent(e.target.value)}
             />
 
-            <input
-              type="date"
-              value={gameDate}
-              onChange={(e) => setGameDate(e.target.value)}
-            />
+            <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700 }}>
+              <span>Game Date</span>
+              <input
+                type="date"
+                aria-label="Game Date"
+                value={gameDate}
+                onChange={(e) => setGameDate(e.target.value)}
+              />
+            </label>
 
-            <input
-              type="time"
-              value={gameTime}
-              onChange={(e) => setGameTime(e.target.value)}
-            />
+            <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700 }}>
+              <span>Game Time</span>
+              <input
+                type="time"
+                aria-label="Game Time"
+                value={gameTime}
+                onChange={(e) => setGameTime(e.target.value)}
+              />
+            </label>
 
             <input
               type="text"
