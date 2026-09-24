@@ -4,8 +4,6 @@ set -e
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
 npm ci
-npm run build
-npx cap copy ios
 
 python3 - <<'PY'
 from pathlib import Path
