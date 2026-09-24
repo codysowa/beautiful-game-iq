@@ -20,52 +20,6 @@ function formatGameDateInput(value: string) {
   return `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}/${year}`
 }
 
-function normalizeGameDateInput(value: string) {
-  const trimmed = value.trim()
-  const match = trimmed.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/)
-  if (!match) return null
-
-  const month = Number(match[1])
-  const day = Number(match[2])
-  const year = Number(match[3])
-  const date = new Date(year, month - 1, day)
-
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
-    return null
-  }
-
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-}
-
-function normalizeGameTimeInput(value: string) {
-  const trimmed = value.trim().toUpperCase()
-  if (!trimmed) return null
-
-  const match = trimmed.match(/^(\d{1,2}):([0-5]\d)\s*(AM|PM)$/)
-  if (match) {
-    const hour = Number(match[1])
-    const minute = Number(match[2])
-    const suffix = match[3]
-    if (hour < 1 || hour > 12) return null
-    const hour24 = suffix === 'PM' ? (hour % 12) + 12 : hour % 12
-    return `${String(hour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
-  }
-
-  const shortMatch = trimmed.match(/^(\d{1,2}):([0-5]\d)$/)
-  if (shortMatch) {
-    const hour = Number(shortMatch[1])
-    const minute = Number(shortMatch[2])
-    if (hour > 23) return null
-    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
-  }
-
-  return null
-}
-
 import { supabase } from './supabase'
 import LiveGame from './LiveGame'
 import Monetization from './Monetization'
@@ -313,9 +267,7 @@ function App() {
 
   const [opponent, setOpponent] = useState('')
   const [gameDate, setGameDate] = useState(localDateInputValue())
-  const [gameDateText, setGameDateText] = useState(formatGameDateInput(localDateInputValue()))
   const [gameTime, setGameTime] = useState('')
-  const [gameTimeText, setGameTimeText] = useState('')
   const [location, setLocation] = useState('')
   const [homeAway, setHomeAway] = useState('Home')
   const [gameNotes, setGameNotes] = useState('')
@@ -925,9 +877,7 @@ function App() {
     setOpponent('')
     const resetDate = localDateInputValue()
     setGameDate(resetDate)
-    setGameDateText(formatGameDateInput(resetDate))
     setGameTime('')
-    setGameTimeText('')
     setLocation('')
     setHomeAway('Home')
     setGameNotes('')
@@ -2328,9 +2278,7 @@ function playerAtPosition(position: string) {
     setShowJoinTeam(false)
     const today = localDateInputValue()
     setGameDate(today)
-    setGameDateText(formatGameDateInput(today))
     setGameTime('')
-    setGameTimeText('')
     setOpponent('')
     setLocation('')
     setHomeAway('Home')
@@ -2957,7 +2905,6 @@ function playerAtPosition(position: string) {
                   value={gameDate}
                   onChange={(e) => {
                     setGameDate(e.target.value)
-                    setGameDateText(formatGameDateInput(e.target.value))
                   }}
                 >
                   {buildGameDateOptions().map((option) => (
@@ -2973,7 +2920,6 @@ function playerAtPosition(position: string) {
                   value={gameTime}
                   onChange={(e) => {
                     setGameTime(e.target.value)
-                    setGameTimeText(e.target.value ? formatGameTime(e.target.value) : '')
                   }}
                 >
                   <option value="">Select time</option>
