@@ -154,6 +154,13 @@ function formatGameTime(time: string | null) {
   return `${hour12}:${String(minutes).padStart(2, '0')} ${suffix}`
 }
 
+function localDateInputValue() {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
+
 function App() {
   const [team, setTeam] = useState<Team | null>(null)
   const [teams, setTeams] = useState<Team[]>([])
@@ -209,7 +216,7 @@ function App() {
   const [requireEveryonePlay, setRequireEveryonePlay] = useState(true)
 
   const [opponent, setOpponent] = useState('')
-  const [gameDate, setGameDate] = useState('')
+  const [gameDate, setGameDate] = useState(localDateInputValue())
   const [gameTime, setGameTime] = useState('')
   const [location, setLocation] = useState('')
   const [homeAway, setHomeAway] = useState('Home')
@@ -2166,17 +2173,15 @@ function playerAtPosition(position: string) {
                   </option>
                 ))}
               </select>
-            </label>            <button
+            </label>
+            <button
               type="button"
               className="secondary-button"
-              onPointerUp={(event) => {
-                event.preventDefault()
+              onClick={() => {
                 setShowJoinTeam(false)
                 setShowNewTeamForm(true)
-                window.setTimeout(() => {
-                  document.getElementById('new-team-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                }, 0)
               }}
+              style={{ touchAction: 'manipulation' }}
             >
               + New Team
             </button>
@@ -2714,6 +2719,7 @@ function playerAtPosition(position: string) {
                 aria-label="Game Date"
                 value={gameDate}
                 onChange={(e) => setGameDate(e.target.value)}
+                style={{ minHeight: '44px' }}
               />
             </label>
 
@@ -2724,7 +2730,11 @@ function playerAtPosition(position: string) {
                 aria-label="Game Time"
                 value={gameTime}
                 onChange={(e) => setGameTime(e.target.value)}
+                style={{ minHeight: '44px' }}
               />
+              <span style={{ fontSize: '12px', fontWeight: 500, color: '#667085' }}>
+                Tap to choose a game time.
+              </span>
             </label>
 
             <input
