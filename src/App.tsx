@@ -220,6 +220,35 @@ function formatGameTime(time: string | null) {
   return `${hour12}:${String(minutes).padStart(2, '0')} ${suffix}`
 }
 
+function buildGameDateOptions() {
+  const start = new Date()
+  start.setHours(12, 0, 0, 0)
+
+  return Array.from({ length: 366 }, (_, index) => {
+    const date = new Date(start)
+    date.setDate(start.getDate() + index)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const value = `${year}-${month}-${day}`
+    const label = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).format(date)
+    return { value, label }
+  })
+}
+
+function buildGameTimeOptions() {
+  return Array.from({ length: 65 }, (_, index) => {
+    const totalMinutes = 6 * 60 + index * 15
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+    const hour12 = hours % 12 || 12
+    const suffix = hours >= 12 ? 'PM' : 'AM'
+    const value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+    const label = `${hour12}:${String(minutes).padStart(2, '0')} ${suffix}`
+    return { value, label }
+  })
+}
+
 function localDateInputValue() {
   const now = new Date()
   const month = String(now.getMonth() + 1).padStart(2, '0')
@@ -247,6 +276,7 @@ function App() {
 
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
   const [selectedQuarter, setSelectedQuarter] = useState(1)
+  const [copyTargetQuarter, setCopyTargetQuarter] = useState('')
 
   const [lineup, setLineup] = useState<LineupItem[]>([])
   const [allGameLineups, setAllGameLineups] = useState<LineupItem[]>([])
@@ -862,21 +892,13 @@ function App() {
       return
     }
 
-    const normalizedDate = normalizeGameDateInput(gameDateText)
-    const normalizedTime = normalizeGameTimeInput(gameTimeText)
+    const normalizedDate = gameDate
+    const normalizedTime = gameTime || null
 
-    if (!normalizedDate) {
-      alert('Enter a valid game date as MM/DD/YYYY.')
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
+      alert('Choose a valid game date.')
       return
     }
-
-    if (gameTimeText.trim() && !normalizedTime) {
-      alert('Enter a valid game time like 6:30 PM.')
-      return
-    }
-
-    setGameDate(normalizedDate)
-    setGameTime(normalizedTime || '')
 
     const { data, error } = await supabase
       .from('games')
@@ -920,6 +942,7 @@ function App() {
   async function openLineup(game: Game) {
     setSelectedGame(game)
     setSelectedQuarter(1)
+    setCopyTargetQuarter('')
     setCaptain1Id(game.captain_1_id || '')
     setCaptain2Id(game.captain_2_id || '')
 
@@ -1012,6 +1035,84 @@ function App() {
       ...current.filter((item) => item.quarter !== quarter),
       ...nextLineup,
     ])
+  }
+
+  async function copySelectedQuarterTo(targetQuarter: number) {
+    if (!selectedGame || targetQuarter === selectedQuarter) return
+    if (lineup.length === 0) {
+      alert(`Q${selectedQuarter} has no lineup to copy.`)
+      return
+    }
+
+    const unavailablePlayers = lineup
+      .filter((item) => !playerAvailableForQuarter(item.player_id, targetQuarter))
+      .map((item) => playerName(item.player_id))
+
+    if (unavailablePlayers.length > 0) {
+      alert(`Cannot copy to Q${targetQuarter}. These players are not available: ${unavailablePlayers.join(', ')}`)
+      return
+    }
+
+    const invalidGoalkeepers = lineup
+      .filter((item) => item.position === 'Goalkeeper')
+      .filter((item) => {
+        const existingCount = allGameLineups.filter(
+          (row) =>
+            row.player_id === item.player_id &&
+            row.position === 'Goalkeeper' &&
+            row.quarter !== selectedQuarter &&
+            row.quarter !== targetQuarter
+        ).length
+        return existingCount >= 2
+      })
+      .map((item) => playerName(item.player_id))
+
+    if (invalidGoalkeepers.length > 0) {
+      alert(`Cannot copy to Q${targetQuarter}. These players would exceed the 2-quarter goalkeeper limit: ${invalidGoalkeepers.join(', ')}`)
+      return
+    }
+
+    const confirmed = window.confirm(`Replace the Q${targetQuarter} lineup with the current Q${selectedQuarter} lineup?`)
+    if (!confirmed) return
+
+    setSavingLineup(true)
+
+    const { error: deleteError } = await supabase
+      .from('game_lineups')
+      .delete()
+      .eq('game_id', selectedGame.id)
+      .eq('quarter', targetQuarter)
+
+    if (deleteError) {
+      setSavingLineup(false)
+      alert(`Could not clear Q${targetQuarter}: ${deleteError.message}`)
+      return
+    }
+
+    const rows = lineup.map((item) => ({
+      game_id: selectedGame.id,
+      quarter: targetQuarter,
+      player_id: item.player_id,
+      position: item.position,
+    }))
+
+    const { error: insertError } = await supabase
+      .from('game_lineups')
+      .insert(rows)
+
+    if (insertError) {
+      setSavingLineup(false)
+      alert(`Could not copy the lineup: ${insertError.message}`)
+      return
+    }
+
+    setAllGameLineups((current) => [
+      ...current.filter((item) => item.quarter !== targetQuarter),
+      ...rows.map(({ player_id, quarter, position }) => ({ player_id, quarter, position })),
+    ])
+    setCopyTargetQuarter('')
+    setSavingLineup(false)
+    alert(`Q${selectedQuarter} lineup copied to Q${targetQuarter}.`)
   }
 
   async function saveAttendanceAvailability(playerId: string, availableQuarters: number[]) {
@@ -1369,90 +1470,6 @@ function playerAtPosition(position: string) {
         </header>
 
   
-      {showNewTeamForm && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,.55)',
-            zIndex: 1100,
-            display: 'grid',
-            placeItems: 'center',
-            padding: '20px',
-            overflowY: 'auto',
-          }}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="new-team-title"
-          onClick={() => setShowNewTeamForm(false)}
-        >
-          <section
-            className="team-card"
-            style={{ width: 'min(620px, 100%)', maxHeight: '90vh', overflowY: 'auto', margin: 0, padding: '22px' }}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="section-header">
-              <div>
-                <h2 id="new-team-title">Create Your Team</h2>
-                <span>Start a clean new team without leaving the current account.</span>
-              </div>
-            </div>
-
-            <div className="form-grid">
-              <label>
-                Team Name
-                <input value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="Enter team name" />
-              </label>
-
-              <label>
-                Age Group
-                <select value={newTeamAgeGroup} onChange={(e) => setNewTeamAgeGroup(e.target.value)}>
-                  {['U08','U09','U10','U11','U12','U13','U14','U15','U16','U17','U18'].map((value) => (
-                    <option key={value} value={value}>{value}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Format
-                <select value={newTeamFormat} onChange={(e) => setNewTeamFormat(e.target.value)}>
-                  <option value="6v6">6v6</option>
-                  <option value="7v7">7v7</option>
-                  <option value="9v9">9v9</option>
-                  <option value="11v11">11v11</option>
-                </select>
-              </label>
-
-              <label>
-                Season
-                <select value={newTeamSeasonType} onChange={(e) => setNewTeamSeasonType(e.target.value)}>
-                  {['Fall','Winter','Spring','Summer','Year Round'].map((value) => (
-                    <option key={value} value={value}>{value}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Year
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={4}
-                  value={newTeamSeasonYear}
-                  onChange={(e) => setNewTeamSeasonYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                  placeholder="YYYY"
-                />
-              </label>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
-              <button type="button" className="primary-button" onClick={createTeam}>Create Team</button>
-              <button type="button" className="secondary-button" onClick={() => setShowNewTeamForm(false)}>Cancel</button>
-            </div>
-          </section>
-        </div>
-      )}
-
       {bugReportOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '20px' }}>
           <section style={{ background: 'white', color: '#111', borderRadius: '16px', padding: '22px', width: 'min(560px, 100%)', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
@@ -2932,49 +2949,40 @@ function playerAtPosition(position: string) {
               onChange={(e) => setOpponent(e.target.value)}
             />
 
-            <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700, minWidth: 0 }}>
-              <span>Game Date</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                aria-label="Game Date"
-                placeholder="MM/DD/YYYY"
-                value={gameDateText || formatGameDateInput(gameDate)}
-                onChange={(e) => setGameDateText(e.target.value)}
-                onBlur={() => {
-                  const normalized = normalizeGameDateInput(gameDateText)
-                  if (normalized) {
-                    setGameDate(normalized)
-                    setGameDateText(formatGameDateInput(normalized))
-                  }
-                }}
-              />
-              <span style={{ fontSize: '12px', fontWeight: 500, color: '#667085' }}>
-                Enter as MM/DD/YYYY.
-              </span>
-            </label>
+            <div className="game-date-time-grid">
+              <label>
+                <span>Game Date</span>
+                <select
+                  aria-label="Game Date"
+                  value={gameDate}
+                  onChange={(e) => {
+                    setGameDate(e.target.value)
+                    setGameDateText(formatGameDateInput(e.target.value))
+                  }}
+                >
+                  {buildGameDateOptions().map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
 
-            <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700, minWidth: 0 }}>
-              <span>Game Time</span>
-              <input
-                type="text"
-                inputMode="decimal"
-                aria-label="Game Time"
-                placeholder="6:30 PM"
-                value={gameTimeText}
-                onChange={(e) => setGameTimeText(e.target.value)}
-                onBlur={() => {
-                  const normalized = normalizeGameTimeInput(gameTimeText)
-                  if (normalized) {
-                    setGameTime(normalized)
-                    setGameTimeText(formatGameTime(normalized))
-                  }
-                }}
-              />
-              <span style={{ fontSize: '12px', fontWeight: 500, color: '#667085' }}>
-                Example: 6:30 PM.
-              </span>
-            </label>
+              <label>
+                <span>Game Time</span>
+                <select
+                  aria-label="Game Time"
+                  value={gameTime}
+                  onChange={(e) => {
+                    setGameTime(e.target.value)
+                    setGameTimeText(e.target.value ? formatGameTime(e.target.value) : '')
+                  }}
+                >
+                  <option value="">Select time</option>
+                  {buildGameTimeOptions().map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
             <input
               type="text"
@@ -3723,6 +3731,26 @@ function playerAtPosition(position: string) {
             })}
           </div>
 
+          <div className="quarter-copy-controls">
+            <label>
+              <span>Copy Q{selectedQuarter} lineup to</span>
+              <select value={copyTargetQuarter} onChange={(e) => setCopyTargetQuarter(e.target.value)} disabled={savingLineup}>
+                <option value="">Choose quarter</option>
+                {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
+                  <option key={quarter} value={quarter}>Q{quarter}</option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={!copyTargetQuarter || savingLineup || lineup.length === 0 || !canManageGame}
+              onClick={() => void copySelectedQuarterTo(Number(copyTargetQuarter))}
+            >
+              Copy Lineup
+            </button>
+          </div>
+
           <h3 className="lineup-heading">
             Q{selectedQuarter} Positions
           </h3>
@@ -3936,7 +3964,8 @@ function playerAtPosition(position: string) {
   }
 
   return (
-    <div className="app">
+    <>
+      <div className="app">
       <header className="app-header">
         <div className="header-content">
           <h1>Beautiful Game IQ</h1>
@@ -3960,6 +3989,71 @@ function playerAtPosition(position: string) {
           </div>
         </div>
       </header>
+
+      {showNewTeamForm && (
+        <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="new-team-title">
+          <section className="team-card app-modal-card">
+            <div className="section-header">
+              <div>
+                <h2 id="new-team-title">Create Your Team</h2>
+                <span>Start a clean new team without leaving the current account.</span>
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <label>
+                Team Name
+                <input value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="Enter team name" autoFocus />
+              </label>
+
+              <label>
+                Age Group
+                <select value={newTeamAgeGroup} onChange={(e) => setNewTeamAgeGroup(e.target.value)}>
+                  {['U08','U09','U10','U11','U12','U13','U14','U15','U16','U17','U18'].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Format
+                <select value={newTeamFormat} onChange={(e) => setNewTeamFormat(e.target.value)}>
+                  <option value="6v6">6v6</option>
+                  <option value="7v7">7v7</option>
+                  <option value="9v9">9v9</option>
+                  <option value="11v11">11v11</option>
+                </select>
+              </label>
+
+              <label>
+                Season
+                <select value={newTeamSeasonType} onChange={(e) => setNewTeamSeasonType(e.target.value)}>
+                  {['Fall','Winter','Spring','Summer','Year Round'].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Year
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={newTeamSeasonYear}
+                  onChange={(e) => setNewTeamSeasonYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="YYYY"
+                />
+              </label>
+            </div>
+
+            <div className="app-modal-actions">
+              <button type="button" className="primary-button" onClick={() => void createTeam()}>Create Team</button>
+              <button type="button" className="secondary-button" onClick={() => setShowNewTeamForm(false)}>Cancel</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {bugReportOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '20px' }}>
@@ -4007,25 +4101,22 @@ function playerAtPosition(position: string) {
         )}
       </main>
 
+    </div>
+
       {!showNewUserOnboarding && (
         <nav className="bottom-nav">
           <button onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
             <span>Home</span>
           </button>
-
           <button onClick={() => setScreen('roster')}>
             <span>Roster</span>
           </button>
-
           <button onClick={() => setScreen('games')}>
             <span>Games</span>
           </button>
         </nav>
       )}
-
-
-
-    </div>
+    </>
   )
 }
 
