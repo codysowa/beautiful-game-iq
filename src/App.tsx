@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
 function formatGameDate(value: string) {
@@ -11,6 +11,59 @@ function formatGameDate(value: string) {
     day: 'numeric',
     year: 'numeric',
   }).format(new Date(year, month - 1, day))
+}
+
+function formatGameDateInput(value: string) {
+  if (!value) return ''
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return ''
+  return `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}/${year}`
+}
+
+function normalizeGameDateInput(value: string) {
+  const trimmed = value.trim()
+  const match = trimmed.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})$/)
+  if (!match) return null
+
+  const month = Number(match[1])
+  const day = Number(match[2])
+  const year = Number(match[3])
+  const date = new Date(year, month - 1, day)
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null
+  }
+
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function normalizeGameTimeInput(value: string) {
+  const trimmed = value.trim().toUpperCase()
+  if (!trimmed) return null
+
+  const match = trimmed.match(/^(\\d{1,2}):([0-5]\\d)\\s*(AM|PM)$/)
+  if (match) {
+    const hour = Number(match[1])
+    const minute = Number(match[2])
+    const suffix = match[3]
+    if (hour < 1 || hour > 12) return null
+    const hour24 = suffix === 'PM' ? (hour % 12) + 12 : hour % 12
+    return `${String(hour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
+  }
+
+  const shortMatch = trimmed.match(/^(\\d{1,2}):([0-5]\\d)$/)
+  if (shortMatch) {
+    const hour = Number(shortMatch[1])
+    const minute = Number(shortMatch[2])
+    if (hour > 23) return null
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
+  }
+
+  return null
 }
 
 import { supabase } from './supabase'
@@ -230,9 +283,9 @@ function App() {
 
   const [opponent, setOpponent] = useState('')
   const [gameDate, setGameDate] = useState(localDateInputValue())
+  const [gameDateText, setGameDateText] = useState(formatGameDateInput(localDateInputValue()))
   const [gameTime, setGameTime] = useState('')
-  const datePickerRef = useRef<HTMLInputElement>(null)
-  const timePickerRef = useRef<HTMLInputElement>(null)
+  const [gameTimeText, setGameTimeText] = useState('')
   const [location, setLocation] = useState('')
   const [homeAway, setHomeAway] = useState('Home')
   const [gameNotes, setGameNotes] = useState('')
@@ -580,21 +633,6 @@ function App() {
     setShowNewUserOnboarding(false)
     setLoading(false)
   }
-  function openNativePicker(input: HTMLInputElement | null) {
-    if (!input) return
-
-    try {
-      if (typeof input.showPicker === 'function') {
-        input.showPicker()
-        return
-      }
-    } catch {
-      // iOS WebKit may not support showPicker() for date/time inputs.
-    }
-
-    input.click()
-  }
-
   async function createTeam() {
     const name = newTeamName.trim()
     if (!name) {
@@ -602,9 +640,19 @@ function App() {
       return
     }
 
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData.user?.id
+
+    if (!userId) {
+      alert('Your session expired. Please sign in again.')
+      return
+    }
+
     const { data, error } = await supabase
       .from('teams')
       .insert({
+        created_by: userId,
+        owner_id: userId,
         name,
         age_group: newTeamAgeGroup,
         format: newTeamFormat,
@@ -622,14 +670,6 @@ function App() {
     if (error) {
       console.error(error)
       alert(`Could not create team: ${error.message}`)
-      return
-    }
-
-    const { data: userData } = await supabase.auth.getUser()
-    const userId = userData.user?.id
-
-    if (!userId) {
-      alert('Your session expired. Please sign in again.')
       return
     }
 
@@ -822,18 +862,29 @@ function App() {
       return
     }
 
-    if (!gameDate) {
-      alert('Enter a game date.')
+    const normalizedDate = normalizeGameDateInput(gameDateText)
+    const normalizedTime = normalizeGameTimeInput(gameTimeText)
+
+    if (!normalizedDate) {
+      alert('Enter a valid game date as MM/DD/YYYY.')
       return
     }
+
+    if (gameTimeText.trim() && !normalizedTime) {
+      alert('Enter a valid game time like 6:30 PM.')
+      return
+    }
+
+    setGameDate(normalizedDate)
+    setGameTime(normalizedTime || '')
 
     const { data, error } = await supabase
       .from('games')
       .insert({
         team_id: selectedTeamId,
         opponent: opponent.trim(),
-        game_date: gameDate,
-        game_time: gameTime || null,
+        game_date: normalizedDate,
+        game_time: normalizedTime,
         format: team?.format || '7v7',
         location: location.trim() || null,
         home_away: homeAway,
@@ -850,8 +901,11 @@ function App() {
     }
 
     setOpponent('')
-    setGameDate('')
+    const resetDate = localDateInputValue()
+    setGameDate(resetDate)
+    setGameDateText(formatGameDateInput(resetDate))
     setGameTime('')
+    setGameTimeText('')
     setLocation('')
     setHomeAway('Home')
     setGameNotes('')
@@ -1314,7 +1368,92 @@ function playerAtPosition(position: string) {
           </div>
         </header>
 
-        {bugReportOpen && (
+  
+      {showNewTeamForm && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,.55)',
+            zIndex: 1100,
+            display: 'grid',
+            placeItems: 'center',
+            padding: '20px',
+            overflowY: 'auto',
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="new-team-title"
+          onClick={() => setShowNewTeamForm(false)}
+        >
+          <section
+            className="team-card"
+            style={{ width: 'min(620px, 100%)', maxHeight: '90vh', overflowY: 'auto', margin: 0, padding: '22px' }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="section-header">
+              <div>
+                <h2 id="new-team-title">Create Your Team</h2>
+                <span>Start a clean new team without leaving the current account.</span>
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <label>
+                Team Name
+                <input value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="Enter team name" />
+              </label>
+
+              <label>
+                Age Group
+                <select value={newTeamAgeGroup} onChange={(e) => setNewTeamAgeGroup(e.target.value)}>
+                  {['U08','U09','U10','U11','U12','U13','U14','U15','U16','U17','U18'].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Format
+                <select value={newTeamFormat} onChange={(e) => setNewTeamFormat(e.target.value)}>
+                  <option value="6v6">6v6</option>
+                  <option value="7v7">7v7</option>
+                  <option value="9v9">9v9</option>
+                  <option value="11v11">11v11</option>
+                </select>
+              </label>
+
+              <label>
+                Season
+                <select value={newTeamSeasonType} onChange={(e) => setNewTeamSeasonType(e.target.value)}>
+                  {['Fall','Winter','Spring','Summer','Year Round'].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Year
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={newTeamSeasonYear}
+                  onChange={(e) => setNewTeamSeasonYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="YYYY"
+                />
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
+              <button type="button" className="primary-button" onClick={createTeam}>Create Team</button>
+              <button type="button" className="secondary-button" onClick={() => setShowNewTeamForm(false)}>Cancel</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {bugReportOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '20px' }}>
           <section style={{ background: 'white', color: '#111', borderRadius: '16px', padding: '22px', width: 'min(560px, 100%)', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
             <h2 style={{ marginTop: 0 }}>Report a Bug</h2>
@@ -1633,7 +1772,7 @@ function playerAtPosition(position: string) {
 
     if (error) {
       console.error(error)
-      alert(`Could not search teams: `)
+      alert(`Could not search teams: ${error.message}`)
       return
     }
 
@@ -2162,6 +2301,12 @@ function playerAtPosition(position: string) {
       </section>
     )
   }
+  function openNewTeamForm() {
+    setShowJoinTeam(false)
+    setShowNewTeamForm(true)
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0)
+  }
+
   function renderHome() {
     const nextGame = upcomingGames[0]
 
@@ -2210,9 +2355,10 @@ function playerAtPosition(position: string) {
             <button
               type="button"
               className="secondary-button"
-              onClick={() => {
-                setShowJoinTeam(false)
-                setShowNewTeamForm(true)
+              onClick={openNewTeamForm}
+              onTouchEnd={(event) => {
+                event.preventDefault()
+                openNewTeamForm()
               }}
               style={{ touchAction: 'manipulation', flex: '0 1 auto', maxWidth: '100%' }}
             >
@@ -2258,90 +2404,14 @@ function playerAtPosition(position: string) {
                   </button>
                 </div>
               ))}
+              {joinTeamSearch.trim().length >= 2 && joinTeamResults.length === 0 && (
+                <p style={{ marginTop: '10px', color: '#666' }}>No active teams found with that name.</p>
+              )}
             </div>
           )}
 
 
 
-          {showNewTeamForm && (
-            <div
-              id="new-team-form"
-              style={{
-                marginTop: '24px',
-                padding: '18px',
-                border: '1px solid #dbe3ec',
-                borderRadius: '14px',
-                background: '#f8fafc',
-              }}
-            >
-              <div className="section-header" style={{ marginBottom: '14px' }}>
-                <div>
-                  <h3 style={{ margin: 0 }}>Create Your Team</h3>
-                  <span>Start a clean new team without leaving the current account.</span>
-                </div>
-              </div>
-
-              <div className="form-grid">
-                <label>
-                  Team Name
-                  <input
-                    value={newTeamName}
-                    onChange={(e) => setNewTeamName(e.target.value)}
-                    placeholder="Enter team name"
-                  />
-                </label>
-
-                <label>
-                  Age Group
-                  <select value={newTeamAgeGroup} onChange={(e) => setNewTeamAgeGroup(e.target.value)}>
-                    {['U08','U09','U10','U11','U12','U13','U14','U15','U16','U17','U18'].map((value) => (
-                      <option key={value} value={value}>{value}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  Format
-                  <select value={newTeamFormat} onChange={(e) => setNewTeamFormat(e.target.value)}>
-                    <option value="6v6">6v6</option>
-                    <option value="7v7">7v7</option>
-                    <option value="9v9">9v9</option>
-                    <option value="11v11">11v11</option>
-                  </select>
-                </label>
-
-                <label>
-                  Season
-                  <select value={newTeamSeasonType} onChange={(e) => setNewTeamSeasonType(e.target.value)}>
-                    {['Fall','Winter','Spring','Summer','Year Round'].map((value) => (
-                      <option key={value} value={value}>{value}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  Year
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={4}
-                    value={newTeamSeasonYear}
-                    onChange={(e) => setNewTeamSeasonYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="YYYY"
-                  />
-                </label>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
-                <button type="button" className="primary-button" onClick={createTeam}>
-                  Create Team
-                </button>
-
-                <button type="button" className="secondary-button" onClick={() => setShowNewTeamForm(false)}>
-                  Cancel
-                </button>
-              </div>
-            </div>
           )}
         </section>
 
@@ -2830,42 +2900,46 @@ function playerAtPosition(position: string) {
 
             <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700, minWidth: 0 }}>
               <span>Game Date</span>
-              <button
-                type="button"
-                className="native-picker-button"
-                onClick={() => openNativePicker(datePickerRef.current)}
-              >
-                <strong>{gameDate ? formatGameDate(gameDate) : 'Choose a date'}</strong>
-                <span aria-hidden="true">▾</span>
-              </button>
               <input
-                ref={datePickerRef}
-                type="date"
+                type="text"
+                inputMode="numeric"
                 aria-label="Game Date"
-                value={gameDate}
-                onChange={(e) => setGameDate(e.target.value)}
-                className="native-picker-input"
+                placeholder="MM/DD/YYYY"
+                value={gameDateText}
+                onChange={(e) => setGameDateText(e.target.value)}
+                onBlur={() => {
+                  const normalized = normalizeGameDateInput(gameDateText)
+                  if (normalized) {
+                    setGameDate(normalized)
+                    setGameDateText(formatGameDateInput(normalized))
+                  }
+                }}
               />
+              <span style={{ fontSize: '12px', fontWeight: 500, color: '#667085' }}>
+                Enter as MM/DD/YYYY.
+              </span>
             </label>
 
             <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700, minWidth: 0 }}>
               <span>Game Time</span>
-              <button
-                type="button"
-                className="native-picker-button"
-                onClick={() => openNativePicker(timePickerRef.current)}
-              >
-                <strong>{gameTime ? formatGameTime(gameTime) : 'Choose a time'}</strong>
-                <span aria-hidden="true">▾</span>
-              </button>
               <input
-                ref={timePickerRef}
-                type="time"
+                type="text"
+                inputMode="decimal"
                 aria-label="Game Time"
-                value={gameTime}
-                onChange={(e) => setGameTime(e.target.value)}
-                className="native-picker-input"
+                placeholder="6:30 PM"
+                value={gameTimeText}
+                onChange={(e) => setGameTimeText(e.target.value)}
+                onBlur={() => {
+                  const normalized = normalizeGameTimeInput(gameTimeText)
+                  if (normalized) {
+                    setGameTime(normalized)
+                    setGameTimeText(formatGameTime(normalized))
+                  }
+                }}
               />
+              <span style={{ fontSize: '12px', fontWeight: 500, color: '#667085' }}>
+                Example: 6:30 PM.
+              </span>
             </label>
 
             <input

@@ -971,43 +971,7 @@ body {
 }
 
 
-.native-picker-button {
-  width: 100%;
-  min-height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 11px 12px;
-  border: 1px solid #d7dce5;
-  border-radius: 10px;
-  background: white;
-  color: #172033;
-  text-align: left;
-  box-shadow: none;
-}
 
-.native-picker-button strong {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.native-picker-button span {
-  flex: 0 0 auto;
-  color: #667085;
-  font-size: 12px;
-}
-
-.native-picker-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  pointer-events: none;
-  overflow: hidden;
+.form-grid label > span {
+  display: block;
 }
