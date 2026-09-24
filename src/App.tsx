@@ -1,5 +1,29 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+
+function formatGameDate(value: string) {
+  if (!value) return ''
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return value
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date(year, month - 1, day))
+}
+
+function formatGameTime(value: string) {
+  if (!value) return ''
+  const [hour, minute] = value.split(':').map(Number)
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return value
+  const display = new Date()
+  display.setHours(hour, minute, 0, 0)
+  return new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(display)
+}
 import { supabase } from './supabase'
 import LiveGame from './LiveGame'
 import Monetization from './Monetization'
@@ -1275,7 +1299,7 @@ function playerAtPosition(position: string) {
 
   if (loading) {
     return (
-      <div className="app">
+      <div className="app" style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
         <header className="app-header">
           <div className="header-content">
             <h1>Beautiful Game IQ</h1>
@@ -2154,8 +2178,11 @@ function playerAtPosition(position: string) {
             </div>
           </div>
 
-          <div className="home-team-bar">
-            <label>
+          <div
+            className="home-team-bar"
+            style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '10px', width: '100%' }}
+          >
+            <label style={{ display: 'grid', gap: '6px', flex: '1 1 240px', minWidth: 0 }}>
               <span>Current Team</span>
               <select
                 value={selectedTeamId}
@@ -2181,11 +2208,12 @@ function playerAtPosition(position: string) {
                 setShowJoinTeam(false)
                 setShowNewTeamForm(true)
               }}
-              style={{ touchAction: 'manipulation' }}
+              style={{ touchAction: 'manipulation', flex: '0 1 auto', maxWidth: '100%' }}
             >
               + New Team
             </button>
             <button
+              type="button"
               className="secondary-button"
               onClick={async () => {
                 setShowJoinTeam(true)
@@ -2193,6 +2221,7 @@ function playerAtPosition(position: string) {
                 setJoinTeamResults([])
                 await loadJoinRequests()
               }}
+              style={{ flex: '0 1 auto', maxWidth: '100%' }}
             >
               Join Existing Team
             </button>
@@ -2712,29 +2741,38 @@ function playerAtPosition(position: string) {
               onChange={(e) => setOpponent(e.target.value)}
             />
 
-            <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700 }}>
+            <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700, minWidth: 0 }}>
               <span>Game Date</span>
-              <input
-                type="date"
-                aria-label="Game Date"
-                value={gameDate}
-                onChange={(e) => setGameDate(e.target.value)}
-                style={{ minHeight: '44px' }}
-              />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', minHeight: '46px', width: '100%', padding: '11px 12px', border: '1px solid #d7dce5', borderRadius: '10px', background: 'white', color: '#172033', overflow: 'hidden' }}>
+                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {gameDate ? formatGameDate(gameDate) : 'Choose a date'}
+                </strong>
+                <span aria-hidden="true" style={{ flex: '0 0 auto', color: '#667085', fontSize: '12px' }}>▾</span>
+                <input
+                  type="date"
+                  aria-label="Game Date"
+                  value={gameDate}
+                  onChange={(e) => setGameDate(e.target.value)}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', margin: 0, padding: 0, border: 0, borderRadius: '10px', opacity: 0.01, cursor: 'pointer', WebkitAppearance: 'auto' }}
+                />
+              </div>
             </label>
 
-            <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700 }}>
+            <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700, minWidth: 0 }}>
               <span>Game Time</span>
-              <input
-                type="time"
-                aria-label="Game Time"
-                value={gameTime}
-                onChange={(e) => setGameTime(e.target.value)}
-                style={{ minHeight: '44px' }}
-              />
-              <span style={{ fontSize: '12px', fontWeight: 500, color: '#667085' }}>
-                Tap to choose a game time.
-              </span>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', minHeight: '46px', width: '100%', padding: '11px 12px', border: '1px solid #d7dce5', borderRadius: '10px', background: 'white', color: '#172033', overflow: 'hidden' }}>
+                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {gameTime ? formatGameTime(gameTime) : 'Choose a time'}
+                </strong>
+                <span aria-hidden="true" style={{ flex: '0 0 auto', color: '#667085', fontSize: '12px' }}>▾</span>
+                <input
+                  type="time"
+                  aria-label="Game Time"
+                  value={gameTime}
+                  onChange={(e) => setGameTime(e.target.value)}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', margin: 0, padding: 0, border: 0, borderRadius: '10px', opacity: 0.01, cursor: 'pointer', WebkitAppearance: 'auto' }}
+                />
+              </div>
             </label>
 
             <input
