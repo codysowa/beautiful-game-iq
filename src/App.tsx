@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 
 function formatGameDate(value: string) {
@@ -13,17 +13,6 @@ function formatGameDate(value: string) {
   }).format(new Date(year, month - 1, day))
 }
 
-function formatGameTime(value: string) {
-  if (!value) return ''
-  const [hour, minute] = value.split(':').map(Number)
-  if (Number.isNaN(hour) || Number.isNaN(minute)) return value
-  const display = new Date()
-  display.setHours(hour, minute, 0, 0)
-  return new Intl.DateTimeFormat(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(display)
-}
 import { supabase } from './supabase'
 import LiveGame from './LiveGame'
 import Monetization from './Monetization'
@@ -242,6 +231,8 @@ function App() {
   const [opponent, setOpponent] = useState('')
   const [gameDate, setGameDate] = useState(localDateInputValue())
   const [gameTime, setGameTime] = useState('')
+  const datePickerRef = useRef<HTMLInputElement>(null)
+  const timePickerRef = useRef<HTMLInputElement>(null)
   const [location, setLocation] = useState('')
   const [homeAway, setHomeAway] = useState('Home')
   const [gameNotes, setGameNotes] = useState('')
@@ -589,6 +580,21 @@ function App() {
     setShowNewUserOnboarding(false)
     setLoading(false)
   }
+  function openNativePicker(input: HTMLInputElement | null) {
+    if (!input) return
+
+    try {
+      if (typeof input.showPicker === 'function') {
+        input.showPicker()
+        return
+      }
+    } catch {
+      // iOS WebKit may not support showPicker() for date/time inputs.
+    }
+
+    input.click()
+  }
+
   async function createTeam() {
     const name = newTeamName.trim()
     if (!name) {
@@ -2256,6 +2262,87 @@ function playerAtPosition(position: string) {
           )}
 
 
+
+          {showNewTeamForm && (
+            <div
+              id="new-team-form"
+              style={{
+                marginTop: '24px',
+                padding: '18px',
+                border: '1px solid #dbe3ec',
+                borderRadius: '14px',
+                background: '#f8fafc',
+              }}
+            >
+              <div className="section-header" style={{ marginBottom: '14px' }}>
+                <div>
+                  <h3 style={{ margin: 0 }}>Create Your Team</h3>
+                  <span>Start a clean new team without leaving the current account.</span>
+                </div>
+              </div>
+
+              <div className="form-grid">
+                <label>
+                  Team Name
+                  <input
+                    value={newTeamName}
+                    onChange={(e) => setNewTeamName(e.target.value)}
+                    placeholder="Enter team name"
+                  />
+                </label>
+
+                <label>
+                  Age Group
+                  <select value={newTeamAgeGroup} onChange={(e) => setNewTeamAgeGroup(e.target.value)}>
+                    {['U08','U09','U10','U11','U12','U13','U14','U15','U16','U17','U18'].map((value) => (
+                      <option key={value} value={value}>{value}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Format
+                  <select value={newTeamFormat} onChange={(e) => setNewTeamFormat(e.target.value)}>
+                    <option value="6v6">6v6</option>
+                    <option value="7v7">7v7</option>
+                    <option value="9v9">9v9</option>
+                    <option value="11v11">11v11</option>
+                  </select>
+                </label>
+
+                <label>
+                  Season
+                  <select value={newTeamSeasonType} onChange={(e) => setNewTeamSeasonType(e.target.value)}>
+                    {['Fall','Winter','Spring','Summer','Year Round'].map((value) => (
+                      <option key={value} value={value}>{value}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Year
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={newTeamSeasonYear}
+                    onChange={(e) => setNewTeamSeasonYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="YYYY"
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
+                <button type="button" className="primary-button" onClick={createTeam}>
+                  Create Team
+                </button>
+
+                <button type="button" className="secondary-button" onClick={() => setShowNewTeamForm(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="home-next-game">
@@ -2743,36 +2830,42 @@ function playerAtPosition(position: string) {
 
             <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700, minWidth: 0 }}>
               <span>Game Date</span>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', minHeight: '46px', width: '100%', padding: '11px 12px', border: '1px solid #d7dce5', borderRadius: '10px', background: 'white', color: '#172033', overflow: 'hidden' }}>
-                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {gameDate ? formatGameDate(gameDate) : 'Choose a date'}
-                </strong>
-                <span aria-hidden="true" style={{ flex: '0 0 auto', color: '#667085', fontSize: '12px' }}>▾</span>
-                <input
-                  type="date"
-                  aria-label="Game Date"
-                  value={gameDate}
-                  onChange={(e) => setGameDate(e.target.value)}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', margin: 0, padding: 0, border: 0, borderRadius: '10px', opacity: 0.01, cursor: 'pointer', WebkitAppearance: 'auto' }}
-                />
-              </div>
+              <button
+                type="button"
+                className="native-picker-button"
+                onClick={() => openNativePicker(datePickerRef.current)}
+              >
+                <strong>{gameDate ? formatGameDate(gameDate) : 'Choose a date'}</strong>
+                <span aria-hidden="true">▾</span>
+              </button>
+              <input
+                ref={datePickerRef}
+                type="date"
+                aria-label="Game Date"
+                value={gameDate}
+                onChange={(e) => setGameDate(e.target.value)}
+                className="native-picker-input"
+              />
             </label>
 
             <label style={{ display: 'grid', gap: '6px', fontSize: '13px', fontWeight: 700, minWidth: 0 }}>
               <span>Game Time</span>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', minHeight: '46px', width: '100%', padding: '11px 12px', border: '1px solid #d7dce5', borderRadius: '10px', background: 'white', color: '#172033', overflow: 'hidden' }}>
-                <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {gameTime ? formatGameTime(gameTime) : 'Choose a time'}
-                </strong>
-                <span aria-hidden="true" style={{ flex: '0 0 auto', color: '#667085', fontSize: '12px' }}>▾</span>
-                <input
-                  type="time"
-                  aria-label="Game Time"
-                  value={gameTime}
-                  onChange={(e) => setGameTime(e.target.value)}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', margin: 0, padding: 0, border: 0, borderRadius: '10px', opacity: 0.01, cursor: 'pointer', WebkitAppearance: 'auto' }}
-                />
-              </div>
+              <button
+                type="button"
+                className="native-picker-button"
+                onClick={() => openNativePicker(timePickerRef.current)}
+              >
+                <strong>{gameTime ? formatGameTime(gameTime) : 'Choose a time'}</strong>
+                <span aria-hidden="true">▾</span>
+              </button>
+              <input
+                ref={timePickerRef}
+                type="time"
+                aria-label="Game Time"
+                value={gameTime}
+                onChange={(e) => setGameTime(e.target.value)}
+                className="native-picker-input"
+              />
             </label>
 
             <input
