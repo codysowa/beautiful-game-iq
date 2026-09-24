@@ -1,25 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
-function formatGameDate(value: string) {
-  if (!value) return ''
-  const [year, month, day] = value.split('-').map(Number)
-  if (!year || !month || !day) return value
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(year, month - 1, day))
-}
-
-function formatGameDateInput(value: string) {
-  if (!value) return ''
-  const [year, month, day] = value.split('-').map(Number)
-  if (!year || !month || !day) return ''
-  return `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}/${year}`
-}
-
 import { supabase } from './supabase'
 import LiveGame from './LiveGame'
 import Monetization from './Monetization'
