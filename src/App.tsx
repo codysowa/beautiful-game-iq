@@ -2478,16 +2478,30 @@ function playerAtPosition(position: string) {
                 <button className="secondary-button" onClick={searchTeamsToJoin} disabled={!joinTeamSearch.trim() && !joinCodeSearch.trim()}>Search Teams</button>
               </div>
               {joinTeamResults.map((teamToJoin) => {
+                const alreadyMember = teams.some((memberTeam) => memberTeam.id === teamToJoin.id)
                 const requestPending = joinRequestTeamIds.includes(teamToJoin.id)
+
                 return (
                   <div key={teamToJoin.id} className="team-card" style={{ marginTop: '12px', padding: '14px' }}>
                     <strong>{teamToJoin.name}</strong>
                     <div style={{ marginTop: '6px', color: '#666', fontSize: '13px' }}>
                       {[teamToJoin.city, teamToJoin.coach_name, teamToJoin.age_group, teamToJoin.format, teamToJoin.season].filter(Boolean).join(' · ')}
                     </div>
-                    <button type="button" className={requestPending ? 'secondary-button' : 'primary-button'} style={{ marginTop: '12px', touchAction: 'manipulation' }} onClick={() => void requestToJoinTeam(teamToJoin)} onTouchEnd={(event) => { event.preventDefault(); void requestToJoinTeam(teamToJoin) }} disabled={requestPending}>
-                      {requestPending ? 'Request Sent' : 'Request to Join'}
-                    </button>
+                    {alreadyMember ? (
+                      <button type="button" className="secondary-button" style={{ marginTop: '12px' }} disabled>
+                        You&apos;re Already on This Team
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={requestPending ? 'secondary-button' : 'primary-button'}
+                        style={{ marginTop: '12px', touchAction: 'manipulation' }}
+                        onClick={() => void requestToJoinTeam(teamToJoin)}
+                        disabled={requestPending}
+                      >
+                        {requestPending ? 'Request Sent' : 'Request to Join'}
+                      </button>
+                    )}
                   </div>
                 )
               })}
@@ -4237,7 +4251,6 @@ function playerAtPosition(position: string) {
 }
 
 export default App
-
 
 
 
