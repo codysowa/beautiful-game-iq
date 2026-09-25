@@ -286,7 +286,7 @@ function App() {
   const [currentUserEmail, setCurrentUserEmail] = useState('')
   const [currentUserId, setCurrentUserId] = useState('')
   const [deletingAccount, setDeletingAccount] = useState(false)
-  const [currentUserRole, setCurrentUserRole] = useState<'owner' | 'coach' | 'viewer' | null>(null) = useState<'owner' | 'coach' | 'viewer' | null>(null)
+  const [currentUserRole, setCurrentUserRole] = useState<'owner' | 'coach' | 'viewer' | null>(null)
   const [coachDraft, setCoachDraft] = useState<{ playerId: string; usage_priority: NonNullable<Player['usage_priority']>; bench_tolerance: NonNullable<Player['bench_tolerance']>; position_preferences: Record<string, number>; avoid_positions: string[]; coach_notes: string } | null>(null)
   const [bugReportOpen, setBugReportOpen] = useState(false)
   const [bugReport, setBugReport] = useState({ severity: 'Normal', summary: '', details: '' })
