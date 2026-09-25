@@ -370,6 +370,44 @@ function App() {
     setStaff((current) => current.filter((item) => item.user_id !== member.user_id))
   }
 
+  async function leaveTeam() {
+    if (currentUserRole === 'owner') {
+      alert('Team owners cannot leave their own team. Transfer ownership before leaving.')
+      return
+    }
+
+    if (!selectedTeamId || !team) return
+
+    if (!confirm(`Leave ${team.name}? You will lose access to this team and its games, roster, and coaching tools.`)) return
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !user?.id) {
+      console.error(userError)
+      alert(`Could not identify the signed-in user: ${userError?.message || 'Unknown error'}`)
+      return
+    }
+
+    const { error } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('team_id', selectedTeamId)
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not leave ${team.name}: ${error.message}`)
+      return
+    }
+
+    setShowJoinTeam(false)
+    setJoinTeamResults([])
+    setJoinTeamSearch('')
+    setJoinCodeSearch('')
+    setScreen('home')
+    await loadApp(selectedTeamId)
+  }
+
   async function loadApp(teamId = selectedTeamId) {
     setLoading(true)
 
@@ -1662,6 +1700,23 @@ function playerAtPosition(position: string) {
               )
             })}
           </div>
+
+          {currentUserRole !== 'owner' && (
+            <div style={{ marginTop: '18px', padding: '14px', border: '1px solid #ead2d2', borderRadius: '10px', background: '#fffafa' }}>
+              <strong>Leave This Team</strong>
+              <p style={{ margin: '6px 0 12px', fontSize: '13px', opacity: 0.75 }}>
+                Joined the wrong team or no longer need access? You can leave this team yourself. The team owner does not need to remove you.
+              </p>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => void leaveTeam()}
+              >
+                Leave Team
+              </button>
+            </div>
+          )}
+
           {currentUserRole === 'owner' && (
           <div style={{ marginTop: '18px', padding: '14px', border: '1px solid #ddd', borderRadius: '10px' }}>
             <strong>Invite a Coach</strong>
