@@ -1767,14 +1767,14 @@ function playerAtPosition(position: string) {
 
           <button className="primary-button" onClick={saveTeamRules} style={{ marginTop: '16px' }}>
             Save Team Rules
+          </button>
           {currentUserRole === 'owner' && (
             <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
-            <button className="secondary-button" onClick={toggleTeamArchived}>
-              {team?.archived ? 'Unarchive Team' : 'Archive Team'}
-            </button>
-          </div>
+              <button className="secondary-button" onClick={toggleTeamArchived}>
+                {team?.archived ? 'Unarchive Team' : 'Archive Team'}
+              </button>
+            </div>
           )}
-          </button>
         </section>
       </>
     )
@@ -2494,6 +2494,8 @@ function playerAtPosition(position: string) {
               {(joinTeamSearch.trim() || joinCodeSearch.trim()) && joinTeamResults.length === 0 && <p style={{ marginTop: '10px', color: '#666' }}>No active teams found.</p>}
             </div>
           )}
+        </section>
+
         <section className="home-next-game">
           <div className="section-header">
             <div>
@@ -4235,7 +4237,6 @@ function playerAtPosition(position: string) {
 }
 
 export default App
-
 
 
 
