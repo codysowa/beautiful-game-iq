@@ -2091,7 +2091,13 @@ function playerAtPosition(position: string) {
                     <div key={teamToJoin.id} className="team-card" style={{ padding: '16px' }}>
                       <strong>{teamToJoin.name}</strong>
                       <div style={{ marginTop: '6px', color: '#666' }}>{[teamToJoin.city, teamToJoin.coach_name, teamToJoin.age_group, teamToJoin.format, teamToJoin.season].filter(Boolean).join(' · ')}</div>
-                      <button type="button" className={requestPending ? 'secondary-button' : 'primary-button'} style={{ marginTop: '12px', touchAction: 'manipulation' }} onClick={() => void requestToJoinTeam(teamToJoin)} onTouchEnd={(event) => { event.preventDefault(); void requestToJoinTeam(teamToJoin) }} disabled={requestPending}>
+                      <button
+                        type="button"
+                        className={requestPending ? 'secondary-button' : 'primary-button'}
+                        style={{ marginTop: '12px', touchAction: 'manipulation' }}
+                        onClick={() => void requestToJoinTeam(teamToJoin)}
+                        disabled={requestPending}
+                      >
                         {requestPending ? 'Request Sent' : 'Request to Join'}
                       </button>
                     </div>
