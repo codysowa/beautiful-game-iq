@@ -2390,10 +2390,6 @@ function playerAtPosition(position: string) {
               )}
             </div>
           )}
-
-
-
-          )}
         </section>
 
         <section className="home-next-game">
