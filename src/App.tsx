@@ -285,7 +285,8 @@ function App() {
   const [currentUserName, setCurrentUserName] = useState('')
   const [currentUserEmail, setCurrentUserEmail] = useState('')
   const [currentUserId, setCurrentUserId] = useState('')
-  const [currentUserRole, setCurrentUserRole] = useState<'owner' | 'coach' | 'viewer' | null>(null)
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [currentUserRole, setCurrentUserRole = useState<'owner' | 'coach' | 'viewer' | null>(null)
   const [coachDraft, setCoachDraft] = useState<{ playerId: string; usage_priority: NonNullable<Player['usage_priority']>; bench_tolerance: NonNullable<Player['bench_tolerance']>; position_preferences: Record<string, number>; avoid_positions: string[]; coach_notes: string } | null>(null)
   const [bugReportOpen, setBugReportOpen] = useState(false)
   const [bugReport, setBugReport] = useState({ severity: 'Normal', summary: '', details: '' })
@@ -300,6 +301,31 @@ function App() {
     if (error) {
       console.error(error)
       alert(`Could not sign out: ${error.message}`)
+    }
+  }
+
+  async function deleteAccount() {
+    if (deletingAccount) return
+
+    const confirmed = confirm(
+      'Delete your Beautiful Game IQ account? This will permanently delete your account and personal data. Any team you own will be transferred to an existing coach so the team data can be preserved. This cannot be undone.'
+    )
+
+    if (!confirmed) return
+
+    setDeletingAccount(true)
+
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-account')
+
+      if (error) throw error
+      if (!data?.success) throw new Error(data?.error || 'Account deletion failed')
+
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.error(error)
+      alert(`Could not delete your account: ${error instanceof Error ? error.message : 'Unexpected error'}`)
+      setDeletingAccount(false)
     }
   }
 
@@ -4210,6 +4236,14 @@ function playerAtPosition(position: string) {
               Sign Out
             </button>
             <button
+              type="button"
+              onClick={deleteAccount}
+              disabled={deletingAccount}
+              style={{ marginTop: '10px' }}
+            >
+              {deletingAccount ? 'Deleting Account...' : 'Delete Account'}
+            </button>
+                        <button
               type="button"
               onClick={() => setBugReportOpen(true)}
             >
