@@ -757,6 +757,14 @@ textarea {
   font-weight: 700;
 }
 
+/* Prevent iOS from auto-zooming the viewport when signing in or switching accounts. */
+.auth-form input,
+.auth-form select,
+.auth-form textarea {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
 .auth-form button {
   margin-top: 3px;
   background: #1f6f4a;
