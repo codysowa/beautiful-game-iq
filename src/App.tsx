@@ -211,9 +211,8 @@ function App() {
 
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
   const [selectedQuarter, setSelectedQuarter] = useState(1)
-  const [copyTargetQuarter, setCopyTargetQuarter] = useState('')
   const [copySourceGameId, setCopySourceGameId] = useState('')
-  const [copySourceQuarter, setCopySourceQuarter] = useState(1)
+  const [copySourceQuarter, setCopySourceQuarter] = useState(0)
 
   const [lineup, setLineup] = useState<LineupItem[]>([])
   const [allGameLineups, setAllGameLineups] = useState<LineupItem[]>([])
@@ -875,9 +874,8 @@ function App() {
   async function openLineup(game: Game) {
     setSelectedGame(game)
     setSelectedQuarter(1)
-    setCopyTargetQuarter('')
     setCopySourceGameId('')
-    setCopySourceQuarter(1)
+    setCopySourceQuarter(0)
     setCaptain1Id(game.captain_1_id || '')
     setCaptain2Id(game.captain_2_id || '')
 
@@ -972,82 +970,68 @@ function App() {
     ])
   }
 
-  async function copySelectedQuarterTo(targetQuarter: number) {
-    if (!selectedGame || targetQuarter === selectedQuarter) return
-    if (lineup.length === 0) {
-      alert(`Q${selectedQuarter} has no lineup to copy.`)
+  async function copyQuarterFromCurrentGame(sourceQuarter: number) {
+    if (!selectedGame || sourceQuarter === selectedQuarter) return
+
+    const sourceLineup = allGameLineups
+      .filter((item) => item.quarter === sourceQuarter)
+      .map((item) => ({
+        player_id: item.player_id,
+        quarter: selectedQuarter,
+        position: item.position,
+      }))
+
+    if (sourceLineup.length === 0) {
+      alert(`Q${sourceQuarter} has no saved lineup to copy.`)
       return
     }
 
-    const unavailablePlayers = lineup
-      .filter((item) => !playerAvailableForQuarter(item.player_id, targetQuarter))
+    const unavailablePlayers = sourceLineup
+      .filter((item) => !playerAvailableForQuarter(item.player_id, selectedQuarter))
       .map((item) => playerName(item.player_id))
 
     if (unavailablePlayers.length > 0) {
-      alert(`Cannot copy to Q${targetQuarter}. These players are not available: ${unavailablePlayers.join(', ')}`)
+      alert(`Cannot copy to Q${selectedQuarter}. These players are not available: ${unavailablePlayers.join(', ')}`)
       return
     }
 
-    const invalidGoalkeepers = lineup
+    const invalidGoalkeepers = sourceLineup
       .filter((item) => item.position === 'Goalkeeper')
       .filter((item) => {
         const existingCount = allGameLineups.filter(
           (row) =>
             row.player_id === item.player_id &&
             row.position === 'Goalkeeper' &&
-            row.quarter !== selectedQuarter &&
-            row.quarter !== targetQuarter
+            row.quarter !== sourceQuarter &&
+            row.quarter !== selectedQuarter
         ).length
         return existingCount >= 2
       })
       .map((item) => playerName(item.player_id))
 
     if (invalidGoalkeepers.length > 0) {
-      alert(`Cannot copy to Q${targetQuarter}. These players would exceed the 2-quarter goalkeeper limit: ${invalidGoalkeepers.join(', ')}`)
+      alert(`Cannot copy to Q${selectedQuarter}. These players would exceed the 2-quarter goalkeeper limit: ${invalidGoalkeepers.join(', ')}`)
       return
     }
 
-    const confirmed = window.confirm(`Replace the Q${targetQuarter} lineup with the current Q${selectedQuarter} lineup?`)
+    const confirmed = window.confirm(`Replace Q${selectedQuarter} with the Q${sourceQuarter} lineup?`)
     if (!confirmed) return
 
     setSavingLineup(true)
+    try {
+      const saved = await saveLineupData(sourceLineup, selectedQuarter, false)
+      if (!saved) return
 
-    const { error: deleteError } = await supabase
-      .from('game_lineups')
-      .delete()
-      .eq('game_id', selectedGame.id)
-      .eq('quarter', targetQuarter)
-
-    if (deleteError) {
+      setLineup(sourceLineup)
+      setAllGameLineups((current) => [
+        ...current.filter((item) => item.quarter !== selectedQuarter),
+        ...sourceLineup,
+      ])
+      setCopySourceQuarter(0)
+      alert(`Q${sourceQuarter} lineup copied to Q${selectedQuarter}.`)
+    } finally {
       setSavingLineup(false)
-      alert(`Could not clear Q${targetQuarter}: ${deleteError.message}`)
-      return
     }
-
-    const rows = lineup.map((item) => ({
-      game_id: selectedGame.id,
-      quarter: targetQuarter,
-      player_id: item.player_id,
-      position: item.position,
-    }))
-
-    const { error: insertError } = await supabase
-      .from('game_lineups')
-      .insert(rows)
-
-    if (insertError) {
-      setSavingLineup(false)
-      alert(`Could not copy the lineup: ${insertError.message}`)
-      return
-    }
-
-    setAllGameLineups((current) => [
-      ...current.filter((item) => item.quarter !== targetQuarter),
-      ...rows.map(({ player_id, quarter, position }) => ({ player_id, quarter, position })),
-    ])
-    setCopyTargetQuarter('')
-    setSavingLineup(false)
-    alert(`Q${selectedQuarter} lineup copied to Q${targetQuarter}.`)
   }
 
   function previousGamesForCopy() {
@@ -1059,66 +1043,6 @@ function App() {
         if (dateCompare !== 0) return dateCompare
         return (b.game_time || '').localeCompare(a.game_time || '')
       })
-  }
-
-  async function copyQuarterFromGame() {
-    if (!selectedGame || !copySourceGameId) {
-      alert('Select a previous game first.')
-      return
-    }
-
-    const sourceGame = games.find((game) => game.id === copySourceGameId)
-    if (!sourceGame) return
-
-    const { data, error } = await supabase
-      .from('game_lineups')
-      .select('player_id, quarter, position')
-      .eq('game_id', sourceGame.id)
-      .eq('quarter', copySourceQuarter)
-
-    if (error) {
-      console.error(error)
-      alert('Could not load Q' + copySourceQuarter + ' from ' + sourceGame.opponent + ': ' + error.message)
-      return
-    }
-
-    const sourceLineup = data || []
-    if (sourceLineup.length === 0) {
-      alert('Q' + copySourceQuarter + ' in the selected game has no saved lineup.')
-      return
-    }
-
-    const missingPlayers = sourceLineup.filter((item) => !players.some((player) => player.id === item.player_id))
-    const copiedLineup = sourceLineup
-      .filter((item) => players.some((player) => player.id === item.player_id))
-      .map((item) => ({
-        player_id: item.player_id,
-        quarter: selectedQuarter,
-        position: item.position,
-      }))
-
-    if (copiedLineup.length === 0) {
-      alert('None of the players in that lineup are on the current roster.')
-      return
-    }
-
-    if (missingPlayers.length > 0) {
-      const confirmed = window.confirm(
-        missingPlayers.length + ' player(s) from the old lineup are no longer on this roster. Copy the remaining players?'
-      )
-      if (!confirmed) return
-    }
-
-    const confirmed = window.confirm(
-      'Copy Q' + copySourceQuarter + ' from ' + sourceGame.opponent + ' into Q' + selectedQuarter + '? This will replace the current Q' + selectedQuarter + ' lineup.'
-    )
-    if (!confirmed) return
-
-    const saved = await saveLineupData(copiedLineup, selectedQuarter)
-    if (saved) {
-      setLineup(copiedLineup)
-      alert('Q' + selectedQuarter + ' copied from ' + sourceGame.opponent + '.')
-    }
   }
 
   async function copyEntireGameFromGame() {
@@ -2162,8 +2086,13 @@ function playerAtPosition(position: string) {
                       <button
                         type="button"
                         className={requestPending ? 'secondary-button' : 'primary-button'}
-                        style={{ marginTop: '12px' }}
-                        onClick={() => requestToJoinTeam(teamToJoin)}
+                        style={{ marginTop: '12px', touchAction: 'manipulation' }}
+                        onClick={() => void requestToJoinTeam(teamToJoin)}
+                        onTouchEnd={(event) => {
+                          event.preventDefault()
+                          void requestToJoinTeam(teamToJoin)
+                        }}
+                        disabled={requestPending}
                       >
                         {requestPending ? 'Request Sent' : 'Request to Join'}
                       </button>
@@ -2543,8 +2472,14 @@ function playerAtPosition(position: string) {
                   <strong>{teamToJoin.name}</strong>
                   <span> {teamToJoin.age_group} | {teamToJoin.format} | {teamToJoin.season}</span>
                   <button
+                    type="button"
                     className="secondary-button"
-                    onClick={() => requestToJoinTeam(teamToJoin)}
+                    style={{ touchAction: 'manipulation' }}
+                    onClick={() => void requestToJoinTeam(teamToJoin)}
+                    onTouchEnd={(event) => {
+                      event.preventDefault()
+                      void requestToJoinTeam(teamToJoin)
+                    }}
                     disabled={joinRequestTeamIds.includes(teamToJoin.id)}
                   >
                     {joinRequestTeamIds.includes(teamToJoin.id) ? 'Request Sent' : 'Request to Join'}
@@ -3426,7 +3361,7 @@ function playerAtPosition(position: string) {
     alert('Captains saved.')
   }
 
-  async function saveLineupData(items: LineupItem[], quarter: number) {
+  async function saveLineupData(items: LineupItem[], quarter: number, announceSuccess = true) {
     if (!selectedGame) return false
 
     // Validate lineup data before sending anything to Supabase.
@@ -3482,12 +3417,14 @@ function playerAtPosition(position: string) {
       }
     }
 
-    alert(`Q${quarter} lineup saved successfully.`)
+    if (announceSuccess) {
+      alert(`Q${quarter} lineup saved successfully.`)
+    }
     return true
   }
 
   async function saveLineup() {
-    return saveLineupData(lineup, selectedQuarter)
+    return saveLineupData(lineup, selectedQuarter, true)
   }
   function renderLineup() {
     if (!selectedGame) return null
@@ -3857,50 +3794,65 @@ function playerAtPosition(position: string) {
             })}
           </div>
 
-          <div className="quarter-copy-controls">
-            <label>
-              <span>Copy Q{selectedQuarter} lineup to</span>
-              <select value={copyTargetQuarter} onChange={(e) => setCopyTargetQuarter(e.target.value)} disabled={savingLineup}>
-                <option value="">Choose quarter</option>
-                {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
-                  <option key={quarter} value={quarter}>Q{quarter}</option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              className="secondary-button"
-              disabled={!copyTargetQuarter || savingLineup || lineup.length === 0 || !canManageGame}
-              onClick={() => void copySelectedQuarterTo(Number(copyTargetQuarter))}
-            >
-              Copy Lineup
-            </button>
-          </div>
+          <details style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }} open={false}>
+            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
+              Copy Lineups
+            </summary>
 
-          {previousGamesForCopy().length > 0 && (
-            <div style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }}>
-              <h3 style={{ margin: '0 0 8px' }}>Copy From Previous Game</h3>
-              <div style={{ display: 'grid', gap: '8px' }}>
-                <select value={copySourceGameId} onChange={(e) => setCopySourceGameId(e.target.value)} disabled={savingLineup || !canManageGame}>
-                  <option value="">Select a previous game...</option>
-                  {previousGamesForCopy().map((game) => (
-                    <option key={game.id} value={game.id}>{game.game_date} — {game.opponent}</option>
-                  ))}
-                </select>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <select value={copySourceQuarter} onChange={(e) => setCopySourceQuarter(Number(e.target.value))} disabled={savingLineup || !canManageGame}>
-                    <option value={1}>Q1</option><option value={2}>Q2</option><option value={3}>Q3</option><option value={4}>Q4</option>
+            <div style={{ marginTop: '10px' }}>
+              <div className="quarter-copy-controls">
+                <label>
+                  <span>Copy lineup from</span>
+                  <select
+                    value={copySourceQuarter}
+                    onChange={(e) => setCopySourceQuarter(Number(e.target.value))}
+                    disabled={savingLineup || !canManageGame}
+                  >
+                    <option value={0}>Choose quarter</option>
+                    {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
+                      <option key={quarter} value={quarter}>Q{quarter}</option>
+                    ))}
                   </select>
-                  <button className="secondary-button" onClick={copyQuarterFromGame} disabled={savingLineup || !canManageGame || !copySourceGameId}>
-                    Copy Q{copySourceQuarter} → Q{selectedQuarter}
-                  </button>
-                </div>
-                <button className="primary-button" onClick={copyEntireGameFromGame} disabled={savingLineup || !canManageGame || !copySourceGameId}>
-                  Copy Entire 4-Quarter Lineup
+                </label>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={!copySourceQuarter || savingLineup || !canManageGame}
+                  onClick={() => void copyQuarterFromCurrentGame(copySourceQuarter)}
+                >
+                  Copy Q{copySourceQuarter || '?'} → Q{selectedQuarter}
                 </button>
               </div>
+
+              {previousGamesForCopy().length > 0 && (
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #eee' }}>
+                  <h3 style={{ margin: '0 0 8px' }}>Copy From Previous Game</h3>
+                  <div style={{ display: 'grid', gap: '8px' }}>
+                    <select
+                      value={copySourceGameId}
+                      onChange={(e) => setCopySourceGameId(e.target.value)}
+                      disabled={savingLineup || !canManageGame}
+                    >
+                      <option value="">Select a previous game...</option>
+                      {previousGamesForCopy().map((game) => (
+                        <option key={game.id} value={game.id}>
+                          {game.game_date} — {game.opponent}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={copyEntireGameFromGame}
+                      disabled={savingLineup || !canManageGame || !copySourceGameId}
+                    >
+                      Copy Entire Game
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </details>
 
           <h3 className="lineup-heading">
             Q{selectedQuarter} Positions
