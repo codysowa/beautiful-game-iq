@@ -2027,6 +2027,53 @@ function playerAtPosition(position: string) {
 
       if (error) {
         if (error.code === '23505') {
+          const { data: existingRequest, error: existingRequestError } = await supabase
+            .from('team_join_requests')
+            .select('id, status')
+            .eq('team_id', teamToJoin.id)
+            .eq('user_id', userId)
+            .maybeSingle()
+
+          if (existingRequestError) {
+            console.error(existingRequestError)
+            alert(`Could not check the existing join request: ${existingRequestError.message}`)
+            return
+          }
+
+          if (existingRequest?.status === 'pending') {
+            setJoinRequestTeamIds((current) =>
+              current.includes(teamToJoin.id) ? current : [...current, teamToJoin.id]
+            )
+            return
+          }
+
+          if (existingRequest?.status === 'denied') {
+            const { error: retryError } = await supabase
+              .from('team_join_requests')
+              .update({
+                status: 'pending',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', existingRequest.id)
+              .eq('user_id', userId)
+
+            if (retryError) {
+              console.error(retryError)
+              alert(`Could not retry the request to join ${teamToJoin.name}: ${retryError.message}`)
+              return
+            }
+
+            setJoinRequestTeamIds((current) =>
+              current.includes(teamToJoin.id) ? current : [...current, teamToJoin.id]
+            )
+            return
+          }
+
+          if (existingRequest?.status === 'approved') {
+            alert(`Your request to join ${teamToJoin.name} was already approved.`)
+            return
+          }
+
           await loadJoinRequests()
           return
         }
@@ -2036,7 +2083,9 @@ function playerAtPosition(position: string) {
         return
       }
 
-      setJoinRequestTeamIds((current) => [...current, teamToJoin.id])
+      setJoinRequestTeamIds((current) =>
+        current.includes(teamToJoin.id) ? current : [...current, teamToJoin.id]
+      )
     } catch (error) {
       console.error(error)
       alert(`Join request failed: ${error instanceof Error ? error.message : String(error)}`)
