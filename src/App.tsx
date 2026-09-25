@@ -3426,12 +3426,12 @@ function playerAtPosition(position: string) {
     alert('Captains saved.')
   }
 
-  async function saveLineup() {
+  async function saveLineupData(items: LineupItem[], quarter: number) {
     if (!selectedGame) return false
 
     // Validate lineup data before sending anything to Supabase.
     // player_id MUST be an actual player UUID; position is the position string.
-    const validRows = lineup
+    const validRows = items
       .filter((item) => {
         const player = players.find((p) => p.id === item.player_id)
         const validPosition = typeof item.position === 'string' && item.position.length > 0
@@ -3445,15 +3445,15 @@ function playerAtPosition(position: string) {
       })
       .map((item) => ({
         game_id: selectedGame.id,
-        quarter: selectedQuarter,
+        quarter,
         player_id: item.player_id,
         position: item.position,
       }))
 
     // If the UI somehow created a malformed lineup, stop before deleting
     // the existing saved lineup so we never destroy good data.
-    if (validRows.length !== lineup.length) {
-      console.error('Invalid lineup data:', lineup)
+    if (validRows.length !== items.length) {
+      console.error('Invalid lineup data:', items)
       alert('Could not save lineup: one or more player assignments are invalid. Please reassign the affected position.')
       return false
     }
@@ -3462,7 +3462,7 @@ function playerAtPosition(position: string) {
       .from('game_lineups')
       .delete()
       .eq('game_id', selectedGame.id)
-      .eq('quarter', selectedQuarter)
+      .eq('quarter', quarter)
 
     if (deleteError) {
       console.error(deleteError)
@@ -3482,8 +3482,12 @@ function playerAtPosition(position: string) {
       }
     }
 
-    alert(`Q${selectedQuarter} lineup saved successfully.`)
+    alert(`Q${quarter} lineup saved successfully.`)
     return true
+  }
+
+  async function saveLineup() {
+    return saveLineupData(lineup, selectedQuarter)
   }
   function renderLineup() {
     if (!selectedGame) return null
