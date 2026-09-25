@@ -1702,6 +1702,26 @@ function playerAtPosition(position: string) {
     }
   }
 
+  function analyticsSortValue(player: typeof players[number]) {
+    const rows = completedSeasonLineups.filter((item) => item.player_id === player.id)
+    const played = rows.length
+    const gk = rows.filter((item) => item.position === 'Goalkeeper').length
+    const str = rows.filter((item) => item.position.includes('Striker')).length
+    const bench = Math.max(0, completedGames.length * 4 - played)
+    const goals = completedGameEvents.filter(
+      (event) => event.event_type === 'our_goal' && event.player_id === player.id
+    ).length
+    const assists = completedGameEvents.filter(
+      (event) => event.event_type === 'our_goal' && event.assister_id === player.id
+    ).length
+    const captain = completedGames.filter(
+      (game) => game.captain_1_id === player.id || game.captain_2_id === player.id
+    ).length
+
+    if (analyticsSort === 'player') return player.name.toLowerCase()
+    return { played, gk, str, bench, goals, assists, captain }[analyticsSort]
+  }
+
   async function searchTeamsToJoin() {
     const search = joinTeamSearch.trim()
 
@@ -2501,7 +2521,20 @@ function playerAtPosition(position: string) {
                 <th onClick={() => handleAnalyticsSort('captain')}>Captain<br /><span>Gms</span></th>
               </tr></thead>
               <tbody>
-                {players.map((player) => {
+                {[...players]
+                  .sort((a, b) => {
+                    const aValue = analyticsSortValue(a)
+                    const bValue = analyticsSortValue(b)
+
+                    if (typeof aValue === 'string' && typeof bValue === 'string') {
+                      const result = aValue.localeCompare(bValue)
+                      return analyticsSortAsc ? result : -result
+                    }
+
+                    const result = Number(bValue) - Number(aValue)
+                    return analyticsSortAsc ? -result : result
+                  })
+                  .map((player) => {
                   const rows = completedSeasonLineups.filter(
                     (item) => item.player_id === player.id
                   )
