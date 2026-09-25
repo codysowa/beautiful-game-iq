@@ -20,16 +20,16 @@ npm run build
 # Regenerate the web assets in the exact native location Xcode packages.
 npx cap copy ios
 
-JS_FILE=$(find "$REPO_ROOT/ios/App/App/public/assets" -maxdepth 1 -name 'index-*.js' -type f | head -n 1)
+ASSET_DIR="$REPO_ROOT/ios/App/App/public/assets"
 
-test -n "$JS_FILE"
-grep -q "Copy Lineup" "$JS_FILE"
-grep -q "Copy From Previous Game" "$JS_FILE"
-grep -q "Copy Entire Game" "$JS_FILE"
-grep -q "Select time" "$JS_FILE"
+test -d "$ASSET_DIR"
+grep -R -q "Copy Lineup" "$ASSET_DIR" --include='*.js'
+grep -R -q "Copy From Previous Game" "$ASSET_DIR" --include='*.js'
+grep -R -q "Copy Entire Game" "$ASSET_DIR" --include='*.js'
+grep -R -q "Select time" "$ASSET_DIR" --include='*.js'
 
 echo "=== Verified iOS web bundle ==="
-echo "Bundle: $JS_FILE"
+echo "Assets: $ASSET_DIR"
 echo "Copy Lineup: present"
 echo "Copy From Previous Game: present"
 echo "Copy Entire Game: present"
