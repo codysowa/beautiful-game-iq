@@ -212,6 +212,8 @@ function App() {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
   const [selectedQuarter, setSelectedQuarter] = useState(1)
   const [copyTargetQuarter, setCopyTargetQuarter] = useState('')
+  const [copySourceGameId, setCopySourceGameId] = useState('')
+  const [copySourceQuarter, setCopySourceQuarter] = useState(1)
 
   const [lineup, setLineup] = useState<LineupItem[]>([])
   const [allGameLineups, setAllGameLineups] = useState<LineupItem[]>([])
@@ -874,6 +876,8 @@ function App() {
     setSelectedGame(game)
     setSelectedQuarter(1)
     setCopyTargetQuarter('')
+    setCopySourceGameId('')
+    setCopySourceQuarter(1)
     setCaptain1Id(game.captain_1_id || '')
     setCaptain2Id(game.captain_2_id || '')
 
@@ -1044,6 +1048,168 @@ function App() {
     setCopyTargetQuarter('')
     setSavingLineup(false)
     alert(`Q${selectedQuarter} lineup copied to Q${targetQuarter}.`)
+  }
+
+  function previousGamesForCopy() {
+    if (!selectedGame) return []
+    return games
+      .filter((game) => game.id !== selectedGame.id && game.game_date <= selectedGame.game_date)
+      .sort((a, b) => {
+        const dateCompare = b.game_date.localeCompare(a.game_date)
+        if (dateCompare !== 0) return dateCompare
+        return (b.game_time || '').localeCompare(a.game_time || '')
+      })
+  }
+
+  async function copyQuarterFromGame() {
+    if (!selectedGame || !copySourceGameId) {
+      alert('Select a previous game first.')
+      return
+    }
+
+    const sourceGame = games.find((game) => game.id === copySourceGameId)
+    if (!sourceGame) return
+
+    const { data, error } = await supabase
+      .from('game_lineups')
+      .select('player_id, quarter, position')
+      .eq('game_id', sourceGame.id)
+      .eq('quarter', copySourceQuarter)
+
+    if (error) {
+      console.error(error)
+      alert('Could not load Q' + copySourceQuarter + ' from ' + sourceGame.opponent + ': ' + error.message)
+      return
+    }
+
+    const sourceLineup = data || []
+    if (sourceLineup.length === 0) {
+      alert('Q' + copySourceQuarter + ' in the selected game has no saved lineup.')
+      return
+    }
+
+    const missingPlayers = sourceLineup.filter((item) => !players.some((player) => player.id === item.player_id))
+    const copiedLineup = sourceLineup
+      .filter((item) => players.some((player) => player.id === item.player_id))
+      .map((item) => ({
+        player_id: item.player_id,
+        quarter: selectedQuarter,
+        position: item.position,
+      }))
+
+    if (copiedLineup.length === 0) {
+      alert('None of the players in that lineup are on the current roster.')
+      return
+    }
+
+    if (missingPlayers.length > 0) {
+      const confirmed = window.confirm(
+        missingPlayers.length + ' player(s) from the old lineup are no longer on this roster. Copy the remaining players?'
+      )
+      if (!confirmed) return
+    }
+
+    const confirmed = window.confirm(
+      'Copy Q' + copySourceQuarter + ' from ' + sourceGame.opponent + ' into Q' + selectedQuarter + '? This will replace the current Q' + selectedQuarter + ' lineup.'
+    )
+    if (!confirmed) return
+
+    const saved = await saveLineupData(copiedLineup, selectedQuarter)
+    if (saved) {
+      setLineup(copiedLineup)
+      alert('Q' + selectedQuarter + ' copied from ' + sourceGame.opponent + '.')
+    }
+  }
+
+  async function copyEntireGameFromGame() {
+    if (!selectedGame || !copySourceGameId) {
+      alert('Select a previous game first.')
+      return
+    }
+
+    const sourceGame = games.find((game) => game.id === copySourceGameId)
+    if (!sourceGame) return
+
+    const { data, error } = await supabase
+      .from('game_lineups')
+      .select('player_id, quarter, position')
+      .eq('game_id', sourceGame.id)
+      .order('quarter', { ascending: true })
+
+    if (error) {
+      console.error(error)
+      alert('Could not load the saved lineups from ' + sourceGame.opponent + ': ' + error.message)
+      return
+    }
+
+    const sourceLineup = data || []
+    if (sourceLineup.length === 0) {
+      alert('There are no saved lineups in the selected game.')
+      return
+    }
+
+    const missingPlayers = sourceLineup.filter((item) => !players.some((player) => player.id === item.player_id))
+    const copiedLineup = sourceLineup
+      .filter((item) => players.some((player) => player.id === item.player_id))
+      .map((item) => ({
+        player_id: item.player_id,
+        quarter: item.quarter,
+        position: item.position,
+      }))
+
+    if (copiedLineup.length === 0) {
+      alert('None of the players in that game are on the current roster.')
+      return
+    }
+
+    if (missingPlayers.length > 0) {
+      const confirmed = window.confirm(
+        missingPlayers.length + ' player assignment(s) are from players no longer on this roster. Copy the remaining assignments?'
+      )
+      if (!confirmed) return
+    }
+
+    const confirmed = window.confirm(
+      'Copy the entire four-quarter lineup from ' + sourceGame.opponent + ' into this game? This will replace all saved Q1-Q4 lineups.'
+    )
+    if (!confirmed) return
+
+    setSavingLineup(true)
+    try {
+      const { error: deleteError } = await supabase
+        .from('game_lineups')
+        .delete()
+        .eq('game_id', selectedGame.id)
+
+      if (deleteError) {
+        console.error(deleteError)
+        alert('Could not replace the game plan: ' + deleteError.message)
+        return
+      }
+
+      const { error: insertError } = await supabase
+        .from('game_lineups')
+        .insert(copiedLineup.map((item) => ({
+          game_id: selectedGame.id,
+          quarter: item.quarter,
+          player_id: item.player_id,
+          position: item.position,
+        })))
+
+      if (insertError) {
+        console.error(insertError)
+        alert('Could not copy the game plan: ' + insertError.message)
+        return
+      }
+
+      setAllGameLineups(copiedLineup)
+      setLineup(copiedLineup.filter((item) => item.quarter === selectedQuarter))
+      setWholeGameSuggestion(null)
+      setQuarterSuggestion(null)
+      alert('Entire lineup copied from ' + sourceGame.opponent + '.')
+    } finally {
+      setSavingLineup(false)
+    }
   }
 
   async function saveAttendanceAvailability(playerId: string, availableQuarters: number[]) {
@@ -3707,7 +3873,9 @@ function playerAtPosition(position: string) {
             </button>
           </div>
 
-          <h3 className="lineup-heading">
+          {previousGamesForCopy().length > 0 && (
+            <div style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }}>
+              <h3 className="lineup-heading">
             Q{selectedQuarter} Positions
           </h3>
 

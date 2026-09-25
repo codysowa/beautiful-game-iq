@@ -137,8 +137,6 @@
 		};
 /* End PBXProject section */
 
-
-
 /* Begin PBXResourcesBuildPhase section */
 		504EC3021FED79650016851F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
