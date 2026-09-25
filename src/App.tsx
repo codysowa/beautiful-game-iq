@@ -21,6 +21,9 @@ type Team = {
   format: string
   season: string
   archived: boolean
+  city: string | null
+  coach_name: string | null
+  join_code: string | null
   max_gk_quarters: number | null
   max_bench_quarters: number | null
   min_quarters_played: number | null
@@ -191,6 +194,13 @@ function localDateInputValue() {
   return `${now.getFullYear()}-${month}-${day}`
 }
 
+function generateJoinCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const values = new Uint32Array(6)
+  crypto.getRandomValues(values)
+  return Array.from(values, (value) => chars[value % chars.length]).join('')
+}
+
 function App() {
   const [team, setTeam] = useState<Team | null>(null)
   const [teams, setTeams] = useState<Team[]>([])
@@ -264,12 +274,15 @@ function App() {
   const [analyticsSort, setAnalyticsSort] = useState<'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'captain'>('player')
   const [analyticsSortAsc, setAnalyticsSortAsc] = useState(true)
   const [newTeamName, setNewTeamName] = useState('')
+  const [newTeamCity, setNewTeamCity] = useState('')
+  const [newTeamCoachName, setNewTeamCoachName] = useState('')
+  const [joinCodeSearch, setJoinCodeSearch] = useState('')
   const [newTeamAgeGroup, setNewTeamAgeGroup] = useState('U10')
   const [newTeamFormat, setNewTeamFormat] = useState('7v7')
   const [newTeamSeasonType, setNewTeamSeasonType] = useState('Fall')
   const [newTeamSeasonYear, setNewTeamSeasonYear] = useState('2026')
   const [staff, setStaff] = useState<Array<{ user_id: string; role: 'owner' | 'coach' | 'viewer'; is_head_coach: boolean; full_name: string; email: string }>>([])
-  const [, setCurrentUserName] = useState('')
+  const [currentUserName, setCurrentUserName] = useState('')
   const [currentUserEmail, setCurrentUserEmail] = useState('')
   const [currentUserId, setCurrentUserId] = useState('')
   const [currentUserRole, setCurrentUserRole] = useState<'owner' | 'coach' | 'viewer' | null>(null)
@@ -599,8 +612,21 @@ function App() {
   }
   async function createTeam() {
     const name = newTeamName.trim()
+    const city = newTeamCity.trim()
+    const coachName = newTeamCoachName.trim()
+
     if (!name) {
       alert('Enter a team name.')
+      return
+    }
+
+    if (!city) {
+      alert('Enter the team city.')
+      return
+    }
+
+    if (!coachName) {
+      alert('Enter the coach name.')
       return
     }
 
@@ -618,6 +644,9 @@ function App() {
         created_by: userId,
         owner_id: userId,
         name,
+        city,
+        coach_name: coachName,
+        join_code: generateJoinCode(),
         age_group: newTeamAgeGroup,
         format: newTeamFormat,
         season: `${newTeamSeasonType} ${newTeamSeasonYear}`.trim(),
@@ -653,6 +682,8 @@ function App() {
     }
 
     setNewTeamName('')
+    setNewTeamCity('')
+    setNewTeamCoachName('')
     setShowNewTeamForm(false)
     setSelectedTeamId(data.id)
   }
@@ -1814,19 +1845,25 @@ function playerAtPosition(position: string) {
 
   async function searchTeamsToJoin() {
     const search = joinTeamSearch.trim()
+    const code = joinCodeSearch.trim().toUpperCase()
 
-    if (search.length < 2) {
+    if (!search && !code) {
       setJoinTeamResults([])
       return
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('teams')
-      .select('id, name, age_group, format, season, max_gk_quarters, max_bench_quarters, min_quarters_played, target_quarters_played, require_everyone_play, default_formation, archived')
-      .ilike('name', `%${search}%`)
+      .select('*')
       .eq('archived', false)
-      .order('name')
-      .limit(20)
+
+    if (code) {
+      query = query.eq('join_code', code)
+    } else {
+      query = query.or('name.ilike.%' + search + '%,city.ilike.%' + search + '%,coach_name.ilike.%' + search + '%')
+    }
+
+    const { data, error } = await query.order('name').limit(20)
 
     if (error) {
       console.error(error)
@@ -1836,7 +1873,6 @@ function playerAtPosition(position: string) {
 
     setJoinTeamResults(data || [])
   }
-
   async function loadJoinRequests() {
     const { data, error } = await supabase
       .from('team_join_requests')
@@ -2030,6 +2066,7 @@ function playerAtPosition(position: string) {
             onClick={async () => {
                 setShowJoinTeam(true)
                 setJoinTeamSearch('')
+                setJoinCodeSearch('')
                 setJoinTeamResults([])
                 await loadJoinRequests()
               }}
@@ -2041,59 +2078,20 @@ function playerAtPosition(position: string) {
         {showJoinTeam && (
           <div style={{ marginTop: '24px' }}>
             <h3>Join an Existing Team</h3>
-
             <div style={{ display: 'grid', gap: '12px', marginTop: '16px' }}>
-              <label>
-                Search by Team Name
-                <input
-                  value={joinTeamSearch}
-                  onChange={(e) => setJoinTeamSearch(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      searchTeamsToJoin()
-                    }
-                  }}
-                  placeholder="Enter team name"
-                />
-              </label>
-
-              <button
-                className="primary-button"
-                onClick={searchTeamsToJoin}
-                disabled={joinTeamSearch.trim().length < 2}
-              >
-                Search Teams
-              </button>
+              <label>Search team, city, or coach<input value={joinTeamSearch} onChange={(e) => setJoinTeamSearch(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void searchTeamsToJoin() }} placeholder="e.g. Blue Knights" /></label>
+              <label>Exact Join Code<input value={joinCodeSearch} onChange={(e) => setJoinCodeSearch(e.target.value.toUpperCase())} onKeyDown={(e) => { if (e.key === 'Enter') void searchTeamsToJoin() }} placeholder="6-character code" maxLength={6} autoCapitalize="characters" /></label>
+              <button className="primary-button" onClick={searchTeamsToJoin} disabled={!joinTeamSearch.trim() && !joinCodeSearch.trim()}>Search Teams</button>
             </div>
-
             {joinTeamResults.length > 0 && (
               <div style={{ display: 'grid', gap: '12px', marginTop: '20px' }}>
                 {joinTeamResults.map((teamToJoin) => {
                   const requestPending = joinRequestTeamIds.includes(teamToJoin.id)
-
                   return (
-                    <div
-                      key={teamToJoin.id}
-                      className="team-card"
-                      style={{ padding: '16px' }}
-                    >
+                    <div key={teamToJoin.id} className="team-card" style={{ padding: '16px' }}>
                       <strong>{teamToJoin.name}</strong>
-
-                      <div style={{ marginTop: '6px', color: '#666' }}>
-                        {teamToJoin.age_group} | {teamToJoin.format} | {teamToJoin.season}
-                      </div>
-
-                      <button
-                        type="button"
-                        className={requestPending ? 'secondary-button' : 'primary-button'}
-                        style={{ marginTop: '12px', touchAction: 'manipulation' }}
-                        onClick={() => void requestToJoinTeam(teamToJoin)}
-                        onTouchEnd={(event) => {
-                          event.preventDefault()
-                          void requestToJoinTeam(teamToJoin)
-                        }}
-                        disabled={requestPending}
-                      >
+                      <div style={{ marginTop: '6px', color: '#666' }}>{[teamToJoin.city, teamToJoin.coach_name, teamToJoin.age_group, teamToJoin.format, teamToJoin.season].filter(Boolean).join(' · ')}</div>
+                      <button type="button" className={requestPending ? 'secondary-button' : 'primary-button'} style={{ marginTop: '12px', touchAction: 'manipulation' }} onClick={() => void requestToJoinTeam(teamToJoin)} onTouchEnd={(event) => { event.preventDefault(); void requestToJoinTeam(teamToJoin) }} disabled={requestPending}>
                         {requestPending ? 'Request Sent' : 'Request to Join'}
                       </button>
                     </div>
@@ -2101,15 +2099,9 @@ function playerAtPosition(position: string) {
                 })}
               </div>
             )}
-
-            {joinTeamSearch.trim().length >= 2 && joinTeamResults.length === 0 && (
-              <p style={{ marginTop: '16px', color: '#666' }}>
-                No teams found. Check the team name and try again.
-              </p>
-            )}
+            {(joinTeamSearch.trim() || joinCodeSearch.trim()) && joinTeamResults.length === 0 && <p style={{ marginTop: '16px', color: '#666' }}>No active teams found.</p>}
           </div>
-        )}
-        {showNewTeamForm && (
+        )}        {showNewTeamForm && (
           <div id="new-team-form" style={{ marginTop: '24px' }}>
             <h3>Create Your Team</h3>
 
@@ -2122,6 +2114,16 @@ function playerAtPosition(position: string) {
                   placeholder="Enter team name"
                 />
               </label>
+              <label>
+                City
+                <input value={newTeamCity} onChange={(e) => setNewTeamCity(e.target.value)} placeholder="e.g. Redlands" />
+              </label>
+
+              <label>
+                Coach Name
+                <input value={newTeamCoachName} onChange={(e) => setNewTeamCoachName(e.target.value)} placeholder="Head coach name" />
+              </label>
+
 
               <label>
                 Age Group
@@ -2366,6 +2368,9 @@ function playerAtPosition(position: string) {
   }
   function openNewTeamForm() {
     setShowJoinTeam(false)
+    if (!newTeamCoachName.trim() && currentUserName.trim()) {
+      setNewTeamCoachName(currentUserName.trim())
+    }
     setShowNewTeamForm(true)
     window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0)
   }
@@ -2392,6 +2397,14 @@ function playerAtPosition(position: string) {
           <div className="home-team-identity">
             <p className="eyebrow">TEAM</p>
             <h2 className="home-team-name">{team?.name || 'Team'}</h2>
+            <div style={{ marginTop: '4px', color: '#666', fontSize: '13px' }}>
+              {[team?.city, team?.age_group, team?.format, team?.season].filter(Boolean).join(' · ')}
+            </div>
+            {currentUserRole === 'owner' && team?.join_code && (
+              <div style={{ marginTop: '8px', fontSize: '13px' }}>
+                <strong>Join Code:</strong> {team.join_code}
+              </div>
+            )}
             <div className="home-coaches">
               <span className="home-coaches-label">COACHES</span>
               <div className="home-coach-list">
@@ -2446,6 +2459,7 @@ function playerAtPosition(position: string) {
               onClick={async () => {
                 setShowJoinTeam(true)
                 setJoinTeamSearch('')
+                setJoinCodeSearch('')
                 setJoinTeamResults([])
                 await loadJoinRequests()
               }}
@@ -2458,41 +2472,28 @@ function playerAtPosition(position: string) {
           {showJoinTeam && (
             <div style={{ marginTop: '24px' }}>
               <h3>Join an Existing Team</h3>
-              <input
-                type="text"
-                value={joinTeamSearch}
-                onChange={(e) => setJoinTeamSearch(e.target.value)}
-                placeholder="Search by team name"
-              />
-              <button className="secondary-button" onClick={searchTeamsToJoin}>
-                Search
-              </button>
-              {joinTeamResults.map((teamToJoin) => (
-                <div key={teamToJoin.id}>
-                  <strong>{teamToJoin.name}</strong>
-                  <span> {teamToJoin.age_group} | {teamToJoin.format} | {teamToJoin.season}</span>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    style={{ touchAction: 'manipulation' }}
-                    onClick={() => void requestToJoinTeam(teamToJoin)}
-                    onTouchEnd={(event) => {
-                      event.preventDefault()
-                      void requestToJoinTeam(teamToJoin)
-                    }}
-                    disabled={joinRequestTeamIds.includes(teamToJoin.id)}
-                  >
-                    {joinRequestTeamIds.includes(teamToJoin.id) ? 'Request Sent' : 'Request to Join'}
-                  </button>
-                </div>
-              ))}
-              {joinTeamSearch.trim().length >= 2 && joinTeamResults.length === 0 && (
-                <p style={{ marginTop: '10px', color: '#666' }}>No active teams found with that name.</p>
-              )}
+              <div style={{ display: 'grid', gap: '10px', marginTop: '12px' }}>
+                <input type="text" value={joinTeamSearch} onChange={(e) => setJoinTeamSearch(e.target.value)} placeholder="Search team, city, or coach" />
+                <input type="text" value={joinCodeSearch} onChange={(e) => setJoinCodeSearch(e.target.value.toUpperCase())} placeholder="Or enter exact Join Code" maxLength={6} autoCapitalize="characters" />
+                <button className="secondary-button" onClick={searchTeamsToJoin} disabled={!joinTeamSearch.trim() && !joinCodeSearch.trim()}>Search Teams</button>
+              </div>
+              {joinTeamResults.map((teamToJoin) => {
+                const requestPending = joinRequestTeamIds.includes(teamToJoin.id)
+                return (
+                  <div key={teamToJoin.id} className="team-card" style={{ marginTop: '12px', padding: '14px' }}>
+                    <strong>{teamToJoin.name}</strong>
+                    <div style={{ marginTop: '6px', color: '#666', fontSize: '13px' }}>
+                      {[teamToJoin.city, teamToJoin.coach_name, teamToJoin.age_group, teamToJoin.format, teamToJoin.season].filter(Boolean).join(' · ')}
+                    </div>
+                    <button type="button" className={requestPending ? 'secondary-button' : 'primary-button'} style={{ marginTop: '12px', touchAction: 'manipulation' }} onClick={() => void requestToJoinTeam(teamToJoin)} onTouchEnd={(event) => { event.preventDefault(); void requestToJoinTeam(teamToJoin) }} disabled={requestPending}>
+                      {requestPending ? 'Request Sent' : 'Request to Join'}
+                    </button>
+                  </div>
+                )
+              })}
+              {(joinTeamSearch.trim() || joinCodeSearch.trim()) && joinTeamResults.length === 0 && <p style={{ marginTop: '10px', color: '#666' }}>No active teams found.</p>}
             </div>
           )}
-        </section>
-
         <section className="home-next-game">
           <div className="section-header">
             <div>
@@ -4108,6 +4109,16 @@ function playerAtPosition(position: string) {
                 Team Name
                 <input value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="Enter team name" autoFocus />
               </label>
+              <label>
+                City
+                <input value={newTeamCity} onChange={(e) => setNewTeamCity(e.target.value)} placeholder="e.g. Redlands" />
+              </label>
+
+              <label>
+                Coach Name
+                <input value={newTeamCoachName} onChange={(e) => setNewTeamCoachName(e.target.value)} placeholder="Head coach name" />
+              </label>
+
 
               <label>
                 Age Group
