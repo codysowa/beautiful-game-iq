@@ -23,10 +23,10 @@ npx cap copy ios
 ASSET_DIR="$REPO_ROOT/ios/App/App/public/assets"
 
 test -d "$ASSET_DIR"
-grep -R -q "Copy Lineup" "$ASSET_DIR" --include='*.js'
-grep -R -q "Copy From Previous Game" "$ASSET_DIR" --include='*.js'
-grep -R -q "Copy Entire Game" "$ASSET_DIR" --include='*.js'
-grep -R -q "Select time" "$ASSET_DIR" --include='*.js'
+grep -R -q "Copy Lineup" "$ASSET_DIR"
+grep -R -q "Copy From Previous Game" "$ASSET_DIR"
+grep -R -q "Copy Entire Game" "$ASSET_DIR"
+grep -R -q "Select time" "$ASSET_DIR"
 
 echo "=== Verified iOS web bundle ==="
 echo "Assets: $ASSET_DIR"
