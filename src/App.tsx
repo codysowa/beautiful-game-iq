@@ -3875,7 +3875,30 @@ function playerAtPosition(position: string) {
 
           {previousGamesForCopy().length > 0 && (
             <div style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }}>
-              <h3 className="lineup-heading">
+              <h3 style={{ margin: '0 0 8px' }}>Copy From Previous Game</h3>
+              <div style={{ display: 'grid', gap: '8px' }}>
+                <select value={copySourceGameId} onChange={(e) => setCopySourceGameId(e.target.value)} disabled={savingLineup || !canManageGame}>
+                  <option value="">Select a previous game...</option>
+                  {previousGamesForCopy().map((game) => (
+                    <option key={game.id} value={game.id}>{game.game_date} — {game.opponent}</option>
+                  ))}
+                </select>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <select value={copySourceQuarter} onChange={(e) => setCopySourceQuarter(Number(e.target.value))} disabled={savingLineup || !canManageGame}>
+                    <option value={1}>Q1</option><option value={2}>Q2</option><option value={3}>Q3</option><option value={4}>Q4</option>
+                  </select>
+                  <button className="secondary-button" onClick={copyQuarterFromGame} disabled={savingLineup || !canManageGame || !copySourceGameId}>
+                    Copy Q{copySourceQuarter} → Q{selectedQuarter}
+                  </button>
+                </div>
+                <button className="primary-button" onClick={copyEntireGameFromGame} disabled={savingLineup || !canManageGame || !copySourceGameId}>
+                  Copy Entire 4-Quarter Lineup
+                </button>
+              </div>
+            </div>
+          )}
+
+          <h3 className="lineup-heading">
             Q{selectedQuarter} Positions
           </h3>
 
