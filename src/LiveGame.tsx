@@ -1290,3 +1290,58 @@ export default function LiveGame({
                   <strong>Bench:</strong>{' '}
                   {players.filter((player) => !nextQuarterAdvice.suggestedLineup.some(({ player: selected }) => selected.id === player.id))
                     .map((player) => `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}`).join(', ') || 'None'}
+                </div>
+
+                {currentQuarterAdvice.warnings.length > 0 && (
+                  <div style={{ marginTop: 10, padding: 10, borderRadius: 8, background: '#fff7e6', fontSize: 12 }}>
+                    <strong>Rotation notes</strong>
+                    {currentQuarterAdvice.warnings.map((warning) => <div key={warning} style={{ marginTop: 3 }}>{warning}</div>)}
+                  </div>
+                )}
+
+                <button onClick={applyCurrentQuarterPlan} disabled={saving} style={{ width: '100%', marginTop: 14, minHeight: 50, fontWeight: 'bold' }}>
+                  {saving ? 'SAVING...' : `APPLY Q${quarter + 1} PLAN`}
+                </button>
+              </>
+            )}
+
+            <button onClick={() => { setShowCurrentQuarterOptimizer(false); setCurrentQuarterAdvice(null) }} disabled={saving} style={{ width: '100%', marginTop: 8, minHeight: 44 }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showGoal && (
+        <div onClick={() => { setSelectedPosition(''); setSelectedBenchPlayerId('') }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', width: '100%', maxWidth: 700, padding: '18px 18px calc(18px + env(safe-area-inset-bottom))', borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
+            <h2 style={{ marginTop: 0 }}>Our Goal - Q{quarter}</h2>
+            <label>Scorer</label>
+            <select value={goalScorer} onChange={(e) => setGoalScorer(e.target.value)} style={{ width: '100%', padding: 14, marginTop: 5, fontSize: 16 }}>
+              <option value="">Select scorer</option>
+              {players.map((player) => (
+                <option key={player.id} value={player.id}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</option>
+              ))}
+            </select>
+            <label style={{ display: 'block', marginTop: 14 }}>Assist (optional)</label>
+            <select value={goalAssister} onChange={(e) => setGoalAssister(e.target.value)} style={{ width: '100%', padding: 14, marginTop: 5, fontSize: 16 }}>
+              <option value="">No assist</option>
+              {players.filter((player) => player.id !== goalScorer).map((player) => (
+                <option key={player.id} value={player.id}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</option>
+              ))}
+            </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 16 }}>
+              <button onClick={() => { setShowGoal(false); setGoalScorer(''); setGoalAssister('') }} style={{ padding: 15, fontSize: 16 }}>
+                Cancel
+              </button>
+              <button onClick={recordOurGoal} disabled={!goalScorer || saving} style={{ padding: 15, fontSize: 16, fontWeight: 'bold' }}>
+                Save Goal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+

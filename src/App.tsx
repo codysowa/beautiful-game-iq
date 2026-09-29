@@ -4428,3 +4428,63 @@ function playerAtPosition(position: string) {
           </section>
         </div>
       )}
+      <main className="main-content">
+        {archivedViewTeam ? (
+          renderArchivedTeamView()
+        ) : showNewUserOnboarding ? (
+          renderNewUserOnboarding()
+        ) : (
+          <>
+            {screen === 'home' && renderHome()}
+            {screen === 'roster' && renderRoster()}
+            {screen === 'new-game' && renderNewGame()}
+            {screen === 'lineup' && renderLineup()}
+            {screen === 'live-game' && renderLiveGame()}
+            {screen === 'games' && renderGames()}
+            {screen === 'team-rules' && renderTeamRules()}
+            {screen === 'coaches' && renderCoaches()}
+          </>
+        )}
+      </main>
+
+    </div>
+
+      {!showNewUserOnboarding && (
+        <nav className="bottom-nav">
+          <button onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
+            <span>Home</span>
+          </button>
+          <button onClick={() => setScreen('roster')}>
+            <span>Roster</span>
+          </button>
+          <button onClick={() => setScreen('games')}>
+            <span>Games</span>
+          </button>
+        </nav>
+      )}
+    </>
+  )
+}
+
+export default App
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
