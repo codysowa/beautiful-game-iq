@@ -71,7 +71,7 @@ type AttendanceRecord = {
 type GameEvent = {
   id: string
   game_id: string
-  event_type: 'our_goal' | 'their_goal'
+  event_type: 'our_goal' | 'their_goal' | 'save' | 'our_shot'
   player_id: string | null
   assister_id: string | null
   quarter: number
@@ -271,7 +271,7 @@ function App() {
   const [joinTeamResults, setJoinTeamResults] = useState<Team[]>([])
   const [joinRequestTeamIds, setJoinRequestTeamIds] = useState<string[]>([])
   const [joinRequests, setJoinRequests] = useState<Array<{ id: string; team_id: string; user_id: string; status: 'pending' | 'approved' | 'denied'; created_at: string; full_name: string; email: string }>>([])
-  const [analyticsSort, setAnalyticsSort] = useState<'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'captain'>('player')
+  const [analyticsSort, setAnalyticsSort] = useState<'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'shots' | 'saves' | 'captain'>('player')
   const [analyticsSortAsc, setAnalyticsSortAsc] = useState(true)
   const [newTeamName, setNewTeamName] = useState('')
   const [newTeamCity, setNewTeamCity] = useState('')
@@ -1922,12 +1922,14 @@ function playerAtPosition(position: string) {
     const assists = completedGameEvents.filter(
       (event) => event.event_type === 'our_goal' && event.assister_id === player.id
     ).length
+    const shots = completedGameEvents.filter((event) => event.event_type === 'our_shot' && event.player_id === player.id).length
+    const saves = completedGameEvents.filter((event) => event.event_type === 'save' && event.player_id === player.id).length
     const captain = completedGames.filter(
       (game) => game.captain_1_id === player.id || game.captain_2_id === player.id
     ).length
 
     if (analyticsSort === 'player') return player.name.toLowerCase()
-    return { played, gk, str, bench, goals, assists, captain }[analyticsSort]
+    return { played, gk, str, bench, goals, assists, shots, saves, captain }[analyticsSort]
   }
 
   async function searchTeamsToJoin() {
@@ -2773,6 +2775,8 @@ function playerAtPosition(position: string) {
                 <th onClick={() => handleAnalyticsSort('bench')}>Bench<br /><span>Qtrs</span></th>
                 <th onClick={() => handleAnalyticsSort('goals')}>Goals</th>
                 <th onClick={() => handleAnalyticsSort('assists')}>Assists</th>
+                <th onClick={() => handleAnalyticsSort('shots')}>Shots</th>
+                <th onClick={() => handleAnalyticsSort('saves')}>Saves</th>
                 <th onClick={() => handleAnalyticsSort('captain')}>Captain<br /><span>Gms</span></th>
               </tr></thead>
               <tbody>
@@ -2825,6 +2829,9 @@ function playerAtPosition(position: string) {
                       event.assister_id === player.id
                   ).length
 
+                  const shots = completedGameEvents.filter((event) => event.event_type === 'our_shot' && event.player_id === player.id).length
+                  const saves = completedGameEvents.filter((event) => event.event_type === 'save' && event.player_id === player.id).length
+
                   const captainCount = completedGames.filter(
                     (game) =>
                       game.captain_1_id === player.id ||
@@ -2844,6 +2851,8 @@ function playerAtPosition(position: string) {
                       <td>{bench}</td>
                       <td>{goals}</td>
                       <td>{assists}</td>
+                      <td>{shots}</td>
+                      <td>{saves}</td>
                       <td>{captainCount}</td>
                     </tr>
                   )

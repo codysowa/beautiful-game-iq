@@ -104,6 +104,8 @@ export default function LiveGame({
   const [editEventScorer, setEditEventScorer] = useState('')
   const [editEventAssister, setEditEventAssister] = useState('')
   const [showGoal, setShowGoal] = useState(false)
+  const [showShot, setShowShot] = useState(false)
+  const [shotPlayer, setShotPlayer] = useState('')
   const [goalScorer, setGoalScorer] = useState('')
   const [goalAssister, setGoalAssister] = useState('')
   const [saving, setSaving] = useState(false)
@@ -513,7 +515,7 @@ export default function LiveGame({
   }
 
   async function recordOurShot() {
-    if (!canStatTrack || gameStatus !== 'Live') return
+    if (!canStatTrack || gameStatus !== 'Live' || !shotPlayer) return
 
     setSaving(true)
     const { data, error } = await supabase
@@ -522,12 +524,15 @@ export default function LiveGame({
         game_id: gameId,
         quarter,
         event_type: 'our_shot',
+        player_id: shotPlayer,
       })
       .select()
       .single()
 
     if (!error && data) {
       setEvents((current) => [data, ...current])
+      setShotPlayer('')
+      setShowShot(false)
     } else if (error) {
       console.error(error)
       alert(`Could not record shot: ${error.message}`)
@@ -569,25 +574,26 @@ export default function LiveGame({
     if (!editingEvent || !canManageGame) return
 
     if (
-      editingEvent.event_type === 'our_goal' &&
+      (editingEvent.event_type === 'our_goal' ||
+        editingEvent.event_type === 'save' ||
+        editingEvent.event_type === 'our_shot') &&
       !editEventScorer
     ) {
-      alert('Select the goal scorer.')
+      alert(editingEvent.event_type === 'our_goal' ? 'Select the goal scorer.' : 'Select the player.')
       return
     }
 
     setSaving(true)
 
+    const playerAttributedEvent =
+      editingEvent.event_type === 'our_goal' ||
+      editingEvent.event_type === 'save' ||
+      editingEvent.event_type === 'our_shot'
+
     const payload = {
       quarter: editEventQuarter,
-      player_id:
-        editingEvent.event_type === 'our_goal'
-          ? editEventScorer
-          : null,
-      assister_id:
-        editingEvent.event_type === 'our_goal'
-          ? editEventAssister || null
-          : null,
+      player_id: playerAttributedEvent ? editEventScorer : null,
+      assister_id: editingEvent.event_type === 'our_goal' ? editEventAssister || null : null,
     }
 
     const { data, error } = await supabase
@@ -867,8 +873,8 @@ export default function LiveGame({
           SAVE
         </button>
         <button
-          onClick={recordOurShot}
-          disabled={gameStatus !== 'Live' || saving}
+          onClick={() => { setShotPlayer(''); setShowShot(true) }}
+          disabled={gameStatus !== 'Live' || saving || lineupLoading}
           style={{ minHeight: 68, fontSize: 17, fontWeight: 'bold' }}
         >
           OUR SHOT
@@ -1098,7 +1104,7 @@ export default function LiveGame({
                     </button>
                   </div>
                 </div>
-                {(event.event_type === 'our_goal' || event.event_type === 'save') && event.player_id && (
+                {(event.event_type === 'our_goal' || event.event_type === 'save' || event.event_type === 'our_shot') && event.player_id && (
                   <div style={{ marginTop: 3 }}>
                     {playerName(event.player_id)}
                     {event.event_type === 'our_goal' && event.assister_id && <span> - Assist: {playerName(event.assister_id)}</span>}
@@ -1397,6 +1403,25 @@ export default function LiveGame({
             <button onClick={() => { setShowCurrentQuarterOptimizer(false); setCurrentQuarterAdvice(null) }} disabled={saving} style={{ width: '100%', marginTop: 8, minHeight: 44 }}>
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {showShot && (
+        <div onClick={() => { setShowShot(false); setShotPlayer('') }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', width: '100%', maxWidth: 700, padding: '18px 18px calc(18px + env(safe-area-inset-bottom))', borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
+            <h2 style={{ marginTop: 0 }}>Our Shot - Q{quarter}</h2>
+            <p style={{ marginTop: 0, color: '#666' }}>Who took the shot?</p>
+            <select value={shotPlayer} onChange={(e) => setShotPlayer(e.target.value)} style={{ width: '100%', padding: 14, marginTop: 5, fontSize: 16 }}>
+              <option value="">Select player</option>
+              {currentPlayers.map((player) => (
+                <option key={player.id} value={player.id}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</option>
+              ))}
+            </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 16 }}>
+              <button onClick={() => { setShowShot(false); setShotPlayer('') }} style={{ padding: 15, fontSize: 16 }}>Cancel</button>
+              <button onClick={recordOurShot} disabled={!shotPlayer || saving} style={{ padding: 15, fontSize: 16, fontWeight: 'bold' }}>Record Shot</button>
+            </div>
           </div>
         </div>
       )}
