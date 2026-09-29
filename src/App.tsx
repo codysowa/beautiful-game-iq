@@ -1901,7 +1901,7 @@ function playerAtPosition(position: string) {
     alert(reportId ? `Bug report submitted. Reference #${String(reportId).slice(0, 8)}.` : 'Bug report submitted. Thank you.')
   }
 
-  function handleAnalyticsSort(field: 'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'captain') {
+  function handleAnalyticsSort(field: 'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'shots' | 'saves' | 'captain') {
     if (analyticsSort === field) {
       setAnalyticsSortAsc((value) => !value)
     } else {
