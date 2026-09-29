@@ -209,30 +209,37 @@ export default function LiveGame({
     setLineupLoading(true)
     setLiveLineup([])
 
-    const { data, error } = await supabase
-      .from('game_live_lineups')
-      .select('player_id, quarter, position')
-      .eq('game_id', gameId)
-      .eq('quarter', targetQuarter)
-      .order('created_at', { ascending: true })
+    const [{ data: gameData }, { data: plannedData, error: plannedError }, { data: actualData, error: actualError }] =
+      await Promise.all([
+        supabase.from('games').select('status').eq('id', gameId).single(),
+        supabase
+          .from('game_lineups')
+          .select('player_id, quarter, position')
+          .eq('game_id', gameId)
+          .eq('quarter', targetQuarter)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('game_live_lineups')
+          .select('player_id, quarter, position')
+          .eq('game_id', gameId)
+          .eq('quarter', targetQuarter)
+          .order('created_at', { ascending: true }),
+      ])
 
     if (requestId !== lineupLoadId.current) return
-
-    if (!error && data && data.length > 0) {
-      const actual = data as Lineup[]
-      setLiveLineup(actual)
-      setLiveFormation(formationForLineup(actual))
-      setLineupLoading(false)
-      return
-    }
-
-    const { data: plannedData, error: plannedError } = await supabase.from('game_lineups').select('player_id, quarter, position').eq('game_id', gameId).eq('quarter', targetQuarter).order('created_at', { ascending: true })
-
     if (plannedError) console.error(plannedError)
+    if (actualError) console.error(actualError)
 
-    const planned = (plannedData && plannedData.length > 0 ? plannedData : lineups.filter((item) => item.quarter === targetQuarter)) as Lineup[]
-    setLiveLineup(planned)
-    setLiveFormation(formationForLineup(planned))
+    // Before kickoff, the coach's saved quarter plan is authoritative.
+    // Once live, actual live lineups are authoritative.
+    const useActual = gameData?.status === 'Live' || gameData?.status === 'Completed'
+    const selected = useActual && actualData && actualData.length > 0
+      ? actualData
+      : (plannedData && plannedData.length > 0 ? plannedData : lineups.filter((item) => item.quarter === targetQuarter))
+
+    const nextLineup = selected as Lineup[]
+    setLiveLineup(nextLineup)
+    setLiveFormation(formationForLineup(nextLineup))
     setLineupLoading(false)
   }
 
@@ -411,7 +418,7 @@ export default function LiveGame({
     setSaving(false)
   }
 
-  async function persistLiveLineup(nextLineup: Lineup[], targetQuarter = quarter) {
+  async function persistLiveLineup(nextLineup: Lineup[], targetQuarter = quarter, syncTracking = true) {
     const { error: deleteError } = await supabase
       .from('game_live_lineups')
       .delete()
@@ -449,7 +456,7 @@ export default function LiveGame({
       ...nextLineup.map((item) => ({ ...item, quarter: targetQuarter })),
     ])
 
-    if (gameStatus === 'Live' && targetQuarter === quarter) {
+    if (syncTracking && gameStatus === 'Live' && targetQuarter === quarter) {
       const trackingSynced = await syncPositionTracking(nextLineup, targetQuarter)
       if (!trackingSynced) return false
     }
@@ -461,14 +468,17 @@ export default function LiveGame({
     if (!canManageGame || nextQuarter === quarter || lineupLoading) return
 
     const changedAt = new Date().toISOString()
-    const saved = await persistLiveLineup(activeLineup, quarter)
+    // Save the current quarter without doing a second tracking sync.
+    const saved = await persistLiveLineup(activeLineup, quarter, false)
     if (!saved) return
 
     if (gameStatus === 'Live') {
-      const closed = await closePositionTracking(quarter, changedAt)
+      const [closed, nextLineup] = await Promise.all([
+        closePositionTracking(quarter, changedAt),
+        loadLineupForTracking(nextQuarter),
+      ])
       if (!closed) return
 
-      const nextLineup = await loadLineupForTracking(nextQuarter)
       const started = await startPositionTracking(nextQuarter, nextLineup, changedAt)
       if (!started) return
     }
@@ -626,7 +636,8 @@ export default function LiveGame({
   async function recordOurGoal() {
     if (!canStatTrack || !goalScorer || gameStatus !== 'Live') return
     setSaving(true)
-    const { data, error } = await supabase
+
+    const { data: goalData, error: goalError } = await supabase
       .from('game_events')
       .insert({
         game_id: gameId,
@@ -638,7 +649,33 @@ export default function LiveGame({
       .select()
       .single()
 
-    if (!error && data) setEvents((current) => [data, ...current])
+    if (goalError || !goalData) {
+      console.error(goalError)
+      alert('Could not record goal: ' + (goalError?.message || 'Unknown error'))
+      setSaving(false)
+      return
+    }
+
+    // A goal is also a shot by the player who scored it.
+    const { data: shotData, error: shotError } = await supabase
+      .from('game_events')
+      .insert({
+        game_id: gameId,
+        quarter,
+        event_type: 'our_shot',
+        player_id: goalScorer,
+      })
+      .select()
+      .single()
+
+    if (shotError || !shotData) {
+      console.error(shotError)
+      alert('Goal recorded, but the automatic shot could not be recorded: ' + (shotError?.message || 'Unknown error'))
+      setEvents((current) => [goalData, ...current])
+    } else {
+      setEvents((current) => [shotData, goalData, ...current])
+    }
+
     setGoalScorer('')
     setGoalAssister('')
     setShowGoal(false)
