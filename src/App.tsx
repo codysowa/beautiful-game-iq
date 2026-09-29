@@ -1042,6 +1042,13 @@ function App() {
   async function changeQuarter(quarter: number) {
     if (!selectedGame || quarter === selectedQuarter) return
 
+    // Auto-save the quarter being edited before switching away from it.
+    // This keeps iOS behavior consistent with the explicit Save Lineup button.
+    if (currentUserRole === 'owner' || currentUserRole === 'coach') {
+      const saved = await saveLineupData(lineup, selectedQuarter, false)
+      if (!saved) return
+    }
+
     const { data, error } = await supabase
       .from('game_lineups')
       .select('*')
@@ -3746,7 +3753,7 @@ function playerAtPosition(position: string) {
           {(() => {
             const advice = rotationAdvice()
             return (
-              <div
+              <details
                 style={{
                   marginBottom: '12px',
                   padding: '12px',
@@ -3754,8 +3761,12 @@ function playerAtPosition(position: string) {
                   borderRadius: '8px',
                   background: '#f7f7f7',
                 }}
+                open={false}
               >
-                <strong>Coach Assist</strong>
+                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
+                  Coach Assist
+                </summary>
+                <div style={{ marginTop: '10px' }}>
                 <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.7 }}>
                   {advice.message}
                 </div>
@@ -3973,7 +3984,8 @@ function playerAtPosition(position: string) {
                     #{advice.gk.jersey_number ?? '-'} {advice.gk.first_name || advice.gk.name.split(' ')[0]}
                   </div>
                 )}
-              </div>
+                </div>
+              </details>
             )
           })()}
 
@@ -4416,64 +4428,3 @@ function playerAtPosition(position: string) {
           </section>
         </div>
       )}
-
-      <main className="main-content">
-        {archivedViewTeam ? (
-          renderArchivedTeamView()
-        ) : showNewUserOnboarding ? (
-          renderNewUserOnboarding()
-        ) : (
-          <>
-            {screen === 'home' && renderHome()}
-            {screen === 'roster' && renderRoster()}
-            {screen === 'new-game' && renderNewGame()}
-            {screen === 'lineup' && renderLineup()}
-            {screen === 'live-game' && renderLiveGame()}
-            {screen === 'games' && renderGames()}
-            {screen === 'team-rules' && renderTeamRules()}
-            {screen === 'coaches' && renderCoaches()}
-          </>
-        )}
-      </main>
-
-    </div>
-
-      {!showNewUserOnboarding && (
-        <nav className="bottom-nav">
-          <button onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
-            <span>Home</span>
-          </button>
-          <button onClick={() => setScreen('roster')}>
-            <span>Roster</span>
-          </button>
-          <button onClick={() => setScreen('games')}>
-            <span>Games</span>
-          </button>
-        </nav>
-      )}
-    </>
-  )
-}
-
-export default App
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
