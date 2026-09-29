@@ -84,6 +84,16 @@ type LineupItem = {
   position: string
 }
 
+type PositionSegment = {
+  id: string
+  game_id: string
+  quarter: number
+  player_id: string
+  position: string
+  started_at: string
+  ended_at: string | null
+}
+
 const TEAM_ID = '92713845-68a3-4bdc-9455-9d93c24744bf'
 
 // Position slots are driven by the selected formation.
@@ -214,6 +224,7 @@ function App() {
   const [gameEvents, setGameEvents] = useState<GameEvent[]>([])
   const [seasonLineups, setSeasonLineups] = useState<(LineupItem & { game_id: string })[]>([])
   const [actualSeasonLineups, setActualSeasonLineups] = useState<(LineupItem & { game_id: string })[]>([])
+  const [positionSegments, setPositionSegments] = useState<PositionSegment[]>([])
 
   const [screen, setScreen] = useState<
     'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches'
@@ -544,6 +555,15 @@ function App() {
 
     if (actualLineupError) console.error(actualLineupError)
 
+    const { data: positionSegmentData, error: positionSegmentError } = gameIds.length > 0
+      ? await supabase
+          .from('game_position_segments')
+          .select('id, game_id, quarter, player_id, position, started_at, ended_at')
+          .in('game_id', gameIds)
+      : { data: [], error: null }
+
+    if (positionSegmentError) console.error(positionSegmentError)
+
     const { data: { user } } = await supabase.auth.getUser()
     const currentUserNameFromAuth =
       user?.user_metadata?.display_name ||
@@ -624,6 +644,7 @@ function App() {
     setGameEvents((eventData || []) as GameEvent[])
     setSeasonLineups((lineupData || []) as (LineupItem & { game_id: string })[])
     setActualSeasonLineups((actualLineupData || []) as (LineupItem & { game_id: string })[])
+    setPositionSegments((positionSegmentData || []) as PositionSegment[])
     setLoading(false)
   }
 
@@ -876,18 +897,20 @@ function App() {
 
     const gameId = game.id
 
-    const [eventsResult, liveLineupsResult, lineupsResult, attendanceResult] = await Promise.all([
+    const [eventsResult, liveLineupsResult, lineupsResult, attendanceResult, positionSegmentsResult] = await Promise.all([
       supabase.from('game_events').delete().eq('game_id', gameId),
       supabase.from('game_live_lineups').delete().eq('game_id', gameId),
       supabase.from('game_lineups').delete().eq('game_id', gameId),
       supabase.from('game_attendance').delete().eq('game_id', gameId),
+      supabase.from('game_position_segments').delete().eq('game_id', gameId),
     ])
 
     const firstError =
       eventsResult.error ||
       liveLineupsResult.error ||
       lineupsResult.error ||
-      attendanceResult.error
+      attendanceResult.error ||
+      positionSegmentsResult.error
 
     if (firstError) {
       console.error(firstError)
