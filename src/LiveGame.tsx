@@ -1292,6 +1292,95 @@ export default function LiveGame({
                     .map((player) => `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}`).join(', ') || 'None'}
                 </div>
 
+                {nextQuarterAdvice.warnings.length > 0 && (
+                  <div style={{ marginTop: 10, padding: 10, borderRadius: 8, background: '#fff7e6', fontSize: 12 }}>
+                    <strong>Rotation notes</strong>
+                    {nextQuarterAdvice.warnings.map((warning) => <div key={warning} style={{ marginTop: 3 }}>{warning}</div>)}
+                  </div>
+                )}
+
+                <button onClick={applyNextQuarterPlan} disabled={saving} style={{ width: '100%', marginTop: 14, minHeight: 50, fontWeight: 'bold' }}>
+                  {saving ? 'SAVING...' : `APPLY Q${quarter} PLAN`}
+                </button>
+              </>
+            )}
+
+            <button onClick={() => { setShowNextQuarterOptimizer(false); setNextQuarterAdvice(null) }} disabled={saving} style={{ width: '100%', marginTop: 8, minHeight: 44 }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {canManageGame && showCurrentQuarterOptimizer && gameStatus === 'Live' && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1100 }}>
+          <div style={{ background: 'white', width: '100%', maxWidth: 700, maxHeight: '88vh', overflowY: 'auto', padding: 16, borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
+            <h2 style={{ margin: '0 0 4px' }}>Optimize Q{quarter} NOW</h2>
+            <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
+              Score: {ourGoals}-{theirGoals}. Uses actual live assignments from earlier quarters when available.
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>
+                Game Situation
+                <select value={currentQuarterSituation} onChange={(e) => { setCurrentQuarterSituation(e.target.value as GameSituation); setCurrentQuarterAdvice(null) }} style={{ padding: 10 }}>
+                  <option>Normal</option>
+                  <option>Protect Lead</option>
+                  <option>Need Goal</option>
+                  <option>Development</option>
+                  <option>Pull Back / AYSO Mode</option>
+                </select>
+              </label>
+              <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>
+                Formation
+                <select value={currentQuarterFormation} onChange={(e) => { setCurrentQuarterFormation(e.target.value); setCurrentQuarterAdvice(null) }} style={{ padding: 10 }}>
+                  {getFormationsForFormat(gameFormat).map((formation) => <option key={formation}>{formation}</option>)}
+                </select>
+              </label>
+            </div>
+
+            {currentFormationSituationWarning && (
+              <div
+                style={{
+                  marginTop: 10,
+                  padding: 12,
+                  border: '1px solid #d6a84f',
+                  borderRadius: 8,
+                  background: '#fff7e6',
+                  fontSize: 13,
+                }}
+              >
+                <strong>Pull Back Suggestion</strong>
+                <div style={{ marginTop: 4 }}>
+                  You're protecting a comfortable lead. Consider switching to a more defensive formation before applying this plan.
+                </div>
+              </div>
+            )}
+
+            {!currentQuarterAdvice ? (
+              <button onClick={optimizeCurrentQuarter} disabled={optimizerLoading} style={{ width: '100%', marginTop: 12, minHeight: 48, fontWeight: 'bold' }}>
+                {optimizerLoading ? 'LOADING GAME CONTEXT...' : `PREVIEW Q${quarter} PLAN`}
+              </button>
+            ) : (
+              <>
+                <div style={{ marginTop: 14, padding: 10, border: '1px solid #ddd', borderRadius: 8 }}>
+                  <strong>Q{quarter} - {currentQuarterFormation}</strong>
+                  <div style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>
+                    {currentQuarterSituation}: {currentQuarterAdvice.message}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px 10px', marginTop: 10, fontSize: 13 }}>
+                    {currentQuarterAdvice.suggestedLineup.map(({ position, player }) => (
+                      <div key={position}><strong>{positionShort[position] || position}:</strong> #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 10, fontSize: 13 }}>
+                  <strong>Bench:</strong>{' '}
+                  {players.filter((player) => !currentQuarterAdvice.suggestedLineup.some(({ player: selected }) => selected.id === player.id))
+                    .map((player) => `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}`).join(', ') || 'None'}
+                </div>
+
                 {currentQuarterAdvice.warnings.length > 0 && (
                   <div style={{ marginTop: 10, padding: 10, borderRadius: 8, background: '#fff7e6', fontSize: 12 }}>
                     <strong>Rotation notes</strong>
