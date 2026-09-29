@@ -352,6 +352,15 @@ export default function LiveGame({
   }
 
   async function loadLineupForTracking(targetQuarter: number) {
+    const { data: plannedData, error: plannedError } = await supabase
+      .from('game_lineups')
+      .select('player_id, quarter, position')
+      .eq('game_id', gameId)
+      .eq('quarter', targetQuarter)
+
+    if (plannedError) console.error(plannedError)
+    if (plannedData && plannedData.length > 0) return plannedData as Lineup[]
+
     const { data: liveData, error: liveError } = await supabase
       .from('game_live_lineups')
       .select('player_id, quarter, position')
@@ -359,14 +368,6 @@ export default function LiveGame({
       .eq('quarter', targetQuarter)
 
     if (!liveError && liveData && liveData.length > 0) return liveData as Lineup[]
-
-    const { data: plannedData } = await supabase
-      .from('game_lineups')
-      .select('player_id, quarter, position')
-      .eq('game_id', gameId)
-      .eq('quarter', targetQuarter)
-
-    if (plannedData && plannedData.length > 0) return plannedData as Lineup[]
 
     return lineups.filter((item) => item.quarter === targetQuarter) as Lineup[]
   }
