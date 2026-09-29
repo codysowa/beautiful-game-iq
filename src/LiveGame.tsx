@@ -347,6 +347,9 @@ export default function LiveGame({
 
   const selectedPlayer = currentPlayers.find((player) => player.id === selectedPlayerId)
 
+  const ourShots = events.filter((event) => event.event_type === 'our_shot').length
+  const teamSaves = events.filter((event) => event.event_type === 'save').length
+
   const playerStats = players
     .map((player) => {
       const goals = events.filter(
@@ -355,9 +358,12 @@ export default function LiveGame({
       const assists = events.filter(
         (event) => event.event_type === 'our_goal' && event.assister_id === player.id
       ).length
-      return { ...player, goals, assists }
+      const saves = events.filter(
+        (event) => event.event_type === 'save' && event.player_id === player.id
+      ).length
+      return { ...player, goals, assists, saves }
     })
-    .filter((player) => player.goals > 0 || player.assists > 0)
+    .filter((player) => player.goals > 0 || player.assists > 0 || player.saves > 0)
 
   const formationSituationWarning =
     nextQuarterSituation === 'Pull Back / AYSO Mode' && nextQuarterFormation !== '4-1-1'
@@ -472,6 +478,61 @@ export default function LiveGame({
     setGoalScorer('')
     setGoalAssister('')
     setShowGoal(false)
+    setSaving(false)
+  }
+
+  async function recordSave() {
+    if (!canStatTrack || gameStatus !== 'Live') return
+
+    const goalkeeper = activeLineup.find((item) => item.position === 'Goalkeeper')
+    if (!goalkeeper) {
+      alert('No goalkeeper is currently on the field.')
+      return
+    }
+
+    setSaving(true)
+    const { data, error } = await supabase
+      .from('game_events')
+      .insert({
+        game_id: gameId,
+        quarter,
+        event_type: 'save',
+        player_id: goalkeeper.player_id,
+      })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setEvents((current) => [data, ...current])
+    } else if (error) {
+      console.error(error)
+      alert(`Could not record save: ${error.message}`)
+    }
+
+    setSaving(false)
+  }
+
+  async function recordOurShot() {
+    if (!canStatTrack || gameStatus !== 'Live') return
+
+    setSaving(true)
+    const { data, error } = await supabase
+      .from('game_events')
+      .insert({
+        game_id: gameId,
+        quarter,
+        event_type: 'our_shot',
+      })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setEvents((current) => [data, ...current])
+    } else if (error) {
+      console.error(error)
+      alert(`Could not record shot: ${error.message}`)
+    }
+
     setSaving(false)
   }
 
@@ -787,16 +848,30 @@ export default function LiveGame({
         <button
           onClick={() => setShowGoal(true)}
           disabled={gameStatus !== 'Live' || saving}
-          style={{ minHeight: 76, fontSize: 18, fontWeight: 'bold' }}
+          style={{ minHeight: 68, fontSize: 17, fontWeight: 'bold' }}
         >
           OUR GOAL
         </button>
         <button
           onClick={recordTheirGoal}
           disabled={gameStatus !== 'Live' || saving}
-          style={{ minHeight: 76, fontSize: 18, fontWeight: 'bold' }}
+          style={{ minHeight: 68, fontSize: 17, fontWeight: 'bold' }}
         >
           THEIR GOAL
+        </button>
+        <button
+          onClick={recordSave}
+          disabled={gameStatus !== 'Live' || saving || lineupLoading}
+          style={{ minHeight: 68, fontSize: 17, fontWeight: 'bold' }}
+        >
+          SAVE
+        </button>
+        <button
+          onClick={recordOurShot}
+          disabled={gameStatus !== 'Live' || saving}
+          style={{ minHeight: 68, fontSize: 17, fontWeight: 'bold' }}
+        >
+          OUR SHOT
         </button>
       </div>
 
@@ -968,20 +1043,27 @@ export default function LiveGame({
         </div>
       )}
 
-      {playerStats.length > 0 && (
+      {(playerStats.length > 0 || ourShots > 0 || teamSaves > 0) && (
         <section style={{ marginTop: 12, border: '1px solid #ddd', borderRadius: 12, padding: 12 }}>
-          <h2 style={{ margin: '0 0 10px', fontSize: 20 }}>{gameStatus === 'Completed' ? 'Scoring' : 'Game Stats'}</h2>
-          <div style={{ display: 'grid', gap: 8 }}>
-            {playerStats.map((player) => (
-              <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', border: '1px solid #e5e5e5', borderRadius: 10, background: '#fafafa' }}>
-                <strong style={{ fontSize: 16 }}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {player.goals > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>⚽ {player.goals}</span>}
-                  {player.assists > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>A {player.assists}</span>}
-                </div>
-              </div>
-            ))}
+          <h2 style={{ margin: '0 0 10px', fontSize: 20 }}>{gameStatus === 'Completed' ? 'Game Stats' : 'Game Stats'}</h2>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: playerStats.length > 0 ? 10 : 0 }}>
+            <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>Shots {ourShots}</span>
+            <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>Saves {teamSaves}</span>
           </div>
+          {playerStats.length > 0 && (
+            <div style={{ display: 'grid', gap: 8 }}>
+              {playerStats.map((player) => (
+                <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', border: '1px solid #e5e5e5', borderRadius: 10, background: '#fafafa' }}>
+                  <strong style={{ fontSize: 16 }}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {player.goals > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>⚽ {player.goals}</span>}
+                    {player.assists > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>A {player.assists}</span>}
+                    {player.saves > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>🧤 {player.saves}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -994,7 +1076,17 @@ export default function LiveGame({
             events.slice(0, 10).map((event) => (
               <div key={event.id} style={{ padding: '9px 0', borderTop: '1px solid #eee' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong>{event.event_type === 'our_goal' ? 'OUR GOAL' : 'THEIR GOAL'}</strong>
+                  <strong>{
+                    event.event_type === 'our_goal'
+                      ? 'OUR GOAL'
+                      : event.event_type === 'their_goal'
+                        ? 'THEIR GOAL'
+                        : event.event_type === 'save'
+                          ? 'SAVE'
+                          : event.event_type === 'our_shot'
+                            ? 'OUR SHOT'
+                            : event.event_type.toUpperCase()
+                  }</strong>
                   <div style={{ display: 'flex', gap: 6 }}>
                     {canManageGame && (
                       <button onClick={() => openEditEvent(event)} disabled={saving} style={{ padding: '4px 8px', fontSize: 12 }}>
@@ -1006,10 +1098,10 @@ export default function LiveGame({
                     </button>
                   </div>
                 </div>
-                {event.event_type === 'our_goal' && (
+                {(event.event_type === 'our_goal' || event.event_type === 'save') && event.player_id && (
                   <div style={{ marginTop: 3 }}>
                     {playerName(event.player_id)}
-                    {event.assister_id && <span> - Assist: {playerName(event.assister_id)}</span>}
+                    {event.event_type === 'our_goal' && event.assister_id && <span> - Assist: {playerName(event.assister_id)}</span>}
                   </div>
                 )}
                 <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>Q{event.quarter}</div>
@@ -1198,147 +1290,3 @@ export default function LiveGame({
                   <strong>Bench:</strong>{' '}
                   {players.filter((player) => !nextQuarterAdvice.suggestedLineup.some(({ player: selected }) => selected.id === player.id))
                     .map((player) => `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}`).join(', ') || 'None'}
-                </div>
-
-                {nextQuarterAdvice.warnings.length > 0 && (
-                  <div style={{ marginTop: 10, padding: 10, borderRadius: 8, background: '#fff7e6', fontSize: 12 }}>
-                    <strong>Rotation notes</strong>
-                    {nextQuarterAdvice.warnings.map((warning) => <div key={warning} style={{ marginTop: 3 }}>{warning}</div>)}
-                  </div>
-                )}
-
-                <button onClick={applyNextQuarterPlan} disabled={saving} style={{ width: '100%', marginTop: 14, minHeight: 50, fontWeight: 'bold' }}>
-                  {saving ? 'SAVING...' : `APPLY Q${quarter} PLAN`}
-                </button>
-              </>
-            )}
-
-            <button onClick={() => { setShowNextQuarterOptimizer(false); setNextQuarterAdvice(null) }} disabled={saving} style={{ width: '100%', marginTop: 8, minHeight: 44 }}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {canManageGame && showCurrentQuarterOptimizer && gameStatus === 'Live' && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1100 }}>
-          <div style={{ background: 'white', width: '100%', maxWidth: 700, maxHeight: '88vh', overflowY: 'auto', padding: 16, borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
-            <h2 style={{ margin: '0 0 4px' }}>Optimize Q{quarter} NOW</h2>
-            <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
-              Score: {ourGoals}-{theirGoals}. Uses actual live assignments from earlier quarters when available.
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>
-                Game Situation
-                <select value={currentQuarterSituation} onChange={(e) => { setCurrentQuarterSituation(e.target.value as GameSituation); setCurrentQuarterAdvice(null) }} style={{ padding: 10 }}>
-                  <option>Normal</option>
-                  <option>Protect Lead</option>
-                  <option>Need Goal</option>
-                  <option>Development</option>
-                  <option>Pull Back / AYSO Mode</option>
-                </select>
-              </label>
-              <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>
-                Formation
-                <select value={currentQuarterFormation} onChange={(e) => { setCurrentQuarterFormation(e.target.value); setCurrentQuarterAdvice(null) }} style={{ padding: 10 }}>
-                  {getFormationsForFormat(gameFormat).map((formation) => <option key={formation}>{formation}</option>)}
-                </select>
-              </label>
-            </div>
-
-            {currentFormationSituationWarning && (
-              <div
-                style={{
-                  marginTop: 10,
-                  padding: 12,
-                  border: '1px solid #d6a84f',
-                  borderRadius: 8,
-                  background: '#fff7e6',
-                  fontSize: 13,
-                }}
-              >
-                <strong>Pull Back Suggestion</strong>
-                <div style={{ marginTop: 4 }}>
-                  You're protecting a comfortable lead. Consider switching to a more defensive formation before applying this plan.
-                </div>
-              </div>
-            )}
-
-            {!currentQuarterAdvice ? (
-              <button onClick={optimizeCurrentQuarter} disabled={optimizerLoading} style={{ width: '100%', marginTop: 12, minHeight: 48, fontWeight: 'bold' }}>
-                {optimizerLoading ? 'LOADING GAME CONTEXT...' : `PREVIEW Q${quarter} PLAN`}
-              </button>
-            ) : (
-              <>
-                <div style={{ marginTop: 14, padding: 10, border: '1px solid #ddd', borderRadius: 8 }}>
-                  <strong>Q{quarter} - {currentQuarterFormation}</strong>
-                  <div style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>
-                    {currentQuarterSituation}: {currentQuarterAdvice.message}
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px 10px', marginTop: 10, fontSize: 13 }}>
-                    {currentQuarterAdvice.suggestedLineup.map(({ position, player }) => (
-                      <div key={position}><strong>{positionShort[position] || position}:</strong> #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</div>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ marginTop: 10, fontSize: 13 }}>
-                  <strong>Bench:</strong>{' '}
-                  {players.filter((player) => !currentQuarterAdvice.suggestedLineup.some(({ player: selected }) => selected.id === player.id))
-                    .map((player) => `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}`).join(', ') || 'None'}
-                </div>
-
-                {currentQuarterAdvice.warnings.length > 0 && (
-                  <div style={{ marginTop: 10, padding: 10, borderRadius: 8, background: '#fff7e6', fontSize: 12 }}>
-                    <strong>Rotation notes</strong>
-                    {currentQuarterAdvice.warnings.map((warning) => <div key={warning} style={{ marginTop: 3 }}>{warning}</div>)}
-                  </div>
-                )}
-
-                <button onClick={applyCurrentQuarterPlan} disabled={saving} style={{ width: '100%', marginTop: 14, minHeight: 50, fontWeight: 'bold' }}>
-                  {saving ? 'SAVING...' : `APPLY Q${quarter + 1} PLAN`}
-                </button>
-              </>
-            )}
-
-            <button onClick={() => { setShowCurrentQuarterOptimizer(false); setCurrentQuarterAdvice(null) }} disabled={saving} style={{ width: '100%', marginTop: 8, minHeight: 44 }}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showGoal && (
-        <div onClick={() => { setSelectedPosition(''); setSelectedBenchPlayerId('') }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', width: '100%', maxWidth: 700, padding: '18px 18px calc(18px + env(safe-area-inset-bottom))', borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
-            <h2 style={{ marginTop: 0 }}>Our Goal - Q{quarter}</h2>
-            <label>Scorer</label>
-            <select value={goalScorer} onChange={(e) => setGoalScorer(e.target.value)} style={{ width: '100%', padding: 14, marginTop: 5, fontSize: 16 }}>
-              <option value="">Select scorer</option>
-              {players.map((player) => (
-                <option key={player.id} value={player.id}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</option>
-              ))}
-            </select>
-            <label style={{ display: 'block', marginTop: 14 }}>Assist (optional)</label>
-            <select value={goalAssister} onChange={(e) => setGoalAssister(e.target.value)} style={{ width: '100%', padding: 14, marginTop: 5, fontSize: 16 }}>
-              <option value="">No assist</option>
-              {players.filter((player) => player.id !== goalScorer).map((player) => (
-                <option key={player.id} value={player.id}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</option>
-              ))}
-            </select>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 16 }}>
-              <button onClick={() => { setShowGoal(false); setGoalScorer(''); setGoalAssister('') }} style={{ padding: 15, fontSize: 16 }}>
-                Cancel
-              </button>
-              <button onClick={recordOurGoal} disabled={!goalScorer || saving} style={{ padding: 15, fontSize: 16, fontWeight: 'bold' }}>
-                Save Goal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
