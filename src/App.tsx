@@ -1584,6 +1584,73 @@ function playerAtPosition(position: string) {
     () => gameEvents.filter((event) => completedGameIds.has(event.game_id)),
     [gameEvents, completedGameIds]
   )
+  const completedPositionAnalytics = useMemo(() => {
+    const result = new Map<string, { played: number; gk: number; def: number; mid: number; str: number; bench: number }>()
+    const completedIds = new Set(completedGames.map((game) => game.id))
+
+    for (const game of completedGames) {
+      for (let quarter = 1; quarter <= 4; quarter++) {
+        const segmentRows = positionSegments.filter(
+          (segment) => segment.game_id === game.id && segment.quarter === quarter
+        )
+
+        if (segmentRows.length > 0) {
+          const quarterStart = Math.min(...segmentRows.map((segment) => new Date(segment.started_at).getTime()))
+          const quarterEnd = Math.max(
+            ...segmentRows.map((segment) => new Date(segment.ended_at || segment.started_at).getTime())
+          )
+          const quarterDuration = quarterEnd - quarterStart
+
+          if (quarterDuration > 0) {
+            for (const segment of segmentRows) {
+              const started = new Date(segment.started_at).getTime()
+              const ended = new Date(segment.ended_at || segment.started_at).getTime()
+              const fraction = Math.max(0, Math.min(1, (ended - started) / quarterDuration))
+              const current = result.get(segment.player_id) || { played: 0, gk: 0, def: 0, mid: 0, str: 0, bench: 0 }
+
+              if (segment.position === 'Bench') {
+                current.bench += fraction
+              } else {
+                current.played += fraction
+                if (segment.position === 'Goalkeeper') current.gk += fraction
+                else if (segment.position.includes('Defense')) current.def += fraction
+                else if (segment.position.includes('Mid')) current.mid += fraction
+                else current.str += fraction
+              }
+
+              result.set(segment.player_id, current)
+            }
+            continue
+          }
+        }
+
+        const fallbackRows = completedSeasonLineups.filter(
+          (item) => item.game_id === game.id && item.quarter === quarter
+        )
+        const fallbackPlayers = new Set(fallbackRows.map((item) => item.player_id))
+
+        for (const player of players) {
+          const current = result.get(player.id) || { played: 0, gk: 0, def: 0, mid: 0, str: 0, bench: 0 }
+          const item = fallbackRows.find((row) => row.player_id === player.id)
+
+          if (!item) {
+            current.bench += 1
+          } else {
+            current.played += 1
+            if (item.position === 'Goalkeeper') current.gk += 1
+            else if (item.position.includes('Defense')) current.def += 1
+            else if (item.position.includes('Mid')) current.mid += 1
+            else current.str += 1
+          }
+
+          result.set(player.id, current)
+        }
+      }
+    }
+
+    return result
+  }, [completedGames, completedSeasonLineups, players, positionSegments])
+
   const topScorers = useMemo(() => {
     const totals = new Map<string, number>()
     completedGameEvents
