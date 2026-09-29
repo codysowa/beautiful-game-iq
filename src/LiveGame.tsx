@@ -1139,7 +1139,15 @@ export default function LiveGame({
             }}
           >
             <h2 style={{ margin: '0 0 4px' }}>
-              Edit {editingEvent.event_type === 'our_goal' ? 'Our Goal' : 'Their Goal'}
+              Edit {
+                editingEvent.event_type === 'our_goal'
+                  ? 'Our Goal'
+                  : editingEvent.event_type === 'save'
+                    ? 'Save'
+                    : editingEvent.event_type === 'our_shot'
+                      ? 'Our Shot'
+                      : 'Their Goal'
+              }
             </h2>
 
             <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 14 }}>
@@ -1162,18 +1170,18 @@ export default function LiveGame({
               </select>
             </label>
 
-            {editingEvent.event_type === 'our_goal' && (
+            {(editingEvent.event_type === 'our_goal' || editingEvent.event_type === 'save' || editingEvent.event_type === 'our_shot') && (
               <>
                 <label style={{ display: 'block', marginBottom: 12 }}>
                   <span style={{ display: 'block', marginBottom: 4, fontWeight: 700 }}>
-                    Goal Scorer
+                    Player
                   </span>
                   <select
                     value={editEventScorer}
                     onChange={(e) => setEditEventScorer(e.target.value)}
                     style={{ width: '100%', padding: 10, boxSizing: 'border-box' }}
                   >
-                    <option value="">Select scorer</option>
+                    <option value="">Select player</option>
                     {players.map((player) => (
                       <option key={player.id} value={player.id}>
                         #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
@@ -1182,23 +1190,25 @@ export default function LiveGame({
                   </select>
                 </label>
 
-                <label style={{ display: 'block', marginBottom: 16 }}>
-                  <span style={{ display: 'block', marginBottom: 4, fontWeight: 700 }}>
-                    Assist
-                  </span>
-                  <select
-                    value={editEventAssister}
-                    onChange={(e) => setEditEventAssister(e.target.value)}
-                    style={{ width: '100%', padding: 10, boxSizing: 'border-box' }}
-                  >
-                    <option value="">No assist</option>
-                    {players.map((player) => (
-                      <option key={player.id} value={player.id}>
-                        #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {editingEvent.event_type === 'our_goal' && (
+                  <label style={{ display: 'block', marginBottom: 16 }}>
+                    <span style={{ display: 'block', marginBottom: 4, fontWeight: 700 }}>
+                      Assist
+                    </span>
+                    <select
+                      value={editEventAssister}
+                      onChange={(e) => setEditEventAssister(e.target.value)}
+                      style={{ width: '100%', padding: 10, boxSizing: 'border-box' }}
+                    >
+                      <option value="">No assist</option>
+                      {players.filter((player) => player.id !== editEventScorer).map((player) => (
+                        <option key={player.id} value={player.id}>
+                          #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </>
             )}
 
