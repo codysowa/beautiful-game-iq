@@ -159,7 +159,9 @@ export default function LiveGame({
           defaultFormation = teamData.default_formation
         }
       }
-      setLiveFormation(defaultFormation)
+      // The live formation is derived from the loaded quarter lineup.
+      // Do not overwrite it here: loadGame and loadLiveLineup run independently,
+      // and the team default can otherwise race in after the saved lineup loads.
       setNextQuarterFormation(defaultFormation)
       setCurrentQuarterFormation(defaultFormation)
     }
