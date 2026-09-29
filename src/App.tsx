@@ -1586,8 +1586,6 @@ function playerAtPosition(position: string) {
   )
   const completedPositionAnalytics = useMemo(() => {
     const result = new Map<string, { played: number; gk: number; def: number; mid: number; str: number; bench: number }>()
-    const completedIds = new Set(completedGames.map((game) => game.id))
-
     for (const game of completedGames) {
       for (let quarter = 1; quarter <= 4; quarter++) {
         const segmentRows = positionSegments.filter(
@@ -2001,11 +1999,18 @@ function playerAtPosition(position: string) {
   }
 
   function analyticsSortValue(player: typeof players[number]) {
-    const rows = completedSeasonLineups.filter((item) => item.player_id === player.id)
-    const played = rows.length
-    const gk = rows.filter((item) => item.position === 'Goalkeeper').length
-    const str = rows.filter((item) => item.position.includes('Striker')).length
-    const bench = Math.max(0, completedGames.length * 4 - played)
+    const usage = completedPositionAnalytics.get(player.id) || {
+      played: 0,
+      gk: 0,
+      def: 0,
+      mid: 0,
+      str: 0,
+      bench: 0,
+    }
+    const played = usage.played
+    const gk = usage.gk
+    const str = usage.str
+    const bench = usage.bench
     const goals = completedGameEvents.filter(
       (event) => event.event_type === 'our_goal' && event.player_id === player.id
     ).length
@@ -2884,28 +2889,24 @@ function playerAtPosition(position: string) {
                     return analyticsSortAsc ? -result : result
                   })
                   .map((player) => {
-                  const rows = completedSeasonLineups.filter(
-                    (item) => item.player_id === player.id
-                  )
+                  const usage = completedPositionAnalytics.get(player.id) || {
+                    played: 0,
+                    gk: 0,
+                    def: 0,
+                    mid: 0,
+                    str: 0,
+                    bench: 0,
+                  }
 
-                  const roleCounts = { GK: 0, DEF: 0, MID: 0, STR: 0 }
+                  const roleCounts = {
+                    GK: usage.gk,
+                    DEF: usage.def,
+                    MID: usage.mid,
+                    STR: usage.str,
+                  }
 
-                  rows.forEach((item) => {
-                    const role =
-                      item.position === 'Goalkeeper'
-                        ? 'GK'
-                        : item.position.includes('Defense')
-                          ? 'DEF'
-                          : item.position.includes('Mid')
-                            ? 'MID'
-                            : 'STR'
-
-                    roleCounts[role]++
-                  })
-
-                  const played = rows.length
-                  const possibleQuarters = completedGames.length * 4
-                  const bench = Math.max(0, possibleQuarters - played)
+                  const played = usage.played
+                  const bench = usage.bench
 
                   const goals = completedGameEvents.filter(
                     (event) =>
@@ -2933,12 +2934,12 @@ function playerAtPosition(position: string) {
                       <td className="player-col" style={{ fontWeight: 700 }}>
                         #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
                       </td>
-                      <td>{played}</td>
-                      <td>{roleCounts.GK}</td>
-                      <td>{roleCounts.DEF}</td>
-                      <td>{roleCounts.MID}</td>
-                      <td>{roleCounts.STR}</td>
-                      <td>{bench}</td>
+                      <td>{played % 1 === 0 ? played : played.toFixed(1)}</td>
+                      <td>{roleCounts.GK % 1 === 0 ? roleCounts.GK : roleCounts.GK.toFixed(1)}</td>
+                      <td>{roleCounts.DEF % 1 === 0 ? roleCounts.DEF : roleCounts.DEF.toFixed(1)}</td>
+                      <td>{roleCounts.MID % 1 === 0 ? roleCounts.MID : roleCounts.MID.toFixed(1)}</td>
+                      <td>{roleCounts.STR % 1 === 0 ? roleCounts.STR : roleCounts.STR.toFixed(1)}</td>
+                      <td>{bench % 1 === 0 ? bench : bench.toFixed(1)}</td>
                       <td>{goals}</td>
                       <td>{assists}</td>
                       <td>{shots}</td>
