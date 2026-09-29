@@ -997,8 +997,7 @@ function App() {
     }
 
     for (const player of players) {
-      if (!attendanceMap[player.id]) {
-        attendanceMap[player.id] = {
+      if (!attendanceMap[player.id]) {        attendanceMap[player.id] = {
           status: 'Present',
           arrival_quarter: null,
           departure_quarter: null,
@@ -2004,8 +2003,7 @@ function playerAtPosition(position: string) {
           .maybeSingle()
 
         return {
-          ...request,
-          full_name: profile?.full_name || 'Unknown User',
+          ...request,          full_name: profile?.full_name || 'Unknown User',
           email: profile?.email || '',
         }
       })
@@ -3004,8 +3002,7 @@ function playerAtPosition(position: string) {
                     position_preferences: { ...prefs },
                     avoid_positions: [...avoid],
                     coach_notes: player.coach_notes || '',
-                  })
-                }
+                  })                }
 
                 const cancelEdit = () => {
                   setCoachProfilePlayerId(null)
@@ -4009,8 +4006,7 @@ function playerAtPosition(position: string) {
                   Q{quarter}
                   <span
                     style={{
-                      marginLeft: '4px',
-                      fontSize: '11px',
+                      marginLeft: '4px',                      fontSize: '11px',
                     }}
                   >
                     ({count})
@@ -4428,3 +4424,63 @@ function playerAtPosition(position: string) {
           </section>
         </div>
       )}
+
+      <main className="main-content">
+        {archivedViewTeam ? (
+          renderArchivedTeamView()
+        ) : showNewUserOnboarding ? (
+          renderNewUserOnboarding()
+        ) : (
+          <>
+            {screen === 'home' && renderHome()}
+            {screen === 'roster' && renderRoster()}
+            {screen === 'new-game' && renderNewGame()}
+            {screen === 'lineup' && renderLineup()}
+            {screen === 'live-game' && renderLiveGame()}
+            {screen === 'games' && renderGames()}
+            {screen === 'team-rules' && renderTeamRules()}
+            {screen === 'coaches' && renderCoaches()}
+          </>
+        )}
+      </main>
+
+    </div>
+
+      {!showNewUserOnboarding && (
+        <nav className="bottom-nav">
+          <button onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
+            <span>Home</span>
+          </button>
+          <button onClick={() => setScreen('roster')}>
+            <span>Roster</span>
+          </button>
+          <button onClick={() => setScreen('games')}>
+            <span>Games</span>
+          </button>
+        </nav>
+      )}
+    </>
+  )
+}
+
+export default App
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
