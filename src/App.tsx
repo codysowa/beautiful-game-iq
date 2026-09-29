@@ -3368,7 +3368,7 @@ function playerAtPosition(position: string) {
           borderBottom: '1px solid #eee',
         }}
       >
-        <strong>vs. {game.opponent}</strong>
+        <strong>{game.home_away === 'Away' ? 'at' : 'vs.'} {game.opponent}</strong>
 
         <div style={{ marginTop: 4, fontSize: 13 }}>
           {game.game_date}
@@ -3838,13 +3838,74 @@ function playerAtPosition(position: string) {
                       >
                         Apply Full Game Plan
                       </button>
-                      <div style={{ marginTop: '8px', display: 'grid', gap: '4px', fontSize: '12px' }}>
+                      <div style={{ marginTop: '10px', display: 'grid', gap: '10px' }}>
                         {[1, 2, 3, 4].map((quarter) => {
                           const q = wholeGameSuggestion.filter((item) => item.quarter === quarter)
+                          const byPosition = new Map(q.map((item) => [item.position, item]))
+                          const rows = formationRows[optimizationFormation] || []
+
                           return (
-                            <div key={quarter}>
-                              <strong>Q{quarter}:</strong>{' '}
-                              {q.map((item) => `#${players.find((p) => p.id === item.player_id)?.jersey_number ?? '-'} ${players.find((p) => p.id === item.player_id)?.name ?? 'Unknown'} (${positionShort(item.position)})`).join(', ') || 'No lineup'}
+                            <div
+                              key={quarter}
+                              style={{
+                                padding: '10px',
+                                border: '1px solid #cfd8cf',
+                                borderRadius: '10px',
+                                background: '#f7faf7',
+                              }}
+                            >
+                              <div style={{ fontWeight: 800, marginBottom: '7px' }}>Q{quarter}</div>
+                              <div
+                                style={{
+                                  borderRadius: '8px',
+                                  padding: '8px',
+                                  background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)',
+                                  border: '1px solid #b8cdb8',
+                                  display: 'grid',
+                                  gap: '5px',
+                                }}
+                              >
+                                {rows.map((row, rowIndex) => (
+                                  <div
+                                    key={rowIndex}
+                                    style={{
+                                      display: 'grid',
+                                      gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
+                                      gap: '5px',
+                                    }}
+                                  >
+                                    {row.map((position) => {
+                                      const item = byPosition.get(position)
+                                      const player = item
+                                        ? players.find((p) => p.id === item.player_id)
+                                        : null
+
+                                      return (
+                                        <div
+                                          key={position}
+                                          style={{
+                                            minHeight: '42px',
+                                            padding: '5px 3px',
+                                            border: '1px solid #aab8aa',
+                                            borderRadius: '6px',
+                                            background: '#fff',
+                                            textAlign: 'center',
+                                          }}
+                                        >
+                                          <div style={{ fontSize: '9px', fontWeight: 800, opacity: 0.6 }}>
+                                            {positionShort(position)}
+                                          </div>
+                                          <div style={{ fontWeight: 700, fontSize: '12px', lineHeight: 1.15 }}>
+                                            {player
+                                              ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}`
+                                              : '—'}
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )
                         })}
@@ -3909,7 +3970,7 @@ function playerAtPosition(position: string) {
                 {advice.gk && (
                   <div style={{ marginTop: '6px' }}>
                     <strong>GK option:</strong>{' '}
-                    #{advice.gk.jersey_number ?? '-'} {advice.gk.name}
+                    #{advice.gk.jersey_number ?? '-'} {advice.gk.first_name || advice.gk.name.split(' ')[0]}
                   </div>
                 )}
               </div>
@@ -4395,7 +4456,6 @@ function playerAtPosition(position: string) {
 }
 
 export default App
-
 
 
 
