@@ -236,14 +236,160 @@ export default function LiveGame({
     setLineupLoading(false)
   }
 
+  async function startPositionTracking(targetQuarter: number, targetLineup: Lineup[], startedAt = new Date().toISOString()) {
+    const { data: existing, error: existingError } = await supabase
+      .from('game_position_segments')
+      .select('id')
+      .eq('game_id', gameId)
+      .eq('quarter', targetQuarter)
+      .limit(1)
+
+    if (existingError) {
+      console.error(existingError)
+      alert(`Could not start position tracking: ${existingError.message}`)
+      return false
+    }
+
+    if (existing && existing.length > 0) return true
+
+    const activeByPlayer = new Map(targetLineup.map((item) => [item.player_id, item.position]))
+    const rows = players.map((player) => ({
+      game_id: gameId,
+      quarter: targetQuarter,
+      player_id: player.id,
+      position: activeByPlayer.get(player.id) || 'Bench',
+      started_at: startedAt,
+    }))
+
+    const { error } = await supabase.from('game_position_segments').insert(rows)
+    if (error) {
+      console.error(error)
+      alert(`Could not start position tracking: ${error.message}`)
+      return false
+    }
+
+    return true
+  }
+
+  async function closePositionTracking(targetQuarter: number, endedAt = new Date().toISOString()) {
+    const { error } = await supabase
+      .from('game_position_segments')
+      .update({ ended_at: endedAt })
+      .eq('game_id', gameId)
+      .eq('quarter', targetQuarter)
+      .is('ended_at', null)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not close position tracking: ${error.message}`)
+      return false
+    }
+
+    return true
+  }
+
+  async function syncPositionTracking(targetLineup: Lineup[], targetQuarter = quarter, changedAt = new Date().toISOString()) {
+    const { data: openSegments, error } = await supabase
+      .from('game_position_segments')
+      .select('id, player_id, position')
+      .eq('game_id', gameId)
+      .eq('quarter', targetQuarter)
+      .is('ended_at', null)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not update position tracking: ${error.message}`)
+      return false
+    }
+
+    if (!openSegments || openSegments.length === 0) {
+      return startPositionTracking(targetQuarter, targetLineup, changedAt)
+    }
+
+    const desired = new Map(targetLineup.map((item) => [item.player_id, item.position]))
+    const changes = openSegments.filter(
+      (segment) => (desired.get(segment.player_id) || 'Bench') !== segment.position
+    )
+
+    for (const segment of changes) {
+      const nextPosition = desired.get(segment.player_id) || 'Bench'
+      const { error: closeError } = await supabase
+        .from('game_position_segments')
+        .update({ ended_at: changedAt })
+        .eq('id', segment.id)
+
+      if (closeError) {
+        console.error(closeError)
+        alert(`Could not save position change: ${closeError.message}`)
+        return false
+      }
+
+      const { error: insertError } = await supabase
+        .from('game_position_segments')
+        .insert({
+          game_id: gameId,
+          quarter: targetQuarter,
+          player_id: segment.player_id,
+          position: nextPosition,
+          started_at: changedAt,
+        })
+
+      if (insertError) {
+        console.error(insertError)
+        alert(`Could not save new position segment: ${insertError.message}`)
+        return false
+      }
+    }
+
+    return true
+  }
+
+  async function loadLineupForTracking(targetQuarter: number) {
+    const { data: liveData, error: liveError } = await supabase
+      .from('game_live_lineups')
+      .select('player_id, quarter, position')
+      .eq('game_id', gameId)
+      .eq('quarter', targetQuarter)
+
+    if (!liveError && liveData && liveData.length > 0) return liveData as Lineup[]
+
+    const { data: plannedData } = await supabase
+      .from('game_lineups')
+      .select('player_id, quarter, position')
+      .eq('game_id', gameId)
+      .eq('quarter', targetQuarter)
+
+    if (plannedData && plannedData.length > 0) return plannedData as Lineup[]
+
+    return lineups.filter((item) => item.quarter === targetQuarter) as Lineup[]
+  }
+
   async function updateGameStatus(nextStatus: 'Scheduled' | 'Live' | 'Completed') {
     if (!canManageGame) return
 
     setSaving(true)
 
+    if (nextStatus === 'Live' && gameStatus === 'Scheduled') {
+      const saved = await persistLiveLineup(activeLineup, quarter)
+      if (!saved) {
+        setSaving(false)
+        return
+      }
+      const trackingStarted = await startPositionTracking(quarter, activeLineup)
+      if (!trackingStarted) {
+        setSaving(false)
+        return
+      }
+    }
+
     if (nextStatus === 'Completed') {
       const saved = await persistLiveLineup(activeLineup, quarter)
       if (!saved) {
+        setSaving(false)
+        return
+      }
+      const trackingClosed = await closePositionTracking(quarter)
+      if (!trackingClosed) {
         setSaving(false)
         return
       }
@@ -302,14 +448,30 @@ export default function LiveGame({
       ...current.filter((item) => item.quarter !== targetQuarter),
       ...nextLineup.map((item) => ({ ...item, quarter: targetQuarter })),
     ])
+
+    if (gameStatus === 'Live' && targetQuarter === quarter) {
+      const trackingSynced = await syncPositionTracking(nextLineup, targetQuarter)
+      if (!trackingSynced) return false
+    }
+
     return true
   }
 
   async function changeQuarter(nextQuarter: number) {
     if (!canManageGame || nextQuarter === quarter || lineupLoading) return
 
+    const changedAt = new Date().toISOString()
     const saved = await persistLiveLineup(activeLineup, quarter)
     if (!saved) return
+
+    if (gameStatus === 'Live') {
+      const closed = await closePositionTracking(quarter, changedAt)
+      if (!closed) return
+
+      const nextLineup = await loadLineupForTracking(nextQuarter)
+      const started = await startPositionTracking(nextQuarter, nextLineup, changedAt)
+      if (!started) return
+    }
 
     setQuarter(nextQuarter)
   }
