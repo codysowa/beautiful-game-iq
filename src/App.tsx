@@ -3694,6 +3694,8 @@ function playerAtPosition(position: string) {
                       const playerEvents = completedGameEvents.filter((event) => event.player_id === player.id)
                       const playerAssists = completedGameEvents.filter((event) => event.assister_id === player.id).length
                       const playerGoals = playerEvents.filter((event) => event.event_type === 'our_goal').length
+                      const playerShots = playerEvents.filter((event) => event.event_type === 'our_shot').length
+                      const playerSaves = playerEvents.filter((event) => event.event_type === 'save').length
                       const playerLineups = actualSeasonLineups.filter((lineup) => lineup.player_id === player.id)
                       const playerPlayed = playerLineups.length
                       const playerGk = playerLineups.filter((lineup) => lineup.position === 'Goalkeeper').length
@@ -3710,6 +3712,8 @@ function playerAtPosition(position: string) {
                         bench: playerBench,
                         goals: playerGoals,
                         assists: playerAssists,
+                        shots: playerShots,
+                        saves: playerSaves,
                         captain: playerCaptain,
                       }[analyticsSort]
                     }
