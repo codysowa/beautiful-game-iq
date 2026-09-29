@@ -1625,8 +1625,6 @@ function playerAtPosition(position: string) {
         const fallbackRows = completedSeasonLineups.filter(
           (item) => item.game_id === game.id && item.quarter === quarter
         )
-        const fallbackPlayers = new Set(fallbackRows.map((item) => item.player_id))
-
         for (const player of players) {
           const current = result.get(player.id) || { played: 0, gk: 0, def: 0, mid: 0, str: 0, bench: 0 }
           const item = fallbackRows.find((row) => row.player_id === player.id)
