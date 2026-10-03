@@ -316,9 +316,15 @@ export default function LiveGame({
       const assists = events.filter(
         (event) => event.event_type === 'our_goal' && event.assister_id === player.id
       ).length
-      return { ...player, goals, assists }
+      const shots = events.filter(
+        (event) => event.event_type === 'our_shot' && event.player_id === player.id
+      ).length
+      const saves = events.filter(
+        (event) => event.event_type === 'save' && event.player_id === player.id
+      ).length
+      return { ...player, goals, assists, shots, saves }
     })
-    .filter((player) => player.goals > 0 || player.assists > 0)
+    .filter((player) => player.goals > 0 || player.assists > 0 || player.shots > 0 || player.saves > 0)
 
   const formationSituationWarning =
     nextQuarterSituation === 'Pull Back / AYSO Mode' && nextQuarterFormation !== '4-1-1'
@@ -949,6 +955,10 @@ export default function LiveGame({
                 {player.goals > 0 && `${player.goals} G`}
                 {player.goals > 0 && player.assists > 0 && '  '}
                 {player.assists > 0 && `${player.assists} A`}
+                {(player.goals > 0 || player.assists > 0) && player.shots > 0 && '  '}
+                {player.shots > 0 && `${player.shots} S`}
+                {(player.goals > 0 || player.assists > 0 || player.shots > 0) && player.saves > 0 && '  '}
+                {player.saves > 0 && `${player.saves} SV`}
               </span>
             </div>
           ))}
