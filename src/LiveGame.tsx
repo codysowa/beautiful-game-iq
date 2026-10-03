@@ -98,6 +98,8 @@ export default function LiveGame({
   const [quarter, setQuarter] = useState(1)
   const [events, setEvents] = useState<Event[]>([])
   const [showGoal, setShowGoal] = useState(false)
+  const [showShot, setShowShot] = useState(false)
+  const [shotPlayer, setShotPlayer] = useState('')
   const [goalScorer, setGoalScorer] = useState('')
   const [goalAssister, setGoalAssister] = useState('')
   const [saving, setSaving] = useState(false)
@@ -326,6 +328,9 @@ export default function LiveGame({
     })
     .filter((player) => player.goals > 0 || player.assists > 0 || player.shots > 0 || player.saves > 0)
 
+  const ourShots = events.filter((event) => event.event_type === 'our_shot').length
+  const teamSaves = events.filter((event) => event.event_type === 'save').length
+
   const formationSituationWarning =
     nextQuarterSituation === 'Pull Back / AYSO Mode' && nextQuarterFormation !== '4-1-1'
   const currentFormationSituationWarning =
@@ -460,6 +465,64 @@ export default function LiveGame({
     setGoalScorer('')
     setGoalAssister('')
     setShowGoal(false)
+    setSaving(false)
+  }
+
+  async function recordSave() {
+    if (!canStatTrack || gameStatus !== 'Live') return
+
+    const goalkeeper = activeLineup.find((item) => item.position === 'Goalkeeper')
+    if (!goalkeeper) {
+      alert('No goalkeeper is currently on the field.')
+      return
+    }
+
+    setSaving(true)
+    const { data, error } = await supabase
+      .from('game_events')
+      .insert({
+        game_id: gameId,
+        quarter,
+        event_type: 'save',
+        player_id: goalkeeper.player_id,
+      })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setEvents((current) => [data, ...current])
+    } else if (error) {
+      console.error(error)
+      alert(`Could not record save: ${error.message}`)
+    }
+
+    setSaving(false)
+  }
+
+  async function recordOurShot() {
+    if (!canStatTrack || gameStatus !== 'Live' || !shotPlayer) return
+
+    setSaving(true)
+    const { data, error } = await supabase
+      .from('game_events')
+      .insert({
+        game_id: gameId,
+        quarter,
+        event_type: 'our_shot',
+        player_id: shotPlayer,
+      })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setEvents((current) => [data, ...current])
+      setShotPlayer('')
+      setShowShot(false)
+    } else if (error) {
+      console.error(error)
+      alert(`Could not record shot: ${error.message}`)
+    }
+
     setSaving(false)
   }
 
@@ -921,12 +984,18 @@ export default function LiveGame({
             boxSizing: 'border-box',
           }}
         >
-          <div style={{ maxWidth: 560, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: 6 }}>
+          <div style={{ maxWidth: 560, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
             <button onClick={() => setShowGoal(true)} disabled={saving || lineupLoading} style={{ minHeight: 50, fontWeight: 'bold' }}>
               + OUR GOAL
             </button>
             <button onClick={recordTheirGoal} disabled={saving || lineupLoading} style={{ minHeight: 50, fontWeight: 'bold' }}>
               + THEIR GOAL
+            </button>
+            <button onClick={recordSave} disabled={saving || lineupLoading} style={{ minHeight: 50, fontWeight: 'bold' }}>
+              + SAVE
+            </button>
+            <button onClick={() => { setShotPlayer(''); setShowShot(true) }} disabled={saving || lineupLoading} style={{ minHeight: 50, fontWeight: 'bold' }}>
+              + OUR SHOT
             </button>
             {quarter < 4 ? (
               <button onClick={() => setQuarter(quarter + 1)} disabled={lineupLoading} style={{ minHeight: 50, fontWeight: 'bold' }}>
@@ -945,9 +1014,13 @@ export default function LiveGame({
         </div>
       )}
 
-      {playerStats.length > 0 && (
+      {(playerStats.length > 0 || ourShots > 0 || teamSaves > 0) && (
         <section style={{ marginTop: 10, border: '1px solid #ddd', borderRadius: 10, padding: 10 }}>
           <h2 style={{ margin: '0 0 8px', fontSize: 18 }}>Game Stats</h2>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: playerStats.length > 0 ? 10 : 0 }}>
+            <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 'bold', background: '#eee' }}>Shots {ourShots}</span>
+            <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 'bold', background: '#eee' }}>Saves {teamSaves}</span>
+          </div>
           {playerStats.map((player) => (
             <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #eee' }}>
               <strong>#{player.jersey_number ?? '-'} {player.name}</strong>
@@ -1164,6 +1237,25 @@ export default function LiveGame({
             <button onClick={() => { setShowCurrentQuarterOptimizer(false); setCurrentQuarterAdvice(null) }} disabled={saving} style={{ width: '100%', marginTop: 8, minHeight: 44 }}>
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {showShot && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'white', width: '100%', maxWidth: 700, padding: 18, borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
+            <h2 style={{ marginTop: 0 }}>Our Shot - Q{quarter}</h2>
+            <p style={{ marginTop: 0, color: '#666' }}>Who took the shot?</p>
+            <select value={shotPlayer} onChange={(e) => setShotPlayer(e.target.value)} style={{ width: '100%', padding: 14, marginTop: 5, fontSize: 16 }}>
+              <option value="">Select player</option>
+              {currentPlayers.map((player) => (
+                <option key={player.id} value={player.id}>#{player.jersey_number ?? '-'} {player.name}</option>
+              ))}
+            </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 16 }}>
+              <button onClick={() => { setShowShot(false); setShotPlayer('') }} style={{ padding: 15, fontSize: 16 }}>Cancel</button>
+              <button onClick={recordOurShot} disabled={!shotPlayer || saving} style={{ padding: 15, fontSize: 16, fontWeight: 'bold' }}>Record Shot</button>
+            </div>
           </div>
         </div>
       )}
