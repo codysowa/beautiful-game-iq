@@ -1046,15 +1046,15 @@ export default function LiveGame({
           events.slice(0, 10).map((event) => (
             <div key={event.id} style={{ padding: '9px 0', borderBottom: '1px solid #eee' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <strong>{event.event_type === 'our_goal' ? 'OUR GOAL' : 'THEIR GOAL'}</strong>
+                <strong>{event.event_type === 'our_goal' ? 'OUR GOAL' : event.event_type === 'their_goal' ? 'THEIR GOAL' : event.event_type === 'our_shot' ? 'OUR SHOT' : event.event_type === 'save' ? 'SAVE' : event.event_type.toUpperCase()}</strong>
                 <button onClick={() => deleteEvent(event.id)} disabled={saving} style={{ padding: '4px 8px', fontSize: 12 }}>
                   Delete
                 </button>
               </div>
-              {event.event_type === 'our_goal' && (
+              {(event.event_type === 'our_goal' || event.event_type === 'our_shot' || event.event_type === 'save') && event.player_id && (
                 <div style={{ marginTop: 3 }}>
                   {playerName(event.player_id)}
-                  {event.assister_id && <span> - Assist: {playerName(event.assister_id)}</span>}
+                  {event.event_type === 'our_goal' && event.assister_id && <span> - Assist: {playerName(event.assister_id)}</span>}
                 </div>
               )}
               <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>Q{event.quarter}</div>
