@@ -899,10 +899,29 @@ function App() {
       }
     }
 
-    setAllGameLineups((current) => [
-      ...current.filter((item) => item.quarter !== selectedQuarter),
-      ...lineup,
-    ])
+    // Re-read the complete game lineup from Supabase after saving.
+    // The lineup builder uses allGameLineups for quarter counts and player
+    // usage, so keeping this state synchronized immediately prevents the UI
+    // from lagging until the coach changes quarters again.
+    const { data: refreshedLineups, error: refreshError } = await supabase
+      .from('game_lineups')
+      .select('player_id, quarter, position')
+      .eq('game_id', selectedGame.id)
+
+    if (refreshError) {
+      console.error(refreshError)
+      setSavingLineup(false)
+
+      if (showAlert) {
+        alert('Lineup saved, but the usage display could not be refreshed.')
+      }
+
+      return true
+    }
+
+    const refreshed = (refreshedLineups || []) as LineupItem[]
+    setAllGameLineups(refreshed)
+    setLineup(refreshed.filter((item) => item.quarter === selectedQuarter))
 
     setSavingLineup(false)
 
