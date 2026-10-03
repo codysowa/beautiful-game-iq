@@ -126,6 +126,7 @@ function App() {
 
   const [lineup, setLineup] = useState<LineupItem[]>([])
   const [allGameLineups, setAllGameLineups] = useState<LineupItem[]>([])
+  const [lineupView, setLineupView] = useState<'table' | 'formation'>('table')
   const [gameAttendance, setGameAttendance] = useState<Record<string, AttendanceRecord>>({})
   const [captain1Id, setCaptain1Id] = useState('')
   const [captain2Id, setCaptain2Id] = useState('')
@@ -1988,6 +1989,145 @@ function playerAtPosition(position: string) {
     )
   }
 
+  function renderFormationOverview() {
+    const formationLines = [
+      {
+        key: 'striker',
+        label: 'Attack',
+        positions: positionsForFormation(optimizationFormation).filter((position) =>
+          position.includes('Striker')
+        ),
+      },
+      {
+        key: 'mid',
+        label: 'Midfield',
+        positions: positionsForFormation(optimizationFormation).filter((position) =>
+          position.includes('Mid')
+        ),
+      },
+      {
+        key: 'defense',
+        label: 'Defense',
+        positions: positionsForFormation(optimizationFormation).filter((position) =>
+          position.includes('Defense')
+        ),
+      },
+      {
+        key: 'goalkeeper',
+        label: 'Goalkeeper',
+        positions: positionsForFormation(optimizationFormation).filter((position) =>
+          position === 'Goalkeeper'
+        ),
+      },
+    ].filter((line) => line.positions.length > 0)
+
+    const playerLabel = (playerId: string) => {
+      const player = players.find((item) => item.id === playerId)
+      if (!player) return 'Unknown'
+      return '#' + (player.jersey_number ?? '-') + ' ' + player.name
+    }
+
+    return (
+      <section className="team-card formation-overview-card">
+        <div className="section-header">
+          <div>
+            <h2>4-Quarter Formation</h2>
+            <span>
+              {optimizationFormation} • Tap a quarter to edit it.
+            </span>
+          </div>
+        </div>
+
+        <div className="formation-grid">
+          {[1, 2, 3, 4].map((quarter) => {
+            const quarterLineup = allGameLineups.filter(
+              (item) => item.quarter === quarter
+            )
+            const count = quarterLineup.length
+            const isActive = selectedQuarter === quarter
+
+            return (
+              <div
+                key={quarter}
+                className={isActive ? 'formation-quarter-card active' : 'formation-quarter-card'}
+                role="button"
+                tabIndex={0}
+                onClick={() => changeQuarter(quarter)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    changeQuarter(quarter)
+                  }
+                }}
+              >
+                <div className="formation-quarter-header">
+                  <strong>Q{quarter}</strong>
+                  <span className={count > 0 ? 'formation-count' : 'formation-count empty'}>
+                    ({count})
+                  </span>
+                  {isActive && <span className="formation-editing">Editing</span>}
+                </div>
+
+                {count === 0 ? (
+                  <div className="formation-empty-state">
+                    <strong>No lineup yet</strong>
+                    <span>Tap to build Q{quarter}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="formation-pitch">
+                      {formationLines.map((line) => (
+                        <div className="formation-line" key={line.key}>
+                          {line.positions.map((position) => {
+                            const assignment = quarterLineup.find(
+                              (item) => item.position === position
+                            )
+                            return (
+                              <div
+                                className={assignment ? 'formation-player' : 'formation-player empty'}
+                                key={position}
+                              >
+                                <span className="formation-position">
+                                  {positionShort(position)}
+                                </span>
+                                <strong>
+                                  {assignment
+                                    ? playerLabel(assignment.player_id)
+                                    : 'Open'}
+                                </strong>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="formation-bench">
+                      <span>Bench</span>
+                      {players
+                        .filter(
+                          (player) =>
+                            !quarterLineup.some(
+                              (item) => item.player_id === player.id
+                            ) &&
+                            playerAvailableForQuarter(player.id, quarter)
+                        )
+                        .map((player) => (
+                          <strong key={player.id}>
+                            #{player.jersey_number ?? '-'} {player.name}
+                          </strong>
+                        ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </section>
+    )
+  }
+
   function renderPlayingTimeTracker() {
     const plannedQuarters = [1, 2, 3, 4].filter((quarter) =>
       quarterHasLineup(quarter)
@@ -2631,7 +2771,24 @@ function playerAtPosition(position: string) {
           </div>
         </section>
 
-        {renderPlayingTimeTracker()}
+        <div className="lineup-view-toggle" role="group" aria-label="Lineup overview">
+          <button
+            className={lineupView === 'table' ? 'primary-button' : 'secondary-button'}
+            onClick={() => setLineupView('table')}
+          >
+            Table
+          </button>
+          <button
+            className={lineupView === 'formation' ? 'primary-button' : 'secondary-button'}
+            onClick={() => setLineupView('formation')}
+          >
+            Formations
+          </button>
+        </div>
+
+        {lineupView === 'formation'
+          ? renderFormationOverview()
+          : renderPlayingTimeTracker()}
 
       </>
     )
