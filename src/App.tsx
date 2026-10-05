@@ -4550,6 +4550,25 @@ function playerAtPosition(position: string) {
           )}
         </section>
 
+          {rotationWarnings().length > 0 && (
+            <section
+              style={{
+                marginBottom: '12px',
+                padding: '12px',
+                border: '1px solid #d6a84f',
+                borderRadius: '10px',
+                background: '#fffaf0',
+              }}
+            >
+              <strong>Rotation Check</strong>
+              {rotationWarnings().map((warning) => (
+                <div key={warning} style={{ marginTop: '6px', fontSize: '13px' }}>
+                  {warning}
+                </div>
+              ))}
+            </section>
+          )}
+
           <section style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }}>
             <div style={{ marginBottom: '10px' }}>
               <strong style={{ fontSize: 18 }}>Full Game Lineup</strong>
@@ -4637,24 +4656,7 @@ function playerAtPosition(position: string) {
             </div>
           </section>
 
-          {rotationWarnings().length > 0 && (
-            <section
-              style={{
-                marginBottom: '12px',
-                padding: '12px',
-                border: '1px solid #d6a84f',
-                borderRadius: '10px',
-                background: '#fffaf0',
-              }}
-            >
-              <strong>Rotation Check</strong>
-              {rotationWarnings().map((warning) => (
-                <div key={warning} style={{ marginTop: '6px', fontSize: '13px' }}>
-                  {warning}
-                </div>
-              ))}
-            </section>
-          )}
+
 
           {renderPlayingTimeTracker()}
 
