@@ -100,6 +100,7 @@ textarea {
   min-width: 0;
   margin: 24px auto;
   overflow-x: hidden;
+  padding-bottom: 96px;
 }
 
 .welcome {
@@ -665,6 +666,33 @@ textarea {
 .analytics-table tbody tr:hover td {
   background: #fafbfd;
 }
+
+/* Lineup builder: keep Position History readable on narrow screens. */
+.team-card table[style*="min-width: 420px"] {
+  width: max-content !important;
+  min-width: 438px !important;
+  table-layout: fixed;
+}
+
+.team-card table[style*="min-width: 420px"] th,
+.team-card table[style*="min-width: 420px"] td {
+  white-space: nowrap;
+}
+
+.team-card table[style*="min-width: 420px"] th:first-child,
+.team-card table[style*="min-width: 420px"] td:first-child {
+  width: 150px !important;
+  min-width: 150px !important;
+  max-width: 150px !important;
+}
+
+.team-card table[style*="min-width: 420px"] th:not(:first-child),
+.team-card table[style*="min-width: 420px"] td:not(:first-child) {
+  width: 72px;
+  min-width: 72px;
+}
+
+
 
 @media (max-width: 700px) {
   .home-next-game .section-header {
