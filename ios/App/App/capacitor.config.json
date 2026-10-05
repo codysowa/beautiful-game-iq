@@ -1,0 +1,31 @@
+{
+	"appId": "com.beautifulgameiq.app",
+	"appName": "Beautiful Game IQ",
+	"webDir": "dist",
+	"bundledWebRuntime": false,
+	"ios": {
+		"scheme": "beautifulgameiq"
+	},
+	"experimental": {
+		"ios": {
+			"spm": {
+				"packageOptions": {
+					"@capacitor/app": {
+						"symlink": true
+					},
+					"@capacitor-community/admob": {
+						"symlink": true
+					},
+					"@revenuecat/purchases-capacitor": {
+						"symlink": true
+					}
+				}
+			}
+		}
+	},
+	"packageClassList": [
+		"AdMobPlugin",
+		"AppPlugin",
+		"PurchasesPlugin"
+	]
+}
