@@ -4253,6 +4253,97 @@ function playerAtPosition(position: string) {
             )
           })()}
 
+          <div className="quarter-tabs">
+            {[1, 2, 3, 4].map((quarter) => {
+              const count = allGameLineups.filter(
+                (item) => item.quarter === quarter
+              ).length
+
+              return (
+                <button
+                  key={quarter}
+                  className={
+                    selectedQuarter === quarter
+                      ? 'primary-button'
+                      : 'secondary-button'
+                  }
+                  onClick={() => void changeQuarter(quarter)}
+                  disabled={savingLineup || changingQuarter}
+                >
+                  Q{quarter}
+                  <span
+                    style={{
+                      marginLeft: '4px',                      fontSize: '11px',
+                    }}
+                  >
+                    ({count})
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <details style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }} open={false}>
+            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
+              Copy Lineups
+            </summary>
+
+            <div style={{ marginTop: '10px' }}>
+              <div className="quarter-copy-controls">
+                <label>
+                  <span>Copy lineup from</span>
+                  <select
+                    value={copySourceQuarter}
+                    onChange={(e) => setCopySourceQuarter(Number(e.target.value))}
+                    disabled={savingLineup || !canManageGame}
+                  >
+                    <option value={0}>Choose quarter</option>
+                    {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
+                      <option key={quarter} value={quarter}>Q{quarter}</option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={!copySourceQuarter || savingLineup || !canManageGame}
+                  onClick={() => void copyQuarterFromCurrentGame(copySourceQuarter)}
+                >
+                  Copy Q{copySourceQuarter || '?'} → Q{selectedQuarter}
+                </button>
+              </div>
+
+              {previousGamesForCopy().length > 0 && (
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #eee' }}>
+                  <h3 style={{ margin: '0 0 8px' }}>Copy From Previous Game</h3>
+                  <div style={{ display: 'grid', gap: '8px' }}>
+                    <select
+                      value={copySourceGameId}
+                      onChange={(e) => setCopySourceGameId(e.target.value)}
+                      disabled={savingLineup || !canManageGame}
+                    >
+                      <option value="">Select a previous game...</option>
+                      {previousGamesForCopy().map((game) => (
+                        <option key={game.id} value={game.id}>
+                          {game.game_date} — {game.opponent}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={copyEntireGameFromGame}
+                      disabled={savingLineup || !canManageGame || !copySourceGameId}
+                    >
+                      Copy Entire Game
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </details>
+
+
           <h3 className="lineup-heading">
             Q{selectedQuarter} Positions
           </h3>
@@ -4545,96 +4636,6 @@ function playerAtPosition(position: string) {
               })}
             </div>
           </section>
-
-          <div className="quarter-tabs">
-            {[1, 2, 3, 4].map((quarter) => {
-              const count = allGameLineups.filter(
-                (item) => item.quarter === quarter
-              ).length
-
-              return (
-                <button
-                  key={quarter}
-                  className={
-                    selectedQuarter === quarter
-                      ? 'primary-button'
-                      : 'secondary-button'
-                  }
-                  onClick={() => void changeQuarter(quarter)}
-                  disabled={savingLineup || changingQuarter}
-                >
-                  Q{quarter}
-                  <span
-                    style={{
-                      marginLeft: '4px',                      fontSize: '11px',
-                    }}
-                  >
-                    ({count})
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-
-          <details style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }} open={false}>
-            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
-              Copy Lineups
-            </summary>
-
-            <div style={{ marginTop: '10px' }}>
-              <div className="quarter-copy-controls">
-                <label>
-                  <span>Copy lineup from</span>
-                  <select
-                    value={copySourceQuarter}
-                    onChange={(e) => setCopySourceQuarter(Number(e.target.value))}
-                    disabled={savingLineup || !canManageGame}
-                  >
-                    <option value={0}>Choose quarter</option>
-                    {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
-                      <option key={quarter} value={quarter}>Q{quarter}</option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  disabled={!copySourceQuarter || savingLineup || !canManageGame}
-                  onClick={() => void copyQuarterFromCurrentGame(copySourceQuarter)}
-                >
-                  Copy Q{copySourceQuarter || '?'} → Q{selectedQuarter}
-                </button>
-              </div>
-
-              {previousGamesForCopy().length > 0 && (
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #eee' }}>
-                  <h3 style={{ margin: '0 0 8px' }}>Copy From Previous Game</h3>
-                  <div style={{ display: 'grid', gap: '8px' }}>
-                    <select
-                      value={copySourceGameId}
-                      onChange={(e) => setCopySourceGameId(e.target.value)}
-                      disabled={savingLineup || !canManageGame}
-                    >
-                      <option value="">Select a previous game...</option>
-                      {previousGamesForCopy().map((game) => (
-                        <option key={game.id} value={game.id}>
-                          {game.game_date} — {game.opponent}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="primary-button"
-                      onClick={copyEntireGameFromGame}
-                      disabled={savingLineup || !canManageGame || !copySourceGameId}
-                    >
-                      Copy Entire Game
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </details>
 
           {rotationWarnings().length > 0 && (
             <section
