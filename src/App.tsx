@@ -266,7 +266,6 @@ function App() {
 
   const [maxGkQuarters, setMaxGkQuarters] = useState('2')
   const [maxBenchQuarters, setMaxBenchQuarters] = useState('2')
-  const [minQuartersPlayed, setMinQuartersPlayed] = useState('0')
   const [targetQuartersPlayed, setTargetQuartersPlayed] = useState('3')
   const [requireEveryonePlay, setRequireEveryonePlay] = useState(true)
 
@@ -447,8 +446,8 @@ function App() {
     await loadApp(selectedTeamId)
   }
 
-  async function loadApp(teamId = selectedTeamId) {
-    setLoading(true)
+  async function loadApp(teamId = selectedTeamId, showLoading = true) {
+    if (showLoading) setLoading(true)
 
     const { data: membershipData, error: membershipError } = await supabase
       .from('team_members')
@@ -457,7 +456,7 @@ function App() {
     if (membershipError) {
       console.error(membershipError)
       alert(`Could not load your team access: ${membershipError.message}`)
-      setLoading(false)
+      if (showLoading) setLoading(false)
       return
     }
 
@@ -475,7 +474,7 @@ function App() {
     if (accessibleTeamsSelectionError) {
       console.error(accessibleTeamsSelectionError)
       alert(`Could not load your teams: ${accessibleTeamsSelectionError.message}`)
-      setLoading(false)
+      if (showLoading) setLoading(false)
       return
     }
 
@@ -501,7 +500,7 @@ function App() {
       setGameEvents([])
       setSeasonLineups([])
       setShowNewUserOnboarding(true)
-      setLoading(false)
+      if (showLoading) setLoading(false)
       return
     }
 
@@ -635,7 +634,6 @@ function App() {
     if (teamData) {
       setMaxGkQuarters(String(teamData.max_gk_quarters ?? 2))
       setMaxBenchQuarters(String(teamData.max_bench_quarters ?? 2))
-      setMinQuartersPlayed(String(teamData.min_quarters_played ?? 0))
       setTargetQuartersPlayed(String(teamData.target_quarters_played ?? 3))
       setRequireEveryonePlay(teamData.require_everyone_play ?? true)
       const teamDefault = teamData.default_formation || getDefaultFormationForFormat(teamData.format)
@@ -647,7 +645,7 @@ function App() {
     setSeasonLineups((lineupData || []) as (LineupItem & { game_id: string })[])
     setActualSeasonLineups((actualLineupData || []) as (LineupItem & { game_id: string })[])
     setPositionSegments((positionSegmentData || []) as PositionSegment[])
-    setLoading(false)
+    if (showLoading) setLoading(false)
   }
 
   async function viewArchivedTeam(archivedTeam: Team) {
@@ -779,8 +777,7 @@ function App() {
     const payload = {
       max_gk_quarters: Number(maxGkQuarters),
       max_bench_quarters: Number(maxBenchQuarters),
-      min_quarters_played: Number(minQuartersPlayed),
-      target_quarters_played: Number(targetQuartersPlayed),
+        target_quarters_played: Number(targetQuartersPlayed),
       require_everyone_play: requireEveryonePlay,
       default_formation: defaultFormation,
     }
@@ -959,7 +956,7 @@ function App() {
       return
     }
 
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(gameDate)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(gameDate)) {
       alert('Choose a valid game date.')
       return
     }
@@ -1059,14 +1056,26 @@ function App() {
     setCaptain1Id(game.captain_1_id || '')
     setCaptain2Id(game.captain_2_id || '')
 
-    const { data: attendanceData, error: attendanceError } = await supabase
-      .from('game_attendance')
-      .select('player_id, status, arrival_quarter, departure_quarter, available_quarters')
-      .eq('game_id', game.id)
+    const [{ data: attendanceData, error: attendanceError }, { data, error }] = await Promise.all([
+      supabase
+        .from('game_attendance')
+        .select('player_id, status, arrival_quarter, departure_quarter, available_quarters')
+        .eq('game_id', game.id),
+      supabase
+        .from('game_lineups')
+        .select('*')
+        .eq('game_id', game.id),
+    ])
 
     if (attendanceError) {
       console.error(attendanceError)
       alert('Could not load attendance.')
+      return
+    }
+
+    if (error) {
+      console.error(error)
+      alert('Could not load lineup.')
       return
     }
 
@@ -1082,7 +1091,8 @@ function App() {
     }
 
     for (const player of players) {
-      if (!attendanceMap[player.id]) {        attendanceMap[player.id] = {
+      if (!attendanceMap[player.id]) {
+        attendanceMap[player.id] = {
           status: 'Present',
           arrival_quarter: null,
           departure_quarter: null,
@@ -1092,17 +1102,6 @@ function App() {
     }
 
     setGameAttendance(attendanceMap)
-
-    const { data, error } = await supabase
-      .from('game_lineups')
-      .select('*')
-      .eq('game_id', game.id)
-
-    if (error) {
-      console.error(error)
-      alert('Could not load lineup.')
-      return
-    }
 
     const loaded = data || []
 
@@ -1495,6 +1494,36 @@ function playerAtPosition(position: string) {
 
   }
 
+  function rotationWarnings() {
+    const maxBench = team?.max_bench_quarters ?? 2
+    const targetPlayed = team?.target_quarters_played ?? 3
+    const quarters = [1, 2, 3, 4].filter((q) =>
+      q === selectedQuarter ? lineup.length > 0 : quarterHasLineup(q)
+    )
+
+    if (quarters.length < 2) return []
+
+    return players.flatMap((player) => {
+      const played = quarters.filter((q) => {
+        const source = q === selectedQuarter ? lineup : allGameLineups
+        return source.some((item) => item.quarter === q && item.player_id === player.id)
+      }).length
+      const bench = quarters.length - played
+      const name = '#' + (player.jersey_number ?? '-') + ' ' + (player.first_name || player.name.split(' ')[0])
+
+      if (bench > maxBench) {
+        return ['Team rule violation: ' + name + ' is scheduled to bench ' + bench + ' quarters. Maximum allowed is ' + maxBench + '.']
+      }
+
+      if (bench >= 2 && played < targetPlayed && quarters.length === 4) {
+        return ['Rotation preference: ' + name + ' is scheduled to bench ' + bench + ' quarters. This is within the ' + maxBench + '-quarter bench rule, but below the preferred target of ' + targetPlayed + ' quarters played.']
+      }
+
+      return []
+    })
+  }
+
+
   function optimizeCurrentQuarter() {
     const result = rotationAdvice()
     setQuarterSuggestion(result)
@@ -1800,7 +1829,7 @@ function playerAtPosition(position: string) {
   function renderCoaches() {
     return (
       <>
-        <button className="back-button" onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
+        <button className="back-button" onClick={() => { setArchivedViewTeam(null); setScreen('home'); void loadApp(selectedTeamId, false) }}>
           Back
         </button>
 
@@ -1992,11 +2021,6 @@ function playerAtPosition(position: string) {
             <label>
               Max bench quarters
               <input type="number" min="0" max="4" value={maxBenchQuarters} onChange={(e) => setMaxBenchQuarters(e.target.value)} />
-            </label>
-
-            <label>
-              Minimum quarters played
-              <input type="number" min="0" max="4" value={minQuartersPlayed} onChange={(e) => setMinQuartersPlayed(e.target.value)} />
             </label>
 
             <label>
@@ -3479,6 +3503,9 @@ function playerAtPosition(position: string) {
                   style={{
                     textAlign: 'left',
                     padding: '8px 6px',
+                    width: '150px',
+                    minWidth: '150px',
+                    maxWidth: '150px',
                     position: 'sticky',
                     left: 0,
                     zIndex: 2,
@@ -3509,6 +3536,9 @@ function playerAtPosition(position: string) {
                   <td
                     style={{
                       padding: '8px 6px',
+                      width: '150px',
+                      minWidth: '150px',
+                      maxWidth: '150px',
                       fontWeight: 600,
                       position: 'sticky',
                       left: 0,
@@ -4400,6 +4430,25 @@ function playerAtPosition(position: string) {
               )}
             </div>
           </details>
+
+          {rotationWarnings().length > 0 && (
+            <section
+              style={{
+                marginBottom: '12px',
+                padding: '12px',
+                border: '1px solid #d6a84f',
+                borderRadius: '10px',
+                background: '#fffaf0',
+              }}
+            >
+              <strong>Rotation Check</strong>
+              {rotationWarnings().map((warning) => (
+                <div key={warning} style={{ marginTop: '6px', fontSize: '13px' }}>
+                  {warning}
+                </div>
+              ))}
+            </section>
+          )}
 
           <h3 className="lineup-heading">
             Q{selectedQuarter} Positions
