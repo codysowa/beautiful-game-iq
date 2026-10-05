@@ -526,43 +526,42 @@ function App() {
 
     const loadedGames = gameData || []
     const gameIds = loadedGames.map((game) => game.id)
-    const { data: eventData, error: eventError } = gameIds.length > 0
-      ? await supabase
-          .from('game_events')
-          .select('*')
-          .in('game_id', gameIds)
-          .order('created_at', { ascending: true })
-      : { data: [], error: null }
 
-    if (eventError) {
-      console.error(eventError)
-    }
+    const [
+      { data: eventData, error: eventError },
+      { data: lineupData, error: lineupError },
+      { data: actualLineupData, error: actualLineupError },
+      { data: positionSegmentData, error: positionSegmentError },
+    ] = gameIds.length > 0
+      ? await Promise.all([
+          supabase
+            .from('game_events')
+            .select('*')
+            .in('game_id', gameIds)
+            .order('created_at', { ascending: true }),
+          supabase
+            .from('game_lineups')
+            .select('player_id, quarter, position, game_id')
+            .in('game_id', gameIds),
+          supabase
+            .from('game_live_lineups')
+            .select('player_id, quarter, position, game_id')
+            .in('game_id', gameIds),
+          supabase
+            .from('game_position_segments')
+            .select('id, game_id, quarter, player_id, position, started_at, ended_at')
+            .in('game_id', gameIds),
+        ])
+      : [
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+          { data: [], error: null },
+        ]
 
-    const { data: lineupData, error: lineupError } = gameIds.length > 0
-      ? await supabase
-          .from('game_lineups')
-          .select('player_id, quarter, position, game_id')
-          .in('game_id', gameIds)
-      : { data: [], error: null }
-
+    if (eventError) console.error(eventError)
     if (lineupError) console.error(lineupError)
-
-    const { data: actualLineupData, error: actualLineupError } = gameIds.length > 0
-      ? await supabase
-          .from('game_live_lineups')
-          .select('player_id, quarter, position, game_id')
-          .in('game_id', gameIds)
-      : { data: [], error: null }
-
     if (actualLineupError) console.error(actualLineupError)
-
-    const { data: positionSegmentData, error: positionSegmentError } = gameIds.length > 0
-      ? await supabase
-          .from('game_position_segments')
-          .select('id, game_id, quarter, player_id, position, started_at, ended_at')
-          .in('game_id', gameIds)
-      : { data: [], error: null }
-
     if (positionSegmentError) console.error(positionSegmentError)
 
     const { data: { user } } = await supabase.auth.getUser()
