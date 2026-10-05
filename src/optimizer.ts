@@ -241,7 +241,6 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
     const doubleBenchBonus = benchStreak >= 2 ? 12000 : 0
     const maxBenchProtectionBonus = stats.bench >= maxBench ? 8000 : 0
     const targetNeed = Math.max(0, (input.teamRules?.target_quarters_played ?? 3) - stats.played) * 12
-    const minimumNeed = Math.max(0, (input.teamRules?.min_quarters_played ?? 0) - stats.played) * 25
     const priorityBonus: Record<string, number> = { Core: 100, Regular: 20, Development: 0, Situational: 10, Limited: -40 }
     const toleranceBonus: Record<string, number> = { Minimal: stats.bench * -20, Normal: stats.bench * -5, Flexible: stats.bench * 5 }
     const attackingFit = Math.max(Number(player.position_preferences?.STR || 0), Number(player.position_preferences?.MID || 0))
@@ -482,7 +481,7 @@ export function optimizeWholeGame(input: OptimizerInput): WholeGamePlan {
           if (role === 'MID') special -= 70
         }
       }
-      return situationFit(player, role) + special + playerSituationBonus(player) + priorityBonus[player.usage_priority || 'Regular'] + toleranceBonus[player.bench_tolerance || 'Normal'] + need + minimumNeed + roleDiversity + repeatedRolePenalty + lastPositionBonus + lastRoleBonus + benchFairness + consecutiveBenchProtection + doubleBenchProtection + maxBenchProtection - stats.played * 18 - stats.bench * 3
+      return situationFit(player, role) + special + playerSituationBonus(player) + priorityBonus[player.usage_priority || 'Regular'] + toleranceBonus[player.bench_tolerance || 'Normal'] + need + roleDiversity + repeatedRolePenalty + lastPositionBonus + lastRoleBonus + benchFairness + consecutiveBenchProtection + doubleBenchProtection + maxBenchProtection - stats.played * 18 - stats.bench * 3
     }
     while (remainingPositions.length > 0) {
       let best: { player: Player; position: string; score: number } | null = null
