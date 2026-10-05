@@ -4254,200 +4254,7 @@ function playerAtPosition(position: string) {
             )
           })()}
 
-          <section style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }}>
-            <div style={{ marginBottom: '10px' }}>
-              <strong style={{ fontSize: 18 }}>Full Game Lineup</strong>
-              <div style={{ fontSize: 12, opacity: 0.7, marginTop: 3 }}>
-                Q1-Q4 at a glance. The current quarter reflects any unsaved changes.
-              </div>
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
-              {[1, 2, 3, 4].map((quarter) => {
-                const quarterLineup = quarter === selectedQuarter
-                  ? lineup
-                  : allGameLineups.filter((item) => item.quarter === quarter)
-                const byPosition = new Map(quarterLineup.map((item) => [item.position, item]))
-                const benchCount = Math.max(0, players.length - quarterLineup.length)
-                const rows = formationRows[optimizationFormation] || []
-
-                return (
-                  <div
-                    key={quarter}
-                    style={{
-                      padding: 10,
-                      border: selectedQuarter === quarter ? '2px solid #888' : '1px solid #cfd8cf',
-                      borderRadius: 10,
-                      background: selectedQuarter === quarter ? '#f7faf7' : '#fafafa',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
-                      <strong>Q{quarter} ({quarterLineup.length})</strong>
-                      <span style={{ fontSize: 12, opacity: 0.7 }}>Bench: {benchCount}</span>
-                    </div>
-
-                    <div
-                      style={{
-                        borderRadius: 8,
-                        padding: 7,
-                        background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)',
-                        border: '1px solid #b8cdb8',
-                        display: 'grid',
-                        gap: 5,
-                      }}
-                    >
-                      {rows.map((row, rowIndex) => (
-                        <div
-                          key={rowIndex}
-                          style={{
-                            display: 'grid',
-                            gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
-                            gap: 5,
-                          }}
-                        >
-                          {row.map((position) => {
-                            const item = byPosition.get(position)
-                            const player = item ? players.find((p) => p.id === item.player_id) : null
-
-                            return (
-                              <div
-                                key={position}
-                                style={{
-                                  minHeight: 42,
-                                  padding: '4px 2px',
-                                  border: '1px solid #aab8aa',
-                                  borderRadius: 6,
-                                  background: '#fff',
-                                  textAlign: 'center',
-                                }}
-                              >
-                                <div style={{ fontSize: 9, fontWeight: 800, opacity: 0.6 }}>
-                                  {positionShort(position)}
-                                </div>
-                                <div style={{ fontWeight: 700, fontSize: 11, lineHeight: 1.15 }}>
-                                  {player
-                                    ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}`
-                                    : '—'}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-
-          <div className="quarter-tabs">
-            {[1, 2, 3, 4].map((quarter) => {
-              const count = allGameLineups.filter(
-                (item) => item.quarter === quarter
-              ).length
-
-              return (
-                <button
-                  key={quarter}
-                  className={
-                    selectedQuarter === quarter
-                      ? 'primary-button'
-                      : 'secondary-button'
-                  }
-                  onClick={() => void changeQuarter(quarter)}
-                  disabled={savingLineup || changingQuarter}
-                >
-                  Q{quarter}
-                  <span
-                    style={{
-                      marginLeft: '4px',                      fontSize: '11px',
-                    }}
-                  >
-                    ({count})
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-
-          <details style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }} open={false}>
-            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
-              Copy Lineups
-            </summary>
-
-            <div style={{ marginTop: '10px' }}>
-              <div className="quarter-copy-controls">
-                <label>
-                  <span>Copy lineup from</span>
-                  <select
-                    value={copySourceQuarter}
-                    onChange={(e) => setCopySourceQuarter(Number(e.target.value))}
-                    disabled={savingLineup || !canManageGame}
-                  >
-                    <option value={0}>Choose quarter</option>
-                    {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
-                      <option key={quarter} value={quarter}>Q{quarter}</option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  disabled={!copySourceQuarter || savingLineup || !canManageGame}
-                  onClick={() => void copyQuarterFromCurrentGame(copySourceQuarter)}
-                >
-                  Copy Q{copySourceQuarter || '?'} → Q{selectedQuarter}
-                </button>
-              </div>
-
-              {previousGamesForCopy().length > 0 && (
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #eee' }}>
-                  <h3 style={{ margin: '0 0 8px' }}>Copy From Previous Game</h3>
-                  <div style={{ display: 'grid', gap: '8px' }}>
-                    <select
-                      value={copySourceGameId}
-                      onChange={(e) => setCopySourceGameId(e.target.value)}
-                      disabled={savingLineup || !canManageGame}
-                    >
-                      <option value="">Select a previous game...</option>
-                      {previousGamesForCopy().map((game) => (
-                        <option key={game.id} value={game.id}>
-                          {game.game_date} — {game.opponent}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="primary-button"
-                      onClick={copyEntireGameFromGame}
-                      disabled={savingLineup || !canManageGame || !copySourceGameId}
-                    >
-                      Copy Entire Game
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </details>
-
-          {rotationWarnings().length > 0 && (
-            <section
-              style={{
-                marginBottom: '12px',
-                padding: '12px',
-                border: '1px solid #d6a84f',
-                borderRadius: '10px',
-                background: '#fffaf0',
-              }}
-            >
-              <strong>Rotation Check</strong>
-              {rotationWarnings().map((warning) => (
-                <div key={warning} style={{ marginTop: '6px', fontSize: '13px' }}>
-                  {warning}
-                </div>
-              ))}
-            </section>
           )}
 
           <h3 className="lineup-heading">
@@ -4655,6 +4462,201 @@ function playerAtPosition(position: string) {
             </div>
           )}
         </section>
+
+          <section style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }}>
+            <div style={{ marginBottom: '10px' }}>
+              <strong style={{ fontSize: 18 }}>Full Game Lineup</strong>
+              <div style={{ fontSize: 12, opacity: 0.7, marginTop: 3 }}>
+                Q1-Q4 at a glance. The current quarter reflects any unsaved changes.
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+              {[1, 2, 3, 4].map((quarter) => {
+                const quarterLineup = quarter === selectedQuarter
+                  ? lineup
+                  : allGameLineups.filter((item) => item.quarter === quarter)
+                const byPosition = new Map(quarterLineup.map((item) => [item.position, item]))
+                const benchCount = Math.max(0, players.length - quarterLineup.length)
+                const rows = formationRows[optimizationFormation] || []
+
+                return (
+                  <div
+                    key={quarter}
+                    style={{
+                      padding: 10,
+                      border: selectedQuarter === quarter ? '2px solid #888' : '1px solid #cfd8cf',
+                      borderRadius: 10,
+                      background: selectedQuarter === quarter ? '#f7faf7' : '#fafafa',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+                      <strong>Q{quarter} ({quarterLineup.length})</strong>
+                      <span style={{ fontSize: 12, opacity: 0.7 }}>Bench: {benchCount}</span>
+                    </div>
+
+                    <div
+                      style={{
+                        borderRadius: 8,
+                        padding: 7,
+                        background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)',
+                        border: '1px solid #b8cdb8',
+                        display: 'grid',
+                        gap: 5,
+                      }}
+                    >
+                      {rows.map((row, rowIndex) => (
+                        <div
+                          key={rowIndex}
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
+                            gap: 5,
+                          }}
+                        >
+                          {row.map((position) => {
+                            const item = byPosition.get(position)
+                            const player = item ? players.find((p) => p.id === item.player_id) : null
+
+                            return (
+                              <div
+                                key={position}
+                                style={{
+                                  minHeight: 42,
+                                  padding: '4px 2px',
+                                  border: '1px solid #aab8aa',
+                                  borderRadius: 6,
+                                  background: '#fff',
+                                  textAlign: 'center',
+                                }}
+                              >
+                                <div style={{ fontSize: 9, fontWeight: 800, opacity: 0.6 }}>
+                                  {positionShort(position)}
+                                </div>
+                                <div style={{ fontWeight: 700, fontSize: 11, lineHeight: 1.15 }}>
+                                  {player
+                                    ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}`
+                                    : '—'}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+
+          <div className="quarter-tabs">
+            {[1, 2, 3, 4].map((quarter) => {
+              const count = allGameLineups.filter(
+                (item) => item.quarter === quarter
+              ).length
+
+              return (
+                <button
+                  key={quarter}
+                  className={
+                    selectedQuarter === quarter
+                      ? 'primary-button'
+                      : 'secondary-button'
+                  }
+                  onClick={() => void changeQuarter(quarter)}
+                  disabled={savingLineup || changingQuarter}
+                >
+                  Q{quarter}
+                  <span
+                    style={{
+                      marginLeft: '4px',                      fontSize: '11px',
+                    }}
+                  >
+                    ({count})
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <details style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }} open={false}>
+            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
+              Copy Lineups
+            </summary>
+
+            <div style={{ marginTop: '10px' }}>
+              <div className="quarter-copy-controls">
+                <label>
+                  <span>Copy lineup from</span>
+                  <select
+                    value={copySourceQuarter}
+                    onChange={(e) => setCopySourceQuarter(Number(e.target.value))}
+                    disabled={savingLineup || !canManageGame}
+                  >
+                    <option value={0}>Choose quarter</option>
+                    {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
+                      <option key={quarter} value={quarter}>Q{quarter}</option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={!copySourceQuarter || savingLineup || !canManageGame}
+                  onClick={() => void copyQuarterFromCurrentGame(copySourceQuarter)}
+                >
+                  Copy Q{copySourceQuarter || '?'} → Q{selectedQuarter}
+                </button>
+              </div>
+
+              {previousGamesForCopy().length > 0 && (
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #eee' }}>
+                  <h3 style={{ margin: '0 0 8px' }}>Copy From Previous Game</h3>
+                  <div style={{ display: 'grid', gap: '8px' }}>
+                    <select
+                      value={copySourceGameId}
+                      onChange={(e) => setCopySourceGameId(e.target.value)}
+                      disabled={savingLineup || !canManageGame}
+                    >
+                      <option value="">Select a previous game...</option>
+                      {previousGamesForCopy().map((game) => (
+                        <option key={game.id} value={game.id}>
+                          {game.game_date} — {game.opponent}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={copyEntireGameFromGame}
+                      disabled={savingLineup || !canManageGame || !copySourceGameId}
+                    >
+                      Copy Entire Game
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </details>
+
+          {rotationWarnings().length > 0 && (
+            <section
+              style={{
+                marginBottom: '12px',
+                padding: '12px',
+                border: '1px solid #d6a84f',
+                borderRadius: '10px',
+                background: '#fffaf0',
+              }}
+            >
+              <strong>Rotation Check</strong>
+              {rotationWarnings().map((warning) => (
+                <div key={warning} style={{ marginTop: '6px', fontSize: '13px' }}>
+                  {warning}
+                </div>
+              ))}
+            </section>
 
         {renderPlayingTimeTracker()}
 
