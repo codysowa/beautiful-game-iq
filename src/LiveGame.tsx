@@ -535,12 +535,15 @@ export default function LiveGame({
       const assists = events.filter(
         (event) => event.event_type === 'our_goal' && event.assister_id === player.id
       ).length
+      const shots = events.filter(
+        (event) => event.event_type === 'our_shot' && event.player_id === player.id
+      ).length
       const saves = events.filter(
         (event) => event.event_type === 'save' && event.player_id === player.id
       ).length
-      return { ...player, goals, assists, saves }
+      return { ...player, goals, assists, shots, saves }
     })
-    .filter((player) => player.goals > 0 || player.assists > 0 || player.saves > 0)
+    .filter((player) => player.goals > 0 || player.assists > 0 || player.shots > 0 || player.saves > 0)
 
   const formationSituationWarning =
     nextQuarterSituation === 'Pull Back' && nextQuarterFormation !== '4-1-1'
@@ -1266,7 +1269,8 @@ export default function LiveGame({
                   <div style={{ display: 'flex', gap: 8 }}>
                     {player.goals > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>⚽ {player.goals}</span>}
                     {player.assists > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>A {player.assists}</span>}
-                    {player.saves > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>🧤 {player.saves}</span>}
+                    {player.shots > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>S {player.shots}</span>}
+                    {player.saves > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>🧤 {player.saves}</span>
                   </div>
                 </div>
               ))}
