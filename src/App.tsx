@@ -4253,9 +4253,6 @@ function playerAtPosition(position: string) {
             )
           })()}
 
-
-          )}
-
           <h3 className="lineup-heading">
             Q{selectedQuarter} Positions
           </h3>
@@ -4656,8 +4653,9 @@ function playerAtPosition(position: string) {
                 </div>
               ))}
             </section>
+          )}
 
-        {renderPlayingTimeTracker()}
+          {renderPlayingTimeTracker()}
 
       </>
     )
