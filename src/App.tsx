@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+
 import { supabase } from './supabase'
 import LiveGame from './LiveGame'
+import Monetization from './Monetization'
+import { APP_PLATFORM, APP_VERSION } from './appInfo'
 import {
   getRotationAdvice as getSharedRotationAdvice,
   optimizationFormations,
   getDefaultFormationForFormat,
   getFormationsForFormat,
+  formationRows,
   optimizeWholeGame as getSharedWholeGamePlan,
 } from './optimizer'
 
@@ -16,17 +20,24 @@ type Team = {
   age_group: string
   format: string
   season: string
+  archived: boolean
+  city: string | null
+  coach_name: string | null
+  join_code: string | null
   max_gk_quarters: number | null
   max_bench_quarters: number | null
   min_quarters_played: number | null
   target_quarters_played: number | null
   require_everyone_play: boolean | null
+  default_formation: string | null
 }
 
 type Player = {
   id: string
   team_id: string
   name: string
+  first_name: string | null
+  last_name: string | null
   jersey_number: number | null
   usage_priority: 'Core' | 'Regular' | 'Development' | 'Situational' | 'Limited' | null
   bench_tolerance: 'Minimal' | 'Normal' | 'Flexible' | null
@@ -53,12 +64,14 @@ type Game = {
 type AttendanceRecord = {
   status: 'Present' | 'Absent' | 'Late'
   arrival_quarter: number | null
+  departure_quarter: number | null
+  available_quarters: number[]
 }
 
 type GameEvent = {
   id: string
   game_id: string
-  event_type: 'our_goal' | 'their_goal'
+  event_type: 'our_goal' | 'their_goal' | 'save' | 'our_shot'
   player_id: string | null
   assister_id: string | null
   quarter: number
@@ -71,6 +84,16 @@ type LineupItem = {
   position: string
 }
 
+type PositionSegment = {
+  id: string
+  game_id: string
+  quarter: number
+  player_id: string
+  position: string
+  started_at: string
+  ended_at: string | null
+}
+
 const TEAM_ID = '92713845-68a3-4bdc-9455-9d93c24744bf'
 
 // Position slots are driven by the selected formation.
@@ -78,6 +101,43 @@ const TEAM_ID = '92713845-68a3-4bdc-9455-9d93c24744bf'
 // Strikers at the top, GK at the bottom.
 function positionsForFormation(formation: string) {
   return [...(optimizationFormations[formation] || optimizationFormations['3-1-2'])].reverse()
+}
+
+function availabilityFromAttendanceRow(row: { status: 'Present' | 'Absent' | 'Late'; arrival_quarter: number | null; departure_quarter: number | null; available_quarters?: number[] | null }) {
+  if (Array.isArray(row.available_quarters)) return row.available_quarters.map(Number).filter((q) => q >= 1 && q <= 4)
+  if (row.status === 'Absent') return []
+  const start = row.status === 'Late' ? (row.arrival_quarter || 2) : 1
+  const end = row.departure_quarter || 4
+  return [1, 2, 3, 4].filter((q) => q >= start && q <= end)
+}
+
+function attendanceSummary(quarters: number[]) {
+  const sorted = [...quarters].sort((a, b) => a - b)
+  if (sorted.length === 0) return 'Absent all game'
+  if (sorted.length === 4) return 'Available all game'
+  const expected = Array.from({ length: sorted.length }, (_, i) => sorted[0] + i)
+  const contiguous = expected.every((q, i) => q === sorted[i])
+  if (contiguous && sorted[0] > 1) return `Arrives Q${sorted[0]}`
+  if (contiguous && sorted[sorted.length - 1] < 4) return `Leaves after Q${sorted[sorted.length - 1]}`
+  return 'Custom availability'
+}
+
+function legacyAttendanceFields(quarters: number[]) {
+  const sorted = [...quarters].sort((a, b) => a - b)
+  if (sorted.length === 0) return { status: 'Absent' as const, arrival_quarter: null, departure_quarter: null }
+  const contiguous = sorted.every((q, i) => q === sorted[0] + i)
+  const arrival = contiguous && sorted[0] > 1 ? sorted[0] : null
+  const departure = contiguous && sorted[sorted.length - 1] < 4 ? sorted[sorted.length - 1] : null
+  return { status: arrival ? 'Late' as const : 'Present' as const, arrival_quarter: arrival, departure_quarter: departure }
+}
+
+function inferFormationForLineup(items: LineupItem[], format: string, fallback: string) {
+  const positions = new Set(items.map((item) => item.position))
+  const match = getFormationsForFormat(format).find((formation) => {
+    const slots = optimizationFormations[formation] || []
+    return slots.length === items.length && slots.every((slot) => positions.has(slot))
+  })
+  return match || fallback
 }
 
 function positionShort(position: string) {
@@ -108,14 +168,63 @@ function formatGameTime(time: string | null) {
   return `${hour12}:${String(minutes).padStart(2, '0')} ${suffix}`
 }
 
+function buildGameDateOptions() {
+  const start = new Date()
+  start.setHours(12, 0, 0, 0)
+
+  return Array.from({ length: 366 }, (_, index) => {
+    const date = new Date(start)
+    date.setDate(start.getDate() + index)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const value = `${year}-${month}-${day}`
+    const label = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).format(date)
+    return { value, label }
+  })
+}
+
+function buildGameTimeOptions() {
+  return Array.from({ length: 65 }, (_, index) => {
+    const totalMinutes = 6 * 60 + index * 15
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+    const hour12 = hours % 12 || 12
+    const suffix = hours >= 12 ? 'PM' : 'AM'
+    const value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+    const label = `${hour12}:${String(minutes).padStart(2, '0')} ${suffix}`
+    return { value, label }
+  })
+}
+
+function localDateInputValue() {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
+
+function generateJoinCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const values = new Uint32Array(6)
+  crypto.getRandomValues(values)
+  return Array.from(values, (value) => chars[value % chars.length]).join('')
+}
+
 function App() {
   const [team, setTeam] = useState<Team | null>(null)
   const [teams, setTeams] = useState<Team[]>([])
+  const [archivedTeams, setArchivedTeams] = useState<Team[]>([])
+  const [archivedViewTeam, setArchivedViewTeam] = useState<Team | null>(null)
+  const [archivedViewPlayers, setArchivedViewPlayers] = useState<Player[]>([])
+  const [archivedViewGames, setArchivedViewGames] = useState<Game[]>([])
   const [selectedTeamId, setSelectedTeamId] = useState(TEAM_ID)
   const [players, setPlayers] = useState<Player[]>([])
   const [games, setGames] = useState<Game[]>([])
   const [gameEvents, setGameEvents] = useState<GameEvent[]>([])
-  const [seasonLineups, setSeasonLineups] = useState<LineupItem[]>([])
+  const [seasonLineups, setSeasonLineups] = useState<(LineupItem & { game_id: string })[]>([])
+  const [actualSeasonLineups, setActualSeasonLineups] = useState<(LineupItem & { game_id: string })[]>([])
+  const [positionSegments, setPositionSegments] = useState<PositionSegment[]>([])
 
   const [screen, setScreen] = useState<
     'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches'
@@ -123,31 +232,32 @@ function App() {
 
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
   const [selectedQuarter, setSelectedQuarter] = useState(1)
+  const [copySourceGameId, setCopySourceGameId] = useState('')
+  const [copySourceQuarter, setCopySourceQuarter] = useState(0)
 
   const [lineup, setLineup] = useState<LineupItem[]>([])
   const [allGameLineups, setAllGameLineups] = useState<LineupItem[]>([])
-  const [lineupView, setLineupView] = useState<'table' | 'formation'>('table')
   const [gameAttendance, setGameAttendance] = useState<Record<string, AttendanceRecord>>({})
   const [captain1Id, setCaptain1Id] = useState('')
   const [captain2Id, setCaptain2Id] = useState('')
+  const [selectedPreplanPlayerId, setSelectedPreplanPlayerId] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [savingLineup, setSavingLineup] = useState(false)
   const [wholeGameSuggestion, setWholeGameSuggestion] = useState<LineupItem[] | null>(null)
-  const [gameSituation, setGameSituation] = useState<'Normal' | 'Protect Lead' | 'Need Goal' | 'Development' | 'Pull Back / AYSO Mode'>('Normal')
-  const [optimizationFormation, setOptimizationFormation] = useState('3-1-2')
+  const [gameSituation, setGameSituation] = useState<'Normal' | 'Protect Lead' | 'Need Goal' | 'Development' | 'Pull Back'>('Normal')
+  const [optimizationFormation, setOptimizationFormation] = useState('3-2-1')
+  const [defaultFormation, setDefaultFormation] = useState('3-2-1')
   const [quarterSuggestion, setQuarterSuggestion] = useState<ReturnType<typeof getSharedRotationAdvice> | null>(null)
 
   useEffect(() => {
     if (!selectedGame) return
-    const formations = getFormationsForFormat(selectedGame.format)
-    const defaultFormation = getDefaultFormationForFormat(selectedGame.format)
-    setOptimizationFormation((current) => formations.includes(current) ? current : defaultFormation)
     setWholeGameSuggestion(null)
     setQuarterSuggestion(null)
-  }, [selectedGame?.format])
+  }, [selectedGame?.id])
 
-  const [newPlayerName, setNewPlayerName] = useState('')
+  const [newPlayerFirstName, setNewPlayerFirstName] = useState('')
+  const [newPlayerLastName, setNewPlayerLastName] = useState('')
   const [newPlayerNumber, setNewPlayerNumber] = useState('')
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null)
   const [coachProfilePlayerId, setCoachProfilePlayerId] = useState<string | null>(null)
@@ -159,19 +269,34 @@ function App() {
   const [requireEveryonePlay, setRequireEveryonePlay] = useState(true)
 
   const [opponent, setOpponent] = useState('')
-  const [gameDate, setGameDate] = useState('')
+  const [gameDate, setGameDate] = useState(localDateInputValue())
   const [gameTime, setGameTime] = useState('')
   const [location, setLocation] = useState('')
   const [homeAway, setHomeAway] = useState('Home')
   const [gameNotes, setGameNotes] = useState('')
   const [showNewTeamForm, setShowNewTeamForm] = useState(false)
+  const [showNewUserOnboarding, setShowNewUserOnboarding] = useState(false)
+  const [showJoinTeam, setShowJoinTeam] = useState(false)
+  const [showArchivedTeams, setShowArchivedTeams] = useState(false)
+  const [joinTeamSearch, setJoinTeamSearch] = useState('')
+  const [joinTeamResults, setJoinTeamResults] = useState<Team[]>([])
+  const [joinRequestTeamIds, setJoinRequestTeamIds] = useState<string[]>([])
+  const [joinRequests, setJoinRequests] = useState<Array<{ id: string; team_id: string; user_id: string; status: 'pending' | 'approved' | 'denied'; created_at: string; full_name: string; email: string }>>([])
+  const [analyticsSort, setAnalyticsSort] = useState<'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'shots' | 'saves' | 'captain'>('player')
+  const [analyticsSortAsc, setAnalyticsSortAsc] = useState(true)
   const [newTeamName, setNewTeamName] = useState('')
+  const [newTeamCity, setNewTeamCity] = useState('')
+  const [newTeamCoachName, setNewTeamCoachName] = useState('')
+  const [joinCodeSearch, setJoinCodeSearch] = useState('')
   const [newTeamAgeGroup, setNewTeamAgeGroup] = useState('U10')
   const [newTeamFormat, setNewTeamFormat] = useState('7v7')
-  const [newTeamSeason, setNewTeamSeason] = useState('Fall 2026')
-  const [staff, setStaff] = useState<Array<{ user_id: string; role: 'owner' | 'coach' | 'viewer'; full_name: string; email: string }>>([])
+  const [newTeamSeasonType, setNewTeamSeasonType] = useState('Fall')
+  const [newTeamSeasonYear, setNewTeamSeasonYear] = useState('2026')
+  const [staff, setStaff] = useState<Array<{ user_id: string; role: 'owner' | 'coach' | 'viewer'; is_head_coach: boolean; full_name: string; email: string }>>([])
   const [currentUserName, setCurrentUserName] = useState('')
+  const [currentUserEmail, setCurrentUserEmail] = useState('')
   const [currentUserId, setCurrentUserId] = useState('')
+  const [deletingAccount, setDeletingAccount] = useState(false)
   const [currentUserRole, setCurrentUserRole] = useState<'owner' | 'coach' | 'viewer' | null>(null)
   const [coachDraft, setCoachDraft] = useState<{ playerId: string; usage_priority: NonNullable<Player['usage_priority']>; bench_tolerance: NonNullable<Player['bench_tolerance']>; position_preferences: Record<string, number>; avoid_positions: string[]; coach_notes: string } | null>(null)
   const [bugReportOpen, setBugReportOpen] = useState(false)
@@ -187,6 +312,31 @@ function App() {
     if (error) {
       console.error(error)
       alert(`Could not sign out: ${error.message}`)
+    }
+  }
+
+  async function deleteAccount() {
+    if (deletingAccount) return
+
+    const confirmed = confirm(
+      'Delete your Beautiful Game IQ account? This will permanently delete your account and personal data. Any team you own will be transferred to an existing coach so the team data can be preserved. This cannot be undone.'
+    )
+
+    if (!confirmed) return
+
+    setDeletingAccount(true)
+
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-account')
+
+      if (error) throw error
+      if (!data?.success) throw new Error(data?.error || 'Account deletion failed')
+
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.error(error)
+      alert(`Could not delete your account: ${error instanceof Error ? error.message : 'Unexpected error'}`)
+      setDeletingAccount(false)
     }
   }
 
@@ -208,6 +358,36 @@ function App() {
     await loadApp(selectedTeamId)
   }
 
+  async function setHeadCoach(member: { user_id: string; role: 'owner' | 'coach' | 'viewer'; is_head_coach: boolean; full_name: string; email: string }, makeHeadCoach: boolean) {
+    if (currentUserRole !== 'owner' || member.role === 'viewer') return
+
+    if (makeHeadCoach) {
+      const { error: clearError } = await supabase
+        .from('team_members')
+        .update({ is_head_coach: false })
+        .eq('team_id', selectedTeamId)
+
+      if (clearError) {
+        console.error(clearError)
+        alert(`Could not update Head Coach: ${clearError.message}`)
+        return
+      }
+    }
+
+    const { error: setError } = await supabase
+      .from('team_members')
+      .update({ is_head_coach: makeHeadCoach })
+      .eq('team_id', selectedTeamId)
+      .eq('user_id', member.user_id)
+
+    if (setError) {
+      console.error(setError)
+      alert(`Could not update ${member.full_name} as Head Coach: ${setError.message}`)
+      return
+    }
+
+    await loadApp(selectedTeamId)
+  }
   async function removeStaffMember(member: { user_id: string; role: 'owner' | 'coach' | 'viewer'; full_name: string; email: string }) {
     if (currentUserRole !== 'owner' || member.role === 'owner') return
     if (!confirm(`Remove ${member.full_name} from ${team?.name || 'this team'}? They will lose access to the team.`)) return
@@ -224,6 +404,44 @@ function App() {
       return
     }
 
+    setStaff((current) => current.filter((item) => item.user_id !== member.user_id))
+  }
+
+  async function leaveTeam() {
+    if (currentUserRole === 'owner') {
+      alert('Team owners cannot leave their own team. Transfer ownership before leaving.')
+      return
+    }
+
+    if (!selectedTeamId || !team) return
+
+    if (!confirm(`Leave ${team.name}? You will lose access to this team and its games, roster, and coaching tools.`)) return
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !user?.id) {
+      console.error(userError)
+      alert(`Could not identify the signed-in user: ${userError?.message || 'Unknown error'}`)
+      return
+    }
+
+    const { error } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('team_id', selectedTeamId)
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not leave ${team.name}: ${error.message}`)
+      return
+    }
+
+    setShowJoinTeam(false)
+    setJoinTeamResults([])
+    setJoinTeamSearch('')
+    setJoinCodeSearch('')
+    setScreen('home')
     await loadApp(selectedTeamId)
   }
 
@@ -232,7 +450,7 @@ function App() {
 
     const { data: membershipData, error: membershipError } = await supabase
       .from('team_members')
-      .select('team_id, role, user_id')
+      .select('team_id, role, user_id, is_head_coach')
 
     if (membershipError) {
       console.error(membershipError)
@@ -243,22 +461,53 @@ function App() {
 
     const memberships = membershipData || []
     const accessibleTeamIds = memberships.map((membership) => membership.team_id)
+    const { data: accessibleTeamsForSelection, error: accessibleTeamsSelectionError } = accessibleTeamIds.length > 0
+      ? await supabase
+          .from('teams')
+          .select('*')
+          .in('id', accessibleTeamIds)
+          .eq('archived', false)
+          .order('name', { ascending: true })
+      : { data: [], error: null }
+
+    if (accessibleTeamsSelectionError) {
+      console.error(accessibleTeamsSelectionError)
+      alert(`Could not load your teams: ${accessibleTeamsSelectionError.message}`)
+      setLoading(false)
+      return
+    }
+
+    const activeTeamIds = (accessibleTeamsForSelection || []).map((availableTeam) => availableTeam.id)
+    const archivedTeamIds = accessibleTeamIds.filter((teamId) => !(activeTeamIds.includes(teamId)))
+    const { data: archivedTeamsData } = archivedTeamIds.length > 0
+      ? await supabase.from('teams').select('*').in('id', archivedTeamIds).order('name', { ascending: true })
+      : { data: [] }
+
+    setArchivedTeams(archivedTeamsData || [])
 
 
-    if (accessibleTeamIds.length === 0) {
+    if (activeTeamIds.length === 0) {
+      const { data: { user } } = await supabase.auth.getUser()
+      setCurrentUserEmail(user?.email || '')
+      setCurrentUserName(user?.user_metadata?.display_name || user?.user_metadata?.full_name || '')
+      setCurrentUserId(user?.id || '')
+      setCurrentUserRole(memberships.find((membership) => membership.role === 'owner')?.role || memberships[0]?.role || null)
       setTeams([])
       setTeam(null)
       setPlayers([])
       setGames([])
       setGameEvents([])
       setSeasonLineups([])
+      setShowNewUserOnboarding(true)
       setLoading(false)
       return
     }
 
-    const activeTeamId = accessibleTeamIds.includes(teamId)
+    setShowNewUserOnboarding(false)
+
+    const activeTeamId = activeTeamIds.includes(teamId)
       ? teamId
-      : accessibleTeamIds[0]
+      : activeTeamIds[0]
 
     if (activeTeamId !== selectedTeamId) {
       setSelectedTeamId(activeTeamId)
@@ -271,7 +520,7 @@ function App() {
         supabase.from('players').select('*').eq('team_id', activeTeamId)
           .order('jersey_number', { ascending: true, nullsFirst: false }),
         supabase.from('games').select('*').eq('team_id', activeTeamId).order('game_date', { ascending: true }),
-        supabase.from('teams').select('*').in('id', accessibleTeamIds).order('name', { ascending: true }),
+        supabase.from('teams').select('*').in('id', accessibleTeamIds).eq('archived', false).order('name', { ascending: true }),
       ])
 
     const loadedGames = gameData || []
@@ -297,11 +546,30 @@ function App() {
 
     if (lineupError) console.error(lineupError)
 
+    const { data: actualLineupData, error: actualLineupError } = gameIds.length > 0
+      ? await supabase
+          .from('game_live_lineups')
+          .select('player_id, quarter, position, game_id')
+          .in('game_id', gameIds)
+      : { data: [], error: null }
+
+    if (actualLineupError) console.error(actualLineupError)
+
+    const { data: positionSegmentData, error: positionSegmentError } = gameIds.length > 0
+      ? await supabase
+          .from('game_position_segments')
+          .select('id, game_id, quarter, player_id, position, started_at, ended_at')
+          .in('game_id', gameIds)
+      : { data: [], error: null }
+
+    if (positionSegmentError) console.error(positionSegmentError)
+
     const { data: { user } } = await supabase.auth.getUser()
     const currentUserNameFromAuth =
       user?.user_metadata?.display_name ||
       user?.user_metadata?.full_name ||
       ''
+    setCurrentUserEmail(user?.email || '')
 
     if (user?.id) {
       const { error: profileUpsertError } = await supabase
@@ -348,6 +616,7 @@ function App() {
         return {
           user_id: membership.user_id,
           role: membership.role as 'owner' | 'coach' | 'viewer',
+          is_head_coach: membership.is_head_coach === true,
           full_name:
             profile?.full_name ||
             (isCurrentUser ? currentUserNameFromAuth : '') ||
@@ -357,6 +626,7 @@ function App() {
       })
     )
     setCurrentUserName(currentUserNameFromAuth)
+    setCurrentUserEmail(user?.email || '')
     setCurrentUserId(user?.id || '')
     setCurrentUserRole((teamMemberships.find((membership) => membership.user_id === user?.id)?.role as 'owner' | 'coach' | 'viewer' | undefined) || null)
     setTeam(teamData)
@@ -366,40 +636,82 @@ function App() {
       setMinQuartersPlayed(String(teamData.min_quarters_played ?? 0))
       setTargetQuartersPlayed(String(teamData.target_quarters_played ?? 3))
       setRequireEveryonePlay(teamData.require_everyone_play ?? true)
+      const teamDefault = teamData.default_formation || getDefaultFormationForFormat(teamData.format)
+      setDefaultFormation(getFormationsForFormat(teamData.format).includes(teamDefault) ? teamDefault : getDefaultFormationForFormat(teamData.format))
     }
-    setPlayers(playerData || [])
+    setPlayers((playerData || []).sort((a, b) => (a.jersey_number ?? Number.MAX_SAFE_INTEGER) - (b.jersey_number ?? Number.MAX_SAFE_INTEGER)))
     setGames(loadedGames)
     setGameEvents((eventData || []) as GameEvent[])
-    setSeasonLineups((lineupData || []) as LineupItem[])
+    setSeasonLineups((lineupData || []) as (LineupItem & { game_id: string })[])
+    setActualSeasonLineups((actualLineupData || []) as (LineupItem & { game_id: string })[])
+    setPositionSegments((positionSegmentData || []) as PositionSegment[])
     setLoading(false)
   }
 
+  async function viewArchivedTeam(archivedTeam: Team) {
+    setLoading(true)
+
+    const [{ data: playerData, error: playerError }, { data: gameData, error: gameError }] =
+      await Promise.all([
+        supabase
+          .from('players')
+          .select('*')
+          .eq('team_id', archivedTeam.id)
+          .order('jersey_number', { ascending: true, nullsFirst: false }),
+        supabase
+          .from('games')
+          .select('*')
+          .eq('team_id', archivedTeam.id)
+          .order('game_date', { ascending: true }),
+      ])
+
+    if (playerError || gameError) {
+      console.error(playerError || gameError)
+      alert(`Could not load archived season: ${(playerError || gameError)?.message || 'Unknown error'}`)
+      setLoading(false)
+      return
+    }
+
+    const archivedGameIds = (gameData || []).map((game) => game.id)
+    const { data: archivedEventData, error: archivedEventError } = archivedGameIds.length > 0
+      ? await supabase
+          .from('game_events')
+          .select('*')
+          .in('game_id', archivedGameIds)
+          .order('created_at', { ascending: true })
+      : { data: [], error: null }
+
+    if (archivedEventError) {
+      console.error(archivedEventError)
+      alert(`Could not load archived game results: ${archivedEventError.message}`)
+      setLoading(false)
+      return
+    }
+
+    setArchivedViewTeam(archivedTeam)
+    setArchivedViewPlayers(playerData || [])
+    setArchivedViewGames(gameData || [])
+    setGameEvents((archivedEventData || []) as GameEvent[])
+    setShowNewUserOnboarding(false)
+    setLoading(false)
+  }
   async function createTeam() {
     const name = newTeamName.trim()
+    const city = newTeamCity.trim()
+    const coachName = newTeamCoachName.trim()
+
     if (!name) {
       alert('Enter a team name.')
       return
     }
 
-    const { data, error } = await supabase
-      .from('teams')
-      .insert({
-        name,
-        age_group: newTeamAgeGroup,
-        format: newTeamFormat,
-        season: newTeamSeason.trim() || 'Fall 2026',
-        max_gk_quarters: 2,
-        max_bench_quarters: 2,
-        min_quarters_played: 0,
-        target_quarters_played: 3,
-        require_everyone_play: true,
-      })
-      .select('*')
-      .single()
+    if (!city) {
+      alert('Enter the team city.')
+      return
+    }
 
-    if (error) {
-      console.error(error)
-      alert(`Could not create team: ${error.message}`)
+    if (!coachName) {
+      alert('Enter the coach name.')
       return
     }
 
@@ -411,12 +723,41 @@ function App() {
       return
     }
 
+    const { data, error } = await supabase
+      .from('teams')
+      .insert({
+        created_by: userId,
+        owner_id: userId,
+        name,
+        city,
+        coach_name: coachName,
+        join_code: generateJoinCode(),
+        age_group: newTeamAgeGroup,
+        format: newTeamFormat,
+        season: `${newTeamSeasonType} ${newTeamSeasonYear}`.trim(),
+        max_gk_quarters: 2,
+        max_bench_quarters: 2,
+        min_quarters_played: 0,
+        target_quarters_played: 3,
+        require_everyone_play: true,
+        default_formation: getDefaultFormationForFormat(newTeamFormat),
+      })
+      .select('*')
+      .single()
+
+    if (error) {
+      console.error(error)
+      alert(`Could not create team: ${error.message}`)
+      return
+    }
+
     const { error: membershipInsertError } = await supabase
       .from('team_members')
       .insert({
         team_id: data.id,
         user_id: userId,
         role: 'owner',
+        is_head_coach: true,
       })
 
     if (membershipInsertError) {
@@ -426,6 +767,8 @@ function App() {
     }
 
     setNewTeamName('')
+    setNewTeamCity('')
+    setNewTeamCoachName('')
     setShowNewTeamForm(false)
     setSelectedTeamId(data.id)
   }
@@ -437,6 +780,7 @@ function App() {
       min_quarters_played: Number(minQuartersPlayed),
       target_quarters_played: Number(targetQuartersPlayed),
       require_everyone_play: requireEveryonePlay,
+      default_formation: defaultFormation,
     }
 
     if (Object.values(payload).some((value) => typeof value === 'number' && (Number.isNaN(value) || value < 0))) {
@@ -459,57 +803,48 @@ function App() {
     alert('Team Rules saved.')
   }
 
-  async function addOrUpdatePlayer() {
-    const name = newPlayerName.trim()
+  async function toggleTeamArchived() {
+    if (currentUserRole !== 'owner' || !team) return
 
-    if (!name) {
-      alert('Enter a player name.')
+    const nextArchived = !team.archived
+    const action = nextArchived ? 'archive' : 'unarchive'
+
+    if (!window.confirm(`Are you sure you want to ${action} ${team.name}?`)) return
+
+    const { error } = await supabase
+      .from('teams')
+      .update({ archived: nextArchived })
+      .eq('id', team.id)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not ${action} team: ${error.message}`)
       return
     }
 
+    await loadApp()
+    alert(nextArchived ? 'Team archived.' : 'Team unarchived.')
+  }
+  async function addOrUpdatePlayer() {
+    const firstName = newPlayerFirstName.trim()
+    const lastName = newPlayerLastName.trim()
+    const name = [firstName, lastName].filter(Boolean).join(' ')
+    if (!firstName) { alert('Enter a first name.'); return }
     const jerseyNumber = newPlayerNumber ? Number(newPlayerNumber) : null
-
-    if (editingPlayerId) {
-      const { error } = await supabase
-        .from('players')
-        .update({
-          name,
-          jersey_number: jerseyNumber,
-        })
-        .eq('id', editingPlayerId)
-
-      if (error) {
-        console.error(error)
-        alert('Could not update player.')
-        return
-      }
-    } else {
-      const { error } = await supabase.from('players').insert({
-        team_id: selectedTeamId,
-        name,
-        jersey_number: jerseyNumber,
-      })
-
-      if (error) {
-        console.error(error)
-        alert('Could not add player.')
-        return
-      }
-    }
-
-    setNewPlayerName('')
-    setNewPlayerNumber('')
-    setEditingPlayerId(null)
-
+    const payload = { name, first_name: firstName, last_name: lastName || null, jersey_number: jerseyNumber }
+    const result = editingPlayerId
+      ? await supabase.from('players').update(payload).eq('id', editingPlayerId)
+      : await supabase.from('players').insert({ team_id: selectedTeamId, ...payload })
+    if (result.error) { console.error(result.error); alert(editingPlayerId ? 'Could not update player.' : 'Could not add player.'); return }
+    setNewPlayerFirstName(''); setNewPlayerLastName(''); setNewPlayerNumber(''); setEditingPlayerId(null)
     await loadApp()
   }
 
   function editPlayer(player: Player) {
     setEditingPlayerId(player.id)
-    setNewPlayerName(player.name)
-    setNewPlayerNumber(
-      player.jersey_number === null ? '' : String(player.jersey_number)
-    )
+    setNewPlayerFirstName(player.first_name || player.name.split(' ')[0] || '')
+    setNewPlayerLastName(player.last_name || player.name.split(' ').slice(1).join(' '))
+    setNewPlayerNumber(player.jersey_number === null ? '' : String(player.jersey_number))
   }
 
   async function saveCoachProfile(player: Player, profile: {
@@ -551,14 +886,69 @@ function App() {
     await loadApp()
   }
 
+  async function resetGame(game: Game) {
+    if (!confirm(
+      `Reset the game vs. ${game.opponent}?\n\n` +
+        'This will remove all game activity: goals/events, live lineups, saved quarter lineups, and attendance. ' +
+        'The game itself will remain scheduled, with captains cleared. All players will default back to Present.'
+    )) {
+      return
+    }
+
+    const gameId = game.id
+
+    const [eventsResult, liveLineupsResult, lineupsResult, attendanceResult, positionSegmentsResult] = await Promise.all([
+      supabase.from('game_events').delete().eq('game_id', gameId),
+      supabase.from('game_live_lineups').delete().eq('game_id', gameId),
+      supabase.from('game_lineups').delete().eq('game_id', gameId),
+      supabase.from('game_attendance').delete().eq('game_id', gameId),
+      supabase.from('game_position_segments').delete().eq('game_id', gameId),
+    ])
+
+    const firstError =
+      eventsResult.error ||
+      liveLineupsResult.error ||
+      lineupsResult.error ||
+      attendanceResult.error ||
+      positionSegmentsResult.error
+
+    if (firstError) {
+      console.error(firstError)
+      alert(`Could not fully reset the game: ${firstError.message}`)
+      return
+    }
+
+    const { error: gameError } = await supabase
+      .from('games')
+      .update({
+        status: 'Scheduled',
+        captain_1_id: null,
+        captain_2_id: null,
+      })
+      .eq('id', gameId)
+
+    if (gameError) {
+      console.error(gameError)
+      alert(`Game activity was cleared, but the game could not be returned to Scheduled: ${gameError.message}`)
+      await loadApp()
+      return
+    }
+
+    await loadApp()
+    alert('Game reset. It is back to Scheduled with a clean slate.')
+  }
+
   async function createGame() {
     if (!opponent.trim()) {
       alert('Enter an opponent.')
       return
     }
 
-    if (!gameDate) {
-      alert('Enter a game date.')
+    const normalizedDate = gameDate
+    const normalizedTime = gameTime || null
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
+      alert('Choose a valid game date.')
       return
     }
 
@@ -567,8 +957,8 @@ function App() {
       .insert({
         team_id: selectedTeamId,
         opponent: opponent.trim(),
-        game_date: gameDate,
-        game_time: gameTime || null,
+        game_date: normalizedDate,
+        game_time: normalizedTime,
         format: team?.format || '7v7',
         location: location.trim() || null,
         home_away: homeAway,
@@ -585,7 +975,8 @@ function App() {
     }
 
     setOpponent('')
-    setGameDate('')
+    const resetDate = localDateInputValue()
+    setGameDate(resetDate)
     setGameTime('')
     setLocation('')
     setHomeAway('Home')
@@ -601,12 +992,14 @@ function App() {
   async function openLineup(game: Game) {
     setSelectedGame(game)
     setSelectedQuarter(1)
+    setCopySourceGameId('')
+    setCopySourceQuarter(0)
     setCaptain1Id(game.captain_1_id || '')
     setCaptain2Id(game.captain_2_id || '')
 
     const { data: attendanceData, error: attendanceError } = await supabase
       .from('game_attendance')
-      .select('player_id, status, arrival_quarter')
+      .select('player_id, status, arrival_quarter, departure_quarter, available_quarters')
       .eq('game_id', game.id)
 
     if (attendanceError) {
@@ -621,14 +1014,17 @@ function App() {
       attendanceMap[row.player_id] = {
         status: row.status,
         arrival_quarter: row.arrival_quarter,
+        departure_quarter: row.departure_quarter ?? null,
+        available_quarters: availabilityFromAttendanceRow(row),
       }
     }
 
     for (const player of players) {
-      if (!attendanceMap[player.id]) {
-        attendanceMap[player.id] = {
+      if (!attendanceMap[player.id]) {        attendanceMap[player.id] = {
           status: 'Present',
           arrival_quarter: null,
+          departure_quarter: null,
+          available_quarters: [1, 2, 3, 4],
         }
       }
     }
@@ -650,297 +1046,29 @@ function App() {
 
     setAllGameLineups(loaded)
 
-    setLineup(
-      loaded
-        .filter((item) => item.quarter === 1)
-        .map((item) => ({
-          player_id: item.player_id,
-          quarter: item.quarter,
-          position: item.position,
-        }))
-    )
-
-    setScreen('lineup')
-  }
-
-  async function saveAttendanceStatus(playerId: string, status: 'Present' | 'Absent' | 'Late', arrivalQuarter: number | null = null) {
-    if (!selectedGame) return
-
-    const { error } = await supabase.from('game_attendance').upsert({
-      game_id: selectedGame.id,
-      player_id: playerId,
-      status,
-      arrival_quarter: status === 'Late' ? (arrivalQuarter || 2) : null,
-    }, { onConflict: 'game_id,player_id' })
-
-    if (error) {
-      console.error(error)
-      alert('Could not save attendance.')
-      return
-    }
-
-    const nextAttendance: AttendanceRecord = {
-      status,
-      arrival_quarter: status === 'Late' ? (arrivalQuarter || 2) : null,
-    }
-
-    setGameAttendance((current) => ({
-      ...current,
-      [playerId]: nextAttendance,
-    }))
-
-    const unavailableNow =
-      status === 'Absent' ||
-      (status === 'Late' && selectedQuarter < (arrivalQuarter || 2))
-
-    if (unavailableNow) {
-      setLineup((current) => current.filter((item) => item.player_id !== playerId))
-      setAllGameLineups((current) => current.filter((item) => {
-        if (item.player_id !== playerId) return true
-        if (status === 'Absent') return false
-        return item.quarter >= (arrivalQuarter || 2)
-      }))
-    }
-  }
-
-  async function saveCaptains() {
-    if (!selectedGame) return
-
-    if (!captain1Id || !captain2Id) {
-      alert('Select two captains.')
-      return
-    }
-
-    if (captain1Id === captain2Id) {
-      alert('Choose two different captains.')
-      return
-    }
-
-    const { error } = await supabase
-      .from('games')
-      .update({ captain_1_id: captain1Id, captain_2_id: captain2Id })
-      .eq('id', selectedGame.id)
-
-    if (error) {
-      console.error(error)
-      alert('Could not save captains.')
-      return
-    }
-
-    setSelectedGame((current) =>
-      current ? { ...current, captain_1_id: captain1Id, captain_2_id: captain2Id } : current
-    )
-
-    setGames((current) =>
-      current.map((game) =>
-        game.id === selectedGame.id
-          ? { ...game, captain_1_id: captain1Id, captain_2_id: captain2Id }
-          : game
-      )
-    )
-
-    alert('Captains saved.')
-  }
-
-  async function copyPreviousGameLineup() {
-    if (!selectedGame) return
-
-    const { data: previousGames, error: gameError } = await supabase
-      .from('games')
-      .select('*')
-      .eq('team_id', selectedGame.team_id)
-      .lt('game_date', selectedGame.game_date)
-      .order('game_date', { ascending: false })
-      .limit(1)
-
-    if (gameError) {
-      console.error(gameError)
-      alert('Could not find the previous game.')
-      return
-    }
-
-    const previousGame = previousGames?.[0]
-
-    if (!previousGame) {
-      alert('No previous game found.')
-      return
-    }
-
-    const { data: previousLineups, error: lineupError } = await supabase
-      .from('game_lineups')
-      .select('*')
-      .eq('game_id', previousGame.id)
-      .order('quarter', { ascending: true })
-
-    if (lineupError) {
-      console.error(lineupError)
-      alert('Could not load the previous lineup.')
-      return
-    }
-
-    if (!previousLineups || previousLineups.length === 0) {
-      alert('The previous game has no saved lineups.')
-      return
-    }
-
-    const usableLineups = previousLineups.filter((item) =>
-      playerAvailableForQuarter(item.player_id, item.quarter)
-    )
-
-    const skippedCount = previousLineups.length - usableLineups.length
-
-    if (
-      !confirm(
-        'Copy the lineups from vs. ' +
-          previousGame.opponent +
-          '?' +
-          (skippedCount > 0
-            ? ' ' +
-              skippedCount +
-              ' assignment(s) will be skipped because of attendance.'
-            : '')
-      )
-    ) {
-      return
-    }
-
-    const { error: deleteError } = await supabase
-      .from('game_lineups')
-      .delete()
-      .eq('game_id', selectedGame.id)
-
-    if (deleteError) {
-      console.error(deleteError)
-      alert('Could not clear the current game lineups.')
-      return
-    }
-
-    const rows = usableLineups.map((item) => ({
-      game_id: selectedGame.id,
-      quarter: item.quarter,
-      player_id: item.player_id,
-      position: item.position,
-    }))
-
-    if (rows.length > 0) {
-      const { error: insertError } = await supabase
-        .from('game_lineups')
-        .insert(rows)
-
-      if (insertError) {
-        console.error(insertError)
-        alert('Could not copy the previous lineup.')
-        return
-      }
-    }
-
-    setAllGameLineups(
-      usableLineups.map((item) => ({
+    const q1Lineup = loaded
+      .filter((item) => item.quarter === 1)
+      .map((item) => ({
         player_id: item.player_id,
         quarter: item.quarter,
         position: item.position,
       }))
-    )
 
-    setLineup(
-      usableLineups
-        .filter((item) => item.quarter === selectedQuarter)
-        .map((item) => ({
-          player_id: item.player_id,
-          quarter: item.quarter,
-          position: item.position,
-        }))
-    )
+    setLineup(q1Lineup)
+    const fallbackFormation = team?.default_formation || getDefaultFormationForFormat(game.format)
+    setOptimizationFormation(inferFormationForLineup(q1Lineup, game.format, fallbackFormation))
 
-    alert('Previous game lineup copied.')
-  }
-  async function saveLineup(showAlert = true) {
-    if (!selectedGame) return false
-
-    setSavingLineup(true)
-
-    const { error: deleteError } = await supabase
-      .from('game_lineups')
-      .delete()
-      .eq('game_id', selectedGame.id)
-      .eq('quarter', selectedQuarter)
-
-    if (deleteError) {
-      console.error(deleteError)
-      setSavingLineup(false)
-
-      if (showAlert) {
-        alert('Could not save lineup.')
-      }
-
-      return false
-    }
-
-    if (lineup.length > 0) {
-      const rows = lineup.map((item) => ({
-        game_id: selectedGame.id,
-        quarter: selectedQuarter,
-        player_id: item.player_id,
-        position: item.position,
-      }))
-
-      const { error: insertError } = await supabase
-        .from('game_lineups')
-        .insert(rows)
-
-      if (insertError) {
-        console.error(insertError)
-        setSavingLineup(false)
-
-        if (showAlert) {
-          alert('Could not save lineup.')
-        }
-
-        return false
-      }
-    }
-
-    // Re-read the complete game lineup from Supabase after saving.
-    // The lineup builder uses allGameLineups for quarter counts and player
-    // usage, so keeping this state synchronized immediately prevents the UI
-    // from lagging until the coach changes quarters again.
-    const { data: refreshedLineups, error: refreshError } = await supabase
-      .from('game_lineups')
-      .select('player_id, quarter, position')
-      .eq('game_id', selectedGame.id)
-
-    if (refreshError) {
-      console.error(refreshError)
-      setSavingLineup(false)
-
-      if (showAlert) {
-        alert('Lineup saved, but the usage display could not be refreshed.')
-      }
-
-      return true
-    }
-
-    const refreshed = (refreshedLineups || []) as LineupItem[]
-    setAllGameLineups(refreshed)
-    setLineup(refreshed.filter((item) => item.quarter === selectedQuarter))
-
-    setSavingLineup(false)
-
-    if (showAlert) {
-      alert(`Quarter ${selectedQuarter} lineup saved.`)
-    }
-
-    return true
+    setScreen('lineup')
   }
 
   async function changeQuarter(quarter: number) {
     if (!selectedGame || quarter === selectedQuarter) return
 
-    const saved = await saveLineup(false)
-
-    if (!saved) {
-      alert('Could not save the current quarter.')
-      return
+    // Auto-save the quarter being edited before switching away from it.
+    // This keeps iOS behavior consistent with the explicit Save Lineup button.
+    if (currentUserRole === 'owner' || currentUserRole === 'coach') {
+      const saved = await saveLineupData(lineup, selectedQuarter, false)
+      if (!saved) return
     }
 
     const { data, error } = await supabase
@@ -958,13 +1086,235 @@ function App() {
     const nextLineup = data || []
 
     setSelectedQuarter(quarter)
-    setQuarterSuggestion(null)
     setLineup(nextLineup)
 
     setAllGameLineups((current) => [
       ...current.filter((item) => item.quarter !== quarter),
       ...nextLineup,
     ])
+  }
+
+  async function copyQuarterFromCurrentGame(sourceQuarter: number) {
+    if (!selectedGame || sourceQuarter === selectedQuarter) return
+
+    const sourceLineup = allGameLineups
+      .filter((item) => item.quarter === sourceQuarter)
+      .map((item) => ({
+        player_id: item.player_id,
+        quarter: selectedQuarter,
+        position: item.position,
+      }))
+
+    if (sourceLineup.length === 0) {
+      alert(`Q${sourceQuarter} has no saved lineup to copy.`)
+      return
+    }
+
+    const unavailablePlayers = sourceLineup
+      .filter((item) => !playerAvailableForQuarter(item.player_id, selectedQuarter))
+      .map((item) => playerName(item.player_id))
+
+    if (unavailablePlayers.length > 0) {
+      alert(`Cannot copy to Q${selectedQuarter}. These players are not available: ${unavailablePlayers.join(', ')}`)
+      return
+    }
+
+    const invalidGoalkeepers = sourceLineup
+      .filter((item) => item.position === 'Goalkeeper')
+      .filter((item) => {
+        const existingCount = allGameLineups.filter(
+          (row) =>
+            row.player_id === item.player_id &&
+            row.position === 'Goalkeeper' &&
+            row.quarter !== sourceQuarter &&
+            row.quarter !== selectedQuarter
+        ).length
+        return existingCount >= 2
+      })
+      .map((item) => playerName(item.player_id))
+
+    if (invalidGoalkeepers.length > 0) {
+      alert(`Cannot copy to Q${selectedQuarter}. These players would exceed the 2-quarter goalkeeper limit: ${invalidGoalkeepers.join(', ')}`)
+      return
+    }
+
+    const confirmed = window.confirm(`Replace Q${selectedQuarter} with the Q${sourceQuarter} lineup?`)
+    if (!confirmed) return
+
+    setSavingLineup(true)
+    try {
+      const saved = await saveLineupData(sourceLineup, selectedQuarter, false)
+      if (!saved) return
+
+      setLineup(sourceLineup)
+      setAllGameLineups((current) => [
+        ...current.filter((item) => item.quarter !== selectedQuarter),
+        ...sourceLineup,
+      ])
+      setCopySourceQuarter(0)
+      alert(`Q${sourceQuarter} lineup copied to Q${selectedQuarter}.`)
+    } finally {
+      setSavingLineup(false)
+    }
+  }
+
+  function previousGamesForCopy() {
+    if (!selectedGame) return []
+    return games
+      .filter((game) => game.id !== selectedGame.id && game.game_date <= selectedGame.game_date)
+      .sort((a, b) => {
+        const dateCompare = b.game_date.localeCompare(a.game_date)
+        if (dateCompare !== 0) return dateCompare
+        return (b.game_time || '').localeCompare(a.game_time || '')
+      })
+  }
+
+  async function copyEntireGameFromGame() {
+    if (!selectedGame || !copySourceGameId) {
+      alert('Select a previous game first.')
+      return
+    }
+
+    const sourceGame = games.find((game) => game.id === copySourceGameId)
+    if (!sourceGame) return
+
+    const { data, error } = await supabase
+      .from('game_lineups')
+      .select('player_id, quarter, position')
+      .eq('game_id', sourceGame.id)
+      .order('quarter', { ascending: true })
+
+    if (error) {
+      console.error(error)
+      alert('Could not load the saved lineups from ' + sourceGame.opponent + ': ' + error.message)
+      return
+    }
+
+    const sourceLineup = data || []
+    if (sourceLineup.length === 0) {
+      alert('There are no saved lineups in the selected game.')
+      return
+    }
+
+    const missingPlayers = sourceLineup.filter((item) => !players.some((player) => player.id === item.player_id))
+    const copiedLineup = sourceLineup
+      .filter((item) => players.some((player) => player.id === item.player_id))
+      .map((item) => ({
+        player_id: item.player_id,
+        quarter: item.quarter,
+        position: item.position,
+      }))
+
+    if (copiedLineup.length === 0) {
+      alert('None of the players in that game are on the current roster.')
+      return
+    }
+
+    if (missingPlayers.length > 0) {
+      const confirmed = window.confirm(
+        missingPlayers.length + ' player assignment(s) are from players no longer on this roster. Copy the remaining assignments?'
+      )
+      if (!confirmed) return
+    }
+
+    const confirmed = window.confirm(
+      'Copy the entire four-quarter lineup from ' + sourceGame.opponent + ' into this game? This will replace all saved Q1-Q4 lineups.'
+    )
+    if (!confirmed) return
+
+    setSavingLineup(true)
+    try {
+      const { error: deleteError } = await supabase
+        .from('game_lineups')
+        .delete()
+        .eq('game_id', selectedGame.id)
+
+      if (deleteError) {
+        console.error(deleteError)
+        alert('Could not replace the game plan: ' + deleteError.message)
+        return
+      }
+
+      const { error: insertError } = await supabase
+        .from('game_lineups')
+        .insert(copiedLineup.map((item) => ({
+          game_id: selectedGame.id,
+          quarter: item.quarter,
+          player_id: item.player_id,
+          position: item.position,
+        })))
+
+      if (insertError) {
+        console.error(insertError)
+        alert('Could not copy the game plan: ' + insertError.message)
+        return
+      }
+
+      setAllGameLineups(copiedLineup)
+      setLineup(copiedLineup.filter((item) => item.quarter === selectedQuarter))
+      setWholeGameSuggestion(null)
+      setQuarterSuggestion(null)
+      alert('Entire lineup copied from ' + sourceGame.opponent + '.')
+    } finally {
+      setSavingLineup(false)
+    }
+  }
+
+  async function saveAttendanceAvailability(playerId: string, availableQuarters: number[]) {
+    if (!selectedGame) return
+
+    const normalized = [...new Set(availableQuarters)].filter((q) => q >= 1 && q <= 4).sort((a, b) => a - b)
+    const legacy = legacyAttendanceFields(normalized)
+    const { error } = await supabase.from('game_attendance').upsert({
+      game_id: selectedGame.id,
+      player_id: playerId,
+      status: legacy.status,
+      arrival_quarter: legacy.arrival_quarter,
+      departure_quarter: legacy.departure_quarter,
+      available_quarters: normalized,
+    }, { onConflict: 'game_id,player_id' })
+
+    if (error) {
+      console.error(error)
+      alert('Could not save attendance.')
+      return
+    }
+
+    const nextAttendance: AttendanceRecord = {
+      ...legacy,
+      available_quarters: normalized,
+    }
+    setGameAttendance((current) => ({ ...current, [playerId]: nextAttendance }))
+
+    const unavailableQuarters = [1, 2, 3, 4].filter((quarter) => !normalized.includes(quarter))
+
+    if (unavailableQuarters.length > 0) {
+      const { error: lineupDeleteError } = await supabase
+        .from('game_lineups')
+        .delete()
+        .eq('game_id', selectedGame.id)
+        .eq('player_id', playerId)
+        .in('quarter', unavailableQuarters)
+
+      if (lineupDeleteError) {
+        console.error(lineupDeleteError)
+        alert('Could not remove the player from unavailable quarters: ' + lineupDeleteError.message)
+        return
+      }
+    }
+
+    setLineup((current) =>
+      current.filter(
+        (item) => item.player_id !== playerId || normalized.includes(item.quarter)
+      )
+    )
+    setAllGameLineups((current) =>
+      current.filter(
+        (item) => item.player_id !== playerId || normalized.includes(item.quarter)
+      )
+    )
+    setQuarterSuggestion(null)
+    setWholeGameSuggestion(null)
   }
 
   function goalkeeperQuarterCount(playerId: string) {
@@ -979,32 +1329,14 @@ function App() {
   function playerAvailableForQuarter(playerId: string, quarter: number) {
     const attendance = gameAttendance[playerId]
 
-    if (!attendance || attendance.status === 'Present') {
-      return true
-    }
-
-    if (attendance.status === 'Absent') {
-      return false
-    }
-
-    if (attendance.status === 'Late') {
-      return quarter >= (attendance.arrival_quarter || 2)
-    }
-
-    return true
+    if (!attendance) return true
+    return attendance.available_quarters.includes(quarter)
   }
 
   function assignPlayer(playerId: string, position: string) {
     if (!playerAvailableForQuarter(playerId, selectedQuarter)) {
-      const attendance = gameAttendance[playerId]
 
-      if (attendance?.status === 'Absent') {
-        alert(`${playerName(playerId)} is marked absent for this game.`)
-      } else {
-        alert(
-          `${playerName(playerId)} is marked late and is not available until Q${attendance?.arrival_quarter || 2}.`
-        )
-      }
+      alert(`${playerName(playerId)} is not marked available for Q${selectedQuarter}.`)
 
       return
     }
@@ -1049,6 +1381,7 @@ function playerName(playerId: string) {
     players.find((player) => player.id === playerId)?.name || 'Unknown'
   )
 }
+
 
 function playerAtPosition(position: string) {
     return lineup.find((item) => item.position === position)
@@ -1223,9 +1556,117 @@ function playerAtPosition(position: string) {
     }
   }, [completedGames, gameEvents])
 
+  const completedGameIds = useMemo(
+    () => new Set(completedGames.map((game) => game.id)),
+    [completedGames]
+  )
+
+  const completedSeasonLineups = useMemo(() => {
+    const actualKeys = new Set(
+      actualSeasonLineups
+        .filter((item) => completedGameIds.has(item.game_id))
+        .map((item) => `${item.game_id}:${item.quarter}`)
+    )
+
+    return [
+      ...seasonLineups.filter(
+        (item) =>
+          completedGameIds.has(item.game_id) &&
+          !actualKeys.has(`${item.game_id}:${item.quarter}`)
+      ),
+      ...actualSeasonLineups.filter((item) =>
+        completedGameIds.has(item.game_id)
+      ),
+    ]
+  }, [seasonLineups, actualSeasonLineups, completedGameIds])
+
+  const completedGameEvents = useMemo(
+    () => gameEvents.filter((event) => completedGameIds.has(event.game_id)),
+    [gameEvents, completedGameIds]
+  )
+  const completedPositionAnalytics = useMemo(() => {
+    const result = new Map<string, { played: number; gk: number; def: number; mid: number; str: number; bench: number }>()
+    const addPosition = (
+      current: { played: number; gk: number; def: number; mid: number; str: number; bench: number },
+      position: string,
+      value: number
+    ) => {
+      if (position === 'Bench') {
+        current.bench += value
+        return
+      }
+
+      current.played += value
+      if (position === 'Goalkeeper') current.gk += value
+      else if (position.includes('Defense')) current.def += value
+      else if (position.includes('Mid')) current.mid += value
+      else current.str += value
+    }
+
+    for (const game of completedGames) {
+      for (let quarter = 1; quarter <= 4; quarter++) {
+        const segmentRows = positionSegments
+          .filter((segment) => segment.game_id === game.id && segment.quarter === quarter)
+          .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime())
+
+        if (segmentRows.length > 0) {
+          const rowsByPlayer = new Map<string, PositionSegment[]>()
+          for (const segment of segmentRows) {
+            const rows = rowsByPlayer.get(segment.player_id) || []
+            rows.push(segment)
+            rowsByPlayer.set(segment.player_id, rows)
+          }
+
+          for (const player of players) {
+            const current = result.get(player.id) || { played: 0, gk: 0, def: 0, mid: 0, str: 0, bench: 0 }
+            const rows = rowsByPlayer.get(player.id) || []
+
+            if (rows.length === 0) {
+              current.bench += 1
+            } else {
+              const firstPosition = rows[0].position
+              const lastPosition = rows[rows.length - 1].position
+
+              if (firstPosition === lastPosition) {
+                addPosition(current, firstPosition, 1)
+              } else {
+                // A mid-quarter change is intentionally discrete: half a quarter
+                // in the starting position and half in the ending position.
+                addPosition(current, firstPosition, 0.5)
+                addPosition(current, lastPosition, 0.5)
+              }
+            }
+
+            result.set(player.id, current)
+          }
+
+          continue
+        }
+
+        const fallbackRows = completedSeasonLineups.filter(
+          (item) => item.game_id === game.id && item.quarter === quarter
+        )
+        for (const player of players) {
+          const current = result.get(player.id) || { played: 0, gk: 0, def: 0, mid: 0, str: 0, bench: 0 }
+          const item = fallbackRows.find((row) => row.player_id === player.id)
+
+          if (!item) {
+            current.bench += 1
+          } else {
+            addPosition(current, item.position, 1)
+          }
+
+          result.set(player.id, current)
+        }
+      }
+    }
+
+    return result
+  }, [completedGames, completedSeasonLineups, players, positionSegments])
+
   const topScorers = useMemo(() => {
     const totals = new Map<string, number>()
-    gameEvents
+    completedGameEvents
       .filter((event) => event.event_type === 'our_goal' && event.player_id)
       .forEach((event) => {
         const playerId = event.player_id as string
@@ -1240,11 +1681,11 @@ function playerAtPosition(position: string) {
       .filter((entry) => entry.player)
       .sort((a, b) => b.goals - a.goals)
       .slice(0, 3)
-  }, [gameEvents, players])
+  }, [completedGameEvents, players])
 
   if (loading) {
     return (
-      <div className="app">
+      <div className="app" style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
         <header className="app-header">
           <div className="header-content">
             <h1>Beautiful Game IQ</h1>
@@ -1253,11 +1694,12 @@ function playerAtPosition(position: string) {
           </div>
         </header>
 
-        {bugReportOpen && (
+  
+      {bugReportOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '20px' }}>
           <section style={{ background: 'white', color: '#111', borderRadius: '16px', padding: '22px', width: 'min(560px, 100%)', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
             <h2 style={{ marginTop: 0 }}>Report a Bug</h2>
-            <p style={{ marginTop: 0 }}>Tell me what went wrong. The report will include the team, screen, format, browser URL, and your account email.</p>
+            <p style={{ marginTop: 0 }}>Tell us what went wrong. The report is securely tracked and sent to Beautiful Game IQ support with useful diagnostic information.</p>
             <label style={{ display: 'block', marginBottom: '12px' }}>
               <span>Severity</span>
               <select value={bugReport.severity} onChange={(e) => setBugReport({ ...bugReport, severity: e.target.value })} style={{ width: '100%' }}>
@@ -1290,7 +1732,7 @@ function playerAtPosition(position: string) {
   function renderCoaches() {
     return (
       <>
-        <button className="back-button" onClick={() => setScreen('home')}>
+        <button className="back-button" onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
           Back
         </button>
 
@@ -1304,6 +1746,35 @@ function playerAtPosition(position: string) {
           </div>
 
           <div style={{ display: 'grid', gap: '10px', marginTop: '14px' }}>
+            {currentUserRole === 'owner' && joinRequests.length > 0 && (
+              <div style={{ marginBottom: '18px', padding: '14px', border: '1px solid #ddd', borderRadius: '10px' }}>
+                <strong>Join Requests</strong>
+                <p style={{ margin: '6px 0 12px', fontSize: '13px', opacity: 0.75 }}>
+                  People requesting access to {team?.name || 'this team'}.
+                </p>
+
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  {joinRequests.map((request) => (
+                    <div key={request.id} style={{ border: '1px solid #ddd', borderRadius: '10px', padding: '12px', display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <strong style={{ display: 'block' }}>{request.full_name}</strong>
+                        {request.email && <span style={{ fontSize: '12px', opacity: 0.7 }}>{request.email}</span>}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button className="primary-button" onClick={() => approveJoinRequest(request)}>
+                          Approve
+                        </button>
+                        <button className="secondary-button" onClick={() => denyJoinRequest(request)}>
+                          Deny
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {staff.map((member) => {
               const isCurrentUser = member.user_id === currentUserId
               return (
@@ -1312,23 +1783,52 @@ function playerAtPosition(position: string) {
                     <strong style={{ display: 'block' }}>{member.full_name}</strong>
                     {member.email && <span style={{ fontSize: '12px', opacity: 0.7 }}>{member.email}</span>}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {member.role === 'owner' ? (
-                      <span style={{ fontSize: '12px', fontWeight: 700 }}>HEAD COACH</span>
-                    ) : currentUserRole === 'owner' && !isCurrentUser ? (
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700 }}>
+                        {member.role === 'owner' ? 'OWNER' : member.is_head_coach ? 'HEAD COACH' : member.role === 'coach' ? 'ASSISTANT COACH' : 'VIEWER'}
+                      </span>
+                      {member.role === 'owner' && (
+                        <span style={{ fontSize: '12px', fontWeight: 700 }}>{member.is_head_coach ? 'HEAD COACH' : 'ASSISTANT COACH'}</span>
+                      )}
+                    </div>
+
+                    {currentUserRole === 'owner' && (
                       <>
-                        <select
-                          value={member.role}
-                          onChange={(e) => updateStaffRole(member, e.target.value as 'coach' | 'viewer')}
-                          aria-label={`Role for ${member.full_name}`}
-                        >
-                          <option value="coach">Assistant Coach</option>
-                          <option value="viewer">Viewer</option>
-                        </select>
-                        <button className="secondary-button" onClick={() => removeStaffMember(member)}>Remove</button>
+                        {!isCurrentUser && member.role !== 'owner' && (
+                          <select
+                            value={member.role}
+                            onChange={(e) => updateStaffRole(member, e.target.value as 'coach' | 'viewer')}
+                            aria-label={`Role for ${member.full_name}`}
+                          >
+                            <option value="coach">Assistant Coach</option>
+                            <option value="viewer">Viewer</option>
+                          </select>
+                        )}
+
+                        {member.role !== 'viewer' && (
+                          <button
+                            className="secondary-button"
+                            onClick={() => setHeadCoach(member, !member.is_head_coach)}
+                          >
+                            {member.is_head_coach ? 'Make Assistant Coach' : 'Make Head Coach'}
+                          </button>
+                        )}
+
+                        {!isCurrentUser && member.role !== 'owner' && (
+                          <button
+                            className="secondary-button"
+                            onClick={() => removeStaffMember(member)}
+                          >
+                            Remove
+                          </button>
+                        )}
+
+                        {isCurrentUser && (
+                          <span style={{ fontSize: '12px', opacity: 0.7 }}>You</span>
+                        )}
                       </>
-                    ) : (
-                      <span style={{ fontSize: '12px', fontWeight: 700 }}>{member.role === 'coach' ? 'ASSISTANT COACH' : 'VIEWER'}</span>
                     )}
                   </div>
                 </div>
@@ -1336,11 +1836,27 @@ function playerAtPosition(position: string) {
             })}
           </div>
 
+          {currentUserRole !== 'owner' && (
+            <div style={{ marginTop: '18px', padding: '14px', border: '1px solid #ead2d2', borderRadius: '10px', background: '#fffafa' }}>
+              <strong>Leave This Team</strong>
+              <p style={{ margin: '6px 0 12px', fontSize: '13px', opacity: 0.75 }}>
+                Joined the wrong team or no longer need access? You can leave this team yourself. The team owner does not need to remove you.
+              </p>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => void leaveTeam()}
+              >
+                Leave Team
+              </button>
+            </div>
+          )}
+
           {currentUserRole === 'owner' && (
           <div style={{ marginTop: '18px', padding: '14px', border: '1px solid #ddd', borderRadius: '10px' }}>
             <strong>Invite a Coach</strong>
             <p style={{ margin: '6px 0 12px', fontSize: '13px', opacity: 0.75 }}>
-              Email invitations are the next step. The secure invitation service will create the account and add the coach to this team without exposing an admin key in the browser.
+              Invite a coach by email. If they already have a Beautiful Game IQ account, they'll be added directly to this team; otherwise they'll receive an account invitation.
             </p>
             <button
               className="primary-button"
@@ -1348,13 +1864,7 @@ function playerAtPosition(position: string) {
                 const email = window.prompt('Assistant coach email:')
                 if (!email) return
 
-                const roleInput = window.prompt(
-                  'Role: type "coach" for Assistant Coach or "viewer" for Viewer',
-                  'coach',
-                )
-                if (roleInput === null) return
-
-                const role = roleInput.trim().toLowerCase() === 'viewer' ? 'viewer' : 'coach'
+                const role = 'coach' as const
 
                 const { data, error } = await supabase.functions.invoke('invite-coach', {
                   body: {
@@ -1375,7 +1885,7 @@ function playerAtPosition(position: string) {
                   return
                 }
 
-                alert(`Invitation sent to ${email.trim()}`)
+                alert(data?.already_registered ? `Coach added to ${team?.name || "the team"}. If they have not completed account setup yet, check their email for the invitation.` : `Invitation sent to ${email.trim()}. Check the email to create the Beautiful Game IQ account and join the team as a Coach.`)
                 await loadApp(selectedTeamId)
               }}
             >
@@ -1391,7 +1901,7 @@ function playerAtPosition(position: string) {
   function renderTeamRules() {
     return (
       <>
-        <button className="back-button" onClick={() => setScreen('home')}>
+        <button className="back-button" onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
           Back
         </button>
 
@@ -1432,43 +1942,703 @@ function playerAtPosition(position: string) {
             Everyone must play when available
           </label>
 
+          <label style={{ display: 'grid', gap: '6px', marginTop: '16px' }}>
+            Default formation
+            <span style={{ fontSize: '12px', opacity: 0.7 }}>This is the starting shape for new game-day lineups and Coach Assist.</span>
+            <select
+              value={defaultFormation}
+              onChange={(e) => setDefaultFormation(e.target.value)}
+            >
+              {getFormationsForFormat(team?.format || '7v7').map((formation) => (
+                <option key={formation} value={formation}>{formation}</option>
+              ))}
+            </select>
+          </label>
+
           <button className="primary-button" onClick={saveTeamRules} style={{ marginTop: '16px' }}>
             Save Team Rules
           </button>
+          {currentUserRole === 'owner' && (
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+              <button className="secondary-button" onClick={toggleTeamArchived}>
+                {team?.archived ? 'Unarchive Team' : 'Archive Team'}
+              </button>
+            </div>
+          )}
         </section>
       </>
     )
   }
 
-  function submitBugReport() {
-    const owner = staff.find((member) => member.role === 'owner')
-    const reporter = staff.find((member) => member.user_id === currentUserId)
-    const recipient = owner?.email || ''
-    const subject = `[Beautiful Game IQ Bug] ${bugReport.summary || 'Bug report'}`
-    const body = [
-      `Beautiful Game IQ bug report`,
-      `Team: ${team?.name || 'Unknown'}`,
-      `Format: ${team?.format || 'Unknown'}`,
-      `Reported by: ${reporter?.email || currentUserName || 'Unknown'}`,
-      `Severity: ${bugReport.severity}`,
-      `Screen: ${screen}`,
-      `URL: ${window.location.href}`,
-      '',
-      `Summary: ${bugReport.summary}`,
-      '',
-      `What happened:`,
-      bugReport.details,
-    ].join('\n')
+  async function submitBugReport() {
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!recipient) {
-      navigator.clipboard?.writeText(body)
-      alert('Bug report copied to your clipboard. The team owner email is not available yet.')
+    if (!user) {
+      alert('Please sign in again before sending a bug report.')
       return
     }
 
-    window.location.href = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    const { data, error } = await supabase.functions.invoke('report-bug', {
+      body: {
+        team_id: team?.id || selectedTeamId || null,
+        severity: bugReport.severity,
+        summary: bugReport.summary.trim(),
+        details: bugReport.details.trim(),
+        screen,
+        page_url: window.location.href,
+        app_version: APP_VERSION,
+        platform: APP_PLATFORM,
+        user_agent: navigator.userAgent,
+      },
+    })
+
+    if (error) {
+      console.error(error)
+      alert(`Could not send bug report: ${error.message}`)
+      return
+    }
+
+    const reportId = data?.report_id
     setBugReportOpen(false)
     setBugReport({ severity: 'Normal', summary: '', details: '' })
+    alert(reportId ? `Bug report submitted. Reference #${String(reportId).slice(0, 8)}.` : 'Bug report submitted. Thank you.')
+  }
+
+  function handleAnalyticsSort(field: 'player' | 'played' | 'gk' | 'str' | 'bench' | 'goals' | 'assists' | 'shots' | 'saves' | 'captain') {
+    if (analyticsSort === field) {
+      setAnalyticsSortAsc((value) => !value)
+    } else {
+      setAnalyticsSort(field)
+      setAnalyticsSortAsc(field === 'player')
+    }
+  }
+
+  function analyticsSortValue(player: typeof players[number]) {
+    const usage = completedPositionAnalytics.get(player.id) || {
+      played: 0,
+      gk: 0,
+      def: 0,
+      mid: 0,
+      str: 0,
+      bench: 0,
+    }
+    const played = usage.played
+    const gk = usage.gk
+    const str = usage.str
+    const bench = usage.bench
+    const goals = completedGameEvents.filter(
+      (event) => event.event_type === 'our_goal' && event.player_id === player.id
+    ).length
+    const assists = completedGameEvents.filter(
+      (event) => event.event_type === 'our_goal' && event.assister_id === player.id
+    ).length
+    const shots = completedGameEvents.filter((event) => event.event_type === 'our_shot' && event.player_id === player.id).length
+    const saves = completedGameEvents.filter((event) => event.event_type === 'save' && event.player_id === player.id).length
+    const captain = completedGames.filter(
+      (game) => game.captain_1_id === player.id || game.captain_2_id === player.id
+    ).length
+
+    if (analyticsSort === 'player') return player.name.toLowerCase()
+    return { played, gk, str, bench, goals, assists, shots, saves, captain }[analyticsSort]
+  }
+
+  async function searchTeamsToJoin() {
+    const search = joinTeamSearch.trim()
+    const code = joinCodeSearch.trim().toUpperCase()
+
+    if (!search && !code) {
+      setJoinTeamResults([])
+      return
+    }
+
+    let query = supabase
+      .from('teams')
+      .select('*')
+      .eq('archived', false)
+
+    if (code) {
+      query = query.eq('join_code', code)
+    } else {
+      query = query.or('name.ilike.%' + search + '%,city.ilike.%' + search + '%,coach_name.ilike.%' + search + '%')
+    }
+
+    const { data, error } = await query.order('name').limit(20)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not search teams: ${error.message}`)
+      return
+    }
+
+    setJoinTeamResults(data || [])
+  }
+  async function loadJoinRequests() {
+    const { data, error } = await supabase
+      .from('team_join_requests')
+      .select('team_id')
+      .eq('user_id', (await supabase.auth.getUser()).data.user?.id || '')
+      .eq('status', 'pending')
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setJoinRequestTeamIds((data || []).map((request) => request.team_id))
+  }
+
+  async function loadOwnerJoinRequests() {
+    if (currentUserRole !== 'owner' || !selectedTeamId) {
+      setJoinRequests([])
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('team_join_requests')
+      .select('id, team_id, user_id, status, created_at')
+      .eq('team_id', selectedTeamId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error(error)
+      alert(`Could not load join requests: ${error.message}`)
+      return
+    }
+
+    const requests = await Promise.all(
+      (data || []).map(async (request) => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', request.user_id)
+          .maybeSingle()
+
+        return {
+          ...request,          full_name: profile?.full_name || 'Unknown User',
+          email: profile?.email || '',
+        }
+      })
+    )
+
+    setJoinRequests(requests)
+  }
+  async function approveJoinRequest(request: {
+    id: string
+    team_id: string
+    user_id: string
+    status: 'pending' | 'approved' | 'denied'
+    created_at: string
+    full_name: string
+    email: string
+  }) {
+    if (currentUserRole !== 'owner' || !selectedTeamId) return
+
+    const { error: memberError } = await supabase
+      .from('team_members')
+      .insert({
+        team_id: request.team_id,
+        user_id: request.user_id,
+        role: 'coach',
+        is_head_coach: false,
+      })
+
+    if (memberError && memberError.code !== '23505') {
+      console.error(memberError)
+      alert(`Could not approve ${request.full_name}: ${memberError.message}`)
+      return
+    }
+
+    const { error: requestError } = await supabase
+      .from('team_join_requests')
+      .update({
+        status: 'approved',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', request.id)
+
+    if (requestError) {
+      console.error(requestError)
+      alert(`The team member was added, but the join request could not be updated: ${requestError.message}`)
+      return
+    }
+
+    await loadOwnerJoinRequests()
+    await loadApp(selectedTeamId)
+  }
+
+  async function denyJoinRequest(request: {
+    id: string
+    team_id: string
+    user_id: string
+    status: 'pending' | 'approved' | 'denied'
+    created_at: string
+    full_name: string
+    email: string
+  }) {
+    if (currentUserRole !== 'owner' || !selectedTeamId) return
+
+    const { error } = await supabase
+      .from('team_join_requests')
+      .update({
+        status: 'denied',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', request.id)
+
+    if (error) {
+      console.error(error)
+      alert(`Could not deny ${request.full_name}'s request: ${error.message}`)
+      return
+    }
+
+    await loadOwnerJoinRequests()
+  }
+  async function requestToJoinTeam(teamToJoin: Team) {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+      if (userError) {
+        console.error(userError)
+        alert(`Could not identify the signed-in user: ${userError.message}`)
+        return
+      }
+
+      const userId = user?.id
+
+      if (!userId) {
+        alert('Could not identify the signed-in user. Please sign out and sign back in.')
+        return
+      }
+
+      if (joinRequestTeamIds.includes(teamToJoin.id)) {
+        return
+      }
+
+      const { error } = await supabase
+        .from('team_join_requests')
+        .insert({
+          team_id: teamToJoin.id,
+          user_id: userId,
+          status: 'pending',
+        })
+
+      if (error) {
+        if (error.code === '23505') {
+          const { data: existingRequest, error: existingRequestError } = await supabase
+            .from('team_join_requests')
+            .select('id, status')
+            .eq('team_id', teamToJoin.id)
+            .eq('user_id', userId)
+            .maybeSingle()
+
+          if (existingRequestError) {
+            console.error(existingRequestError)
+            alert(`Could not check the existing join request: ${existingRequestError.message}`)
+            return
+          }
+
+          if (existingRequest?.status === 'pending') {
+            setJoinRequestTeamIds((current) =>
+              current.includes(teamToJoin.id) ? current : [...current, teamToJoin.id]
+            )
+            return
+          }
+
+          if (existingRequest?.status === 'denied') {
+            const { error: retryError } = await supabase
+              .from('team_join_requests')
+              .update({
+                status: 'pending',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', existingRequest.id)
+              .eq('user_id', userId)
+
+            if (retryError) {
+              console.error(retryError)
+              alert(`Could not retry the request to join ${teamToJoin.name}: ${retryError.message}`)
+              return
+            }
+
+            setJoinRequestTeamIds((current) =>
+              current.includes(teamToJoin.id) ? current : [...current, teamToJoin.id]
+            )
+            return
+          }
+
+          if (existingRequest?.status === 'approved') {
+            alert(`Your request to join ${teamToJoin.name} was already approved.`)
+            return
+          }
+
+          await loadJoinRequests()
+          return
+        }
+
+        console.error(error)
+        alert(`Could not request to join ${teamToJoin.name}: ${error.message}`)
+        return
+      }
+
+      setJoinRequestTeamIds((current) =>
+        current.includes(teamToJoin.id) ? current : [...current, teamToJoin.id]
+      )
+    } catch (error) {
+      console.error(error)
+      alert(`Join request failed: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+  function renderNewUserOnboarding() {
+    return (
+      <section className="team-card" style={{ maxWidth: '620px', margin: '40px auto' }}>
+        <div className="section-header">
+          <h2>Welcome to Beautiful Game IQ</h2>
+        </div>
+
+        <p style={{ marginTop: '12px', lineHeight: 1.6 }}>
+          Let's get your team set up. You can create a new team or join an existing team.
+        </p>
+
+        <div style={{ display: 'grid', gap: '12px', marginTop: '24px' }}>
+          <button
+            className="primary-button"
+            onClick={() => setShowNewTeamForm(true)}
+          >
+            Create Your Team
+          </button>
+
+          <button
+            className="secondary-button"
+            onClick={async () => {
+                setShowJoinTeam(true)
+                setJoinTeamSearch('')
+                setJoinCodeSearch('')
+                setJoinTeamResults([])
+                await loadJoinRequests()
+              }}
+          >
+            Join an Existing Team
+          </button>
+        </div>
+
+        {showJoinTeam && (
+          <div style={{ marginTop: '24px' }}>
+            <h3>Join an Existing Team</h3>
+            <div style={{ display: 'grid', gap: '12px', marginTop: '16px' }}>
+              <label>Search team, city, or coach<input value={joinTeamSearch} onChange={(e) => setJoinTeamSearch(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void searchTeamsToJoin() }} placeholder="e.g. Blue Knights" /></label>
+              <label>Exact Join Code<input value={joinCodeSearch} onChange={(e) => setJoinCodeSearch(e.target.value.toUpperCase())} onKeyDown={(e) => { if (e.key === 'Enter') void searchTeamsToJoin() }} placeholder="6-character code" maxLength={6} autoCapitalize="characters" /></label>
+              <button className="primary-button" onClick={searchTeamsToJoin} disabled={!joinTeamSearch.trim() && !joinCodeSearch.trim()}>Search Teams</button>
+            </div>
+            {joinTeamResults.length > 0 && (
+              <div style={{ display: 'grid', gap: '12px', marginTop: '20px' }}>
+                {joinTeamResults.map((teamToJoin) => {
+                  const requestPending = joinRequestTeamIds.includes(teamToJoin.id)
+                  return (
+                    <div key={teamToJoin.id} className="team-card" style={{ padding: '16px' }}>
+                      <strong>{teamToJoin.name}</strong>
+                      <div style={{ marginTop: '6px', color: '#666' }}>{[teamToJoin.city, teamToJoin.coach_name, teamToJoin.age_group, teamToJoin.format, teamToJoin.season].filter(Boolean).join(' · ')}</div>
+                      <button
+                        type="button"
+                        className={requestPending ? 'secondary-button' : 'primary-button'}
+                        style={{ marginTop: '12px', touchAction: 'manipulation' }}
+                        onClick={() => void requestToJoinTeam(teamToJoin)}
+                        disabled={requestPending}
+                      >
+                        {requestPending ? 'Request Sent' : 'Request to Join'}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            {(joinTeamSearch.trim() || joinCodeSearch.trim()) && joinTeamResults.length === 0 && <p style={{ marginTop: '16px', color: '#666' }}>No active teams found.</p>}
+          </div>
+        )}        {showNewTeamForm && (
+          <div id="new-team-form" style={{ marginTop: '24px' }}>
+            <h3>Create Your Team</h3>
+
+            <div className="form-grid">
+              <label>
+                Team Name
+                <input
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                  placeholder="Enter team name"
+                />
+              </label>
+              <label>
+                City
+                <input value={newTeamCity} onChange={(e) => setNewTeamCity(e.target.value)} placeholder="e.g. Redlands" />
+              </label>
+
+              <label>
+                Coach Name
+                <input value={newTeamCoachName} onChange={(e) => setNewTeamCoachName(e.target.value)} placeholder="Head coach name" />
+              </label>
+
+
+              <label>
+                Age Group
+                <select
+                  value={newTeamAgeGroup}
+                  onChange={(e) => setNewTeamAgeGroup(e.target.value)}
+                >
+                  {['U08','U09','U10','U11','U12','U13','U14','U15','U16','U17','U18'].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Format
+                <select
+                  value={newTeamFormat}
+                  onChange={(e) => setNewTeamFormat(e.target.value)}
+                >
+                  <option value="6v6">6v6</option>
+                  <option value="7v7">7v7</option>
+                  <option value="9v9">9v9</option>
+                  <option value="11v11">11v11</option>
+                </select>
+              </label>
+
+              <label>
+                Season
+                <select
+                  value={newTeamSeasonType}
+                  onChange={(e) => setNewTeamSeasonType(e.target.value)}
+                >
+                  {['Fall','Winter','Spring','Summer','Year Round'].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Year
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={newTeamSeasonYear}
+                  onChange={(e) => setNewTeamSeasonYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="YYYY"
+                />
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+              <button className="primary-button" onClick={createTeam}>
+                Create Team
+              </button>
+
+              <button
+                className="secondary-button"
+                onClick={() => setShowNewTeamForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}        {archivedTeams.length > 0 && (
+          <>
+            <button
+              className="secondary-button"
+              style={{ marginTop: '24px', width: '100%' }}
+              onClick={() => setShowArchivedTeams((value) => !value)}
+            >
+              {showArchivedTeams ? 'Hide Archived Teams' : 'Show Archived Teams'}
+            </button>
+
+            {showArchivedTeams && (
+              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+                {archivedTeams.map((archivedTeam) => (
+                  <div key={archivedTeam.id} className="team-card" style={{ padding: '16px', marginTop: '12px' }}>
+                    <strong>{archivedTeam.name}</strong>
+                    <div style={{ marginTop: '6px', color: '#666' }}>
+                      {archivedTeam.age_group} | {archivedTeam.format} | {archivedTeam.season}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+                      <button className="secondary-button" onClick={() => viewArchivedTeam(archivedTeam)}>
+                        View Season
+                      </button>
+                      {currentUserRole === 'owner' && (
+                        <button className="primary-button" onClick={async () => {
+                          const { error } = await supabase
+                            .from('teams')
+                            .update({ archived: false })
+                            .eq('id', archivedTeam.id)
+
+                          if (error) {
+                            console.error(error)
+                            alert(`Could not unarchive team: ${error.message}`)
+                            return
+                          }
+
+                          await loadApp(archivedTeam.id)
+                        }}>
+                          Unarchive Team
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+    )
+  }
+  function renderArchivedTeamView() {
+    if (!archivedViewTeam) return null
+
+    const archivedCompletedGames = archivedViewGames.filter((game) => game.status === 'Completed')
+
+    const archivedGameIds = archivedCompletedGames.map((game) => game.id)
+    const archivedEvents = gameEvents.filter((event) => archivedGameIds.includes(event.game_id))
+
+    let wins = 0
+    let losses = 0
+    let draws = 0
+    let goalsFor = 0
+    let goalsAgainst = 0
+
+    const archivedResults = archivedCompletedGames.map((game) => {
+      const events = archivedEvents.filter((event) => event.game_id === game.id)
+      const forGoals = events.filter((event) => event.event_type === 'our_goal').length
+      const againstGoals = events.filter((event) => event.event_type === 'their_goal').length
+
+      goalsFor += forGoals
+      goalsAgainst += againstGoals
+
+      let result = 'D'
+      if (forGoals > againstGoals) {
+        wins += 1
+        result = 'W'
+      } else if (forGoals < againstGoals) {
+        losses += 1
+        result = 'L'
+      } else {
+        draws += 1
+      }
+
+      return { game, forGoals, againstGoals, result }
+    })
+
+    return (
+      <section className="team-card" style={{ maxWidth: '900px', margin: '24px auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
+          <div>
+            <p className="eyebrow">ARCHIVED SEASON Ã¯Â¿Â½ READ ONLY</p>
+            <h2 style={{ marginBottom: '6px' }}>{archivedViewTeam.name}</h2>
+            <div style={{ color: '#666' }}>
+              {archivedViewTeam.age_group} | {archivedViewTeam.format} | {archivedViewTeam.season}
+            </div>
+          </div>
+          <button
+            className="secondary-button"
+            onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}
+          >
+            Back
+          </button>
+        </div>
+
+        <div className="home-record-card" style={{ marginTop: '24px' }}>
+          <div className="record-main">
+            <p className="eyebrow">SEASON RECORD</p>
+            <div className="home-record">{wins}-{losses}-{draws}</div>
+            <span>W - L - D</span>
+          </div>
+          <div className="home-record-meta">
+            <div><strong>{archivedCompletedGames.length}</strong><span>Games</span></div>
+            <div><strong>{goalsFor}</strong><span>Goals For</span></div>
+            <div><strong>{goalsAgainst}</strong><span>Goals Against</span></div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '28px' }}>
+          <h3>Game Results</h3>
+          {archivedResults.length === 0 ? (
+            <p style={{ color: '#666' }}>No completed games recorded for this season.</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Opponent</th>
+                    <th>Result</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {archivedResults.map(({ game, forGoals, againstGoals, result }) => (
+                    <tr key={game.id}>
+                      <td>{game.game_date || '-'}</td>
+                      <td>{game.opponent || '-'}</td>
+                      <td><strong>{result}</strong></td>
+                      <td>{forGoals}-{againstGoals}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginTop: '28px' }}>
+          <h3>Roster</h3>
+          {archivedViewPlayers.length === 0 ? (
+            <p style={{ color: '#666' }}>No players recorded for this season.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {archivedViewPlayers.map((player) => (
+                <div
+                  key={player.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    padding: '10px 12px',
+                    borderBottom: '1px solid #e5e7eb',
+                  }}
+                >
+                  <span>
+                    <strong>{player.name}</strong>
+                  </span>
+                  <span style={{ color: '#666' }}>
+                    #{player.jersey_number ?? '-'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+  function openNewTeamForm() {
+    setShowJoinTeam(false)
+    if (!newTeamCoachName.trim() && currentUserName.trim()) {
+      setNewTeamCoachName(currentUserName.trim())
+    }
+    setShowNewTeamForm(true)
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0)
+  }
+
+  function openNewGameForm() {
+    setShowJoinTeam(false)
+    const today = localDateInputValue()
+    setGameDate(today)
+    setGameTime('')
+    setOpponent('')
+    setLocation('')
+    setHomeAway('Home')
+    setGameNotes('')
+    setScreen('new-game')
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0)
   }
 
   function renderHome() {
@@ -1480,21 +2650,32 @@ function playerAtPosition(position: string) {
           <div className="home-team-identity">
             <p className="eyebrow">TEAM</p>
             <h2 className="home-team-name">{team?.name || 'Team'}</h2>
+            <div style={{ marginTop: '4px', color: '#666', fontSize: '13px' }}>
+              {[team?.city, team?.age_group, team?.format, team?.season].filter(Boolean).join(' · ')}
+            </div>
+            {currentUserRole === 'owner' && team?.join_code && (
+              <div style={{ marginTop: '8px', fontSize: '13px' }}>
+                <strong>Join Code:</strong> {team.join_code}
+              </div>
+            )}
             <div className="home-coaches">
               <span className="home-coaches-label">COACHES</span>
               <div className="home-coach-list">
-                {staff.filter((member) => member.role === 'owner' || member.role === 'coach').map((member) => (
+                {staff.filter((member) => member.role === 'owner' || member.role === 'coach').sort((a, b) => Number(b.is_head_coach) - Number(a.is_head_coach)).map((member) => (
                   <span key={member.user_id} className="home-coach">
                     <strong>{member.full_name}</strong>
-                    <span>{member.role === 'owner' ? 'Head Coach' : 'Assistant Coach'}</span>
+                    <span>{member.is_head_coach ? 'Head Coach' : member.role === 'owner' || member.role === 'coach' ? 'Assistant Coach' : ''}</span>
                   </span>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="home-team-bar">
-            <label>
+          <div
+            className="home-team-bar"
+            style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '10px', width: '100%' }}
+          >
+            <label style={{ display: 'grid', gap: '6px', flex: '1 1 240px', minWidth: 0 }}>
               <span>Current Team</span>
               <select
                 value={selectedTeamId}
@@ -1508,37 +2689,77 @@ function playerAtPosition(position: string) {
               >
                 {teams.map((availableTeam) => (
                   <option key={availableTeam.id} value={availableTeam.id}>
-                    {availableTeam.name} — {availableTeam.age_group} {availableTeam.format}
+                    {availableTeam.name} - {availableTeam.age_group} {availableTeam.format}
                   </option>
                 ))}
               </select>
             </label>
-            {currentUserRole === 'owner' && (
-              <button className="secondary-button" onClick={() => setShowNewTeamForm((value) => !value)}>
-                + New Team
-              </button>
-            )}
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={openNewTeamForm}
+              onTouchEnd={(event) => {
+                event.preventDefault()
+                openNewTeamForm()
+              }}
+              style={{ touchAction: 'manipulation', flex: '0 1 auto', maxWidth: '100%' }}
+            >
+              + New Team
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={async () => {
+                setShowJoinTeam(true)
+                setJoinTeamSearch('')
+                setJoinCodeSearch('')
+                setJoinTeamResults([])
+                await loadJoinRequests()
+              }}
+              style={{ flex: '0 1 auto', maxWidth: '100%' }}
+            >
+              Join Existing Team
+            </button>
           </div>
 
-          {showNewTeamForm && (
-            <section className="team-card create-team-card">
-              <div className="section-header">
-                <div>
-                  <h3>Create Team</h3>
-                  <span>Add another team without affecting the current team's roster or games.</span>
-                </div>
+          {showJoinTeam && (
+            <div style={{ marginTop: '24px' }}>
+              <h3>Join an Existing Team</h3>
+              <div style={{ display: 'grid', gap: '10px', marginTop: '12px' }}>
+                <input type="text" value={joinTeamSearch} onChange={(e) => setJoinTeamSearch(e.target.value)} placeholder="Search team, city, or coach" />
+                <input type="text" value={joinCodeSearch} onChange={(e) => setJoinCodeSearch(e.target.value.toUpperCase())} placeholder="Or enter exact Join Code" maxLength={6} autoCapitalize="characters" />
+                <button className="secondary-button" onClick={searchTeamsToJoin} disabled={!joinTeamSearch.trim() && !joinCodeSearch.trim()}>Search Teams</button>
               </div>
-              <div className="create-team-grid">
-                <label><span>Team Name</span><input value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="Blue Tigers" /></label>
-                <label><span>Age Group</span><select value={newTeamAgeGroup} onChange={(e) => setNewTeamAgeGroup(e.target.value)}>{['U08','U09','U10','U11','U12','U13','U14','U15','U16','U17','U18'].map((value) => <option key={value}>{value}</option>)}</select></label>
-                <label><span>Format</span><select value={newTeamFormat} onChange={(e) => setNewTeamFormat(e.target.value)}>{['6v6','7v7','9v9','11v11'].map((value) => <option key={value}>{value}</option>)}</select></label>
-                <label><span>Season</span><input value={newTeamSeason} onChange={(e) => setNewTeamSeason(e.target.value)} /></label>
-              </div>
-              <div className="form-buttons">
-                <button className="primary-button" onClick={createTeam}>Create Team</button>
-                <button className="secondary-button" onClick={() => setShowNewTeamForm(false)}>Cancel</button>
-              </div>
-            </section>
+              {joinTeamResults.map((teamToJoin) => {
+                const alreadyMember = teams.some((memberTeam) => memberTeam.id === teamToJoin.id)
+                const requestPending = joinRequestTeamIds.includes(teamToJoin.id)
+
+                return (
+                  <div key={teamToJoin.id} className="team-card" style={{ marginTop: '12px', padding: '14px' }}>
+                    <strong>{teamToJoin.name}</strong>
+                    <div style={{ marginTop: '6px', color: '#666', fontSize: '13px' }}>
+                      {[teamToJoin.city, teamToJoin.coach_name, teamToJoin.age_group, teamToJoin.format, teamToJoin.season].filter(Boolean).join(' · ')}
+                    </div>
+                    {alreadyMember ? (
+                      <button type="button" className="secondary-button" style={{ marginTop: '12px' }} disabled>
+                        You&apos;re Already on This Team
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={requestPending ? 'secondary-button' : 'primary-button'}
+                        style={{ marginTop: '12px', touchAction: 'manipulation' }}
+                        onClick={() => void requestToJoinTeam(teamToJoin)}
+                        disabled={requestPending}
+                      >
+                        {requestPending ? 'Request Sent' : 'Request to Join'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+              {(joinTeamSearch.trim() || joinCodeSearch.trim()) && joinTeamResults.length === 0 && <p style={{ marginTop: '10px', color: '#666' }}>No active teams found.</p>}
+            </div>
           )}
         </section>
 
@@ -1548,7 +2769,7 @@ function playerAtPosition(position: string) {
               <p className="eyebrow">UP NEXT</p>
               <h2>{nextGame ? `vs. ${nextGame.opponent}` : 'No upcoming game'}</h2>
             </div>
-            {nextGame && <span>{nextGame.game_date}{nextGame.game_time ? ` · ${formatGameTime(nextGame.game_time)}` : ''}</span>}
+            {nextGame && <span>{nextGame.game_date}{nextGame.game_time ? ` - ${formatGameTime(nextGame.game_time)}` : ''}</span>}
           </div>
           {nextGame ? (
             <>
@@ -1559,7 +2780,17 @@ function playerAtPosition(position: string) {
               </div>
             </>
           ) : (
-            <button className="primary-button" onClick={() => setScreen('new-game')}>+ Schedule Game</button>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={openNewGameForm}
+              onTouchEnd={(event) => {
+                event.preventDefault()
+                openNewGameForm()
+              }}
+            >
+              + Schedule Game
+            </button>
           )}
         </section>
 
@@ -1579,19 +2810,38 @@ function playerAtPosition(position: string) {
 
         <div className="quick-actions home-quick-actions">
           <button onClick={() => setScreen('roster')}>Roster</button>
-          <button onClick={() => setScreen('new-game')}>+ New Game</button>
+          <button
+            type="button"
+            onClick={openNewGameForm}
+            onTouchEnd={(event) => {
+              event.preventDefault()
+              openNewGameForm()
+            }}
+          >
+            + New Game
+          </button>
           <button onClick={() => nextGame ? openLineup(nextGame) : setScreen('new-game')}>Build Lineup</button>
           {currentUserRole === 'owner' && (
             <button onClick={() => setScreen('team-rules')}>Team Rules</button>
           )}
-          <button type="button" onPointerDown={(e) => { e.preventDefault(); setScreen('coaches'); window.scrollTo(0, 0) }}>Coaches & Staff</button>
+          <button
+              type="button"
+              onPointerDown={async (e) => {
+                e.preventDefault()
+                setScreen('coaches')
+                window.scrollTo(0, 0)
+                await loadOwnerJoinRequests()
+              }}
+            >
+              Coaches & Staff
+            </button>
         </div>
 
         <section className="team-card home-team-summary">
           <div>
             <p className="eyebrow">CURRENT TEAM</p>
             <h2>{team?.name}</h2>
-            <p>{team?.age_group} · {team?.format} · {team?.season}</p>
+            <p>{team?.age_group} - {team?.format} - {team?.season}</p>
           </div>
           <strong>{players.length} players</strong>
         </section>
@@ -1626,36 +2876,136 @@ function playerAtPosition(position: string) {
           <div className="analytics-table-wrap">
             <table className="analytics-table">
               <thead><tr>
-                <th className="player-col">Player</th>
-                <th>QTRS<br /><span>Played</span></th>
-                <th>GK<br /><span>Qtrs</span></th>
+                <th className="player-col" onClick={() => handleAnalyticsSort('player')}>Player</th>
+                <th onClick={() => handleAnalyticsSort('played')}>QTRS<br /><span>Played</span></th>
+                <th onClick={() => handleAnalyticsSort('gk')}>GK<br /><span>Qtrs</span></th>
                 <th>DEF<br /><span>Qtrs</span></th>
                 <th>MID<br /><span>Qtrs</span></th>
-                <th>STR<br /><span>Qtrs</span></th>
-                <th>Bench<br /><span>Qtrs</span></th>
-                <th>Captain<br /><span>Gms</span></th>
+                <th onClick={() => handleAnalyticsSort('str')}>STR<br /><span>Qtrs</span></th>
+                <th onClick={() => handleAnalyticsSort('bench')}>Bench<br /><span>Qtrs</span></th>
+                <th onClick={() => handleAnalyticsSort('goals')}>Goals</th>
+                <th onClick={() => handleAnalyticsSort('assists')}>Assists</th>
+                <th onClick={() => handleAnalyticsSort('shots')}>Shots</th>
+                <th onClick={() => handleAnalyticsSort('saves')}>Saves</th>
+                <th onClick={() => handleAnalyticsSort('captain')}>Captain<br /><span>Gms</span></th>
               </tr></thead>
               <tbody>
-                {players.map((player) => {
-                  const rows = seasonLineups.filter((item) => item.player_id === player.id)
-                  const roleCounts = { GK: 0, DEF: 0, MID: 0, STR: 0 }
-                  const captainCount = games.filter((game) => game.captain_1_id === player.id || game.captain_2_id === player.id).length
-                  rows.forEach((item) => {
-                    const role = item.position === 'Goalkeeper' ? 'GK' : item.position.includes('Defense') ? 'DEF' : item.position.includes('Mid') ? 'MID' : 'STR'
-                    roleCounts[role]++
+                {[...players]
+                  .sort((a, b) => {
+                    const aValue = analyticsSortValue(a)
+                    const bValue = analyticsSortValue(b)
+
+                    if (typeof aValue === 'string' && typeof bValue === 'string') {
+                      const result = aValue.localeCompare(bValue)
+                      return analyticsSortAsc ? result : -result
+                    }
+
+                    const result = Number(bValue) - Number(aValue)
+                    return analyticsSortAsc ? -result : result
                   })
-                  const played = new Set(rows.map((item) => item.quarter)).size
-                  const plannedQuarters = new Set(seasonLineups.map((item) => item.quarter)).size
-                  const bench = Math.max(0, plannedQuarters - played)
-                  return <tr key={player.id}>
-                    <td className="player-col" style={{ fontWeight: 700 }}>#{player.jersey_number ?? '-'} {player.name}</td>
-                    <td>{played}</td><td>{roleCounts.GK}</td><td>{roleCounts.DEF}</td><td>{roleCounts.MID}</td><td>{roleCounts.STR}</td><td>{bench}</td><td>{captainCount}</td>
-                  </tr>
-                })}
-              </tbody>
+                  .map((player) => {
+                  const usage = completedPositionAnalytics.get(player.id) || {
+                    played: 0,
+                    gk: 0,
+                    def: 0,
+                    mid: 0,
+                    str: 0,
+                    bench: 0,
+                  }
+
+                  const roleCounts = {
+                    GK: usage.gk,
+                    DEF: usage.def,
+                    MID: usage.mid,
+                    STR: usage.str,
+                  }
+
+                  const played = usage.played
+                  const bench = usage.bench
+
+                  const goals = completedGameEvents.filter(
+                    (event) =>
+                      event.event_type === 'our_goal' &&
+                      event.player_id === player.id
+                  ).length
+
+                  const assists = completedGameEvents.filter(
+                    (event) =>
+                      event.event_type === 'our_goal' &&
+                      event.assister_id === player.id
+                  ).length
+
+                  const shots = completedGameEvents.filter((event) => event.event_type === 'our_shot' && event.player_id === player.id).length
+                  const saves = completedGameEvents.filter((event) => event.event_type === 'save' && event.player_id === player.id).length
+
+                  const captainCount = completedGames.filter(
+                    (game) =>
+                      game.captain_1_id === player.id ||
+                      game.captain_2_id === player.id
+                  ).length
+
+                  return (
+                    <tr key={player.id}>
+                      <td className="player-col" style={{ fontWeight: 700 }}>
+                        #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
+                      </td>
+                      <td>{played % 1 === 0 ? played : played.toFixed(1)}</td>
+                      <td>{roleCounts.GK % 1 === 0 ? roleCounts.GK : roleCounts.GK.toFixed(1)}</td>
+                      <td>{roleCounts.DEF % 1 === 0 ? roleCounts.DEF : roleCounts.DEF.toFixed(1)}</td>
+                      <td>{roleCounts.MID % 1 === 0 ? roleCounts.MID : roleCounts.MID.toFixed(1)}</td>
+                      <td>{roleCounts.STR % 1 === 0 ? roleCounts.STR : roleCounts.STR.toFixed(1)}</td>
+                      <td>{bench % 1 === 0 ? bench : bench.toFixed(1)}</td>
+                      <td>{goals}</td>
+                      <td>{assists}</td>
+                      <td>{shots}</td>
+                      <td>{saves}</td>
+                      <td>{captainCount}</td>
+                    </tr>
+                  )
+                })}              </tbody>
             </table>
           </div>
         </section>
+          {currentUserRole === 'owner' && archivedTeams.length > 0 && (
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px', opacity: 0.65 }}>
+                Archived Teams
+              </div>
+              {archivedTeams.map((archivedTeam) => (
+                <div key={archivedTeam.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '8px 0' }}>
+                  <span>
+                    <strong>{archivedTeam.name}</strong>
+                    <span style={{ marginLeft: '6px', fontSize: '12px', opacity: 0.7 }}>
+                      {archivedTeam.age_group} | {archivedTeam.format} | {archivedTeam.season}
+                    </span>
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button className="secondary-button" onClick={() => viewArchivedTeam(archivedTeam)}>
+                      View Season
+                    </button>
+                    {currentUserRole === 'owner' && (
+                      <button className="secondary-button" onClick={async () => {
+                        const { error } = await supabase
+                          .from('teams')
+                          .update({ archived: false })
+                          .eq('id', archivedTeam.id)
+
+                        if (error) {
+                          console.error(error)
+                          alert(`Could not unarchive team: ${error.message}`)
+                          return
+                        }
+
+                        await loadApp(archivedTeam.id)
+                      }}>
+                        Unarchive
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
       </>
     )
   }
@@ -1678,43 +3028,14 @@ function playerAtPosition(position: string) {
             </div>
           </div>
 
-          <div className="add-player-form">
-            <input
-              type="text"
-              placeholder="Player name"
-              value={newPlayerName}
-              onChange={(e) => setNewPlayerName(e.target.value)}
-            />
-
-            <input
-              type="number"
-              placeholder="Jersey number"
-              value={newPlayerNumber}
-              onChange={(e) => setNewPlayerNumber(e.target.value)}
-            />
-
-            <div className="form-buttons">
-              <button
-                className="primary-button"
-                onClick={addOrUpdatePlayer}
-              >
-                {editingPlayerId ? 'Save Player' : 'Add Player'}
-              </button>
-
-              {editingPlayerId && (
-                <button
-                  className="secondary-button"
-                  onClick={() => {
-                    setEditingPlayerId(null)
-                    setNewPlayerName('')
-                    setNewPlayerNumber('')
-                  }}
-                >
-                  Cancel
-                </button>
-              )}
+          {!editingPlayerId && (
+            <div className="add-player-form">
+              <input type="text" placeholder="First name" value={newPlayerFirstName} onChange={(e) => setNewPlayerFirstName(e.target.value)} />
+              <input type="text" placeholder="Last name (optional)" value={newPlayerLastName} onChange={(e) => setNewPlayerLastName(e.target.value)} />
+              <input type="number" placeholder="Jersey number" value={newPlayerNumber} onChange={(e) => setNewPlayerNumber(e.target.value)} />
+              <div className="form-buttons"><button className="primary-button" onClick={addOrUpdatePlayer}>Add Player</button></div>
             </div>
-          </div>
+          )}
 
           <div className="roster-list">
             {players.map((player) => (
@@ -1739,15 +3060,31 @@ function playerAtPosition(position: string) {
                       border: '2px solid #cbd5e1',
                     }}
                   >
-                    {player.jersey_number ?? '—'}
+                    {player.jersey_number ?? ''}
                   </div>
 
-                  <div style={{ minWidth: 0 }}>
-                    <strong style={{ display: 'block', fontSize: '15px' }}>{player.name}</strong>
-                    <div className="roster-actions">
-                      <button className="secondary-button" onClick={() => editPlayer(player)}>Edit</button>
-                      <button className="secondary-button" onClick={() => deletePlayer(player)}>Delete</button>
-                    </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    {editingPlayerId === player.id ? (
+                      <div className="inline-player-editor">
+                        <div className="inline-player-fields">
+                          <input aria-label="First name" placeholder="First name" value={newPlayerFirstName} onChange={(e) => setNewPlayerFirstName(e.target.value)} />
+                          <input aria-label="Last name" placeholder="Last name" value={newPlayerLastName} onChange={(e) => setNewPlayerLastName(e.target.value)} />
+                          <input aria-label="Jersey number" type="number" placeholder="#" value={newPlayerNumber} onChange={(e) => setNewPlayerNumber(e.target.value)} />
+                        </div>
+                        <div className="roster-actions">
+                          <button className="primary-button" onClick={addOrUpdatePlayer}>Save</button>
+                          <button className="secondary-button" onClick={() => { setEditingPlayerId(null); setNewPlayerFirstName(''); setNewPlayerLastName(''); setNewPlayerNumber('') }}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <strong style={{ display: 'block', fontSize: '15px' }}>{[player.first_name, player.last_name].filter(Boolean).join(' ') || player.name}</strong>
+                        <div className="roster-actions">
+                          <button className="secondary-button" onClick={() => editPlayer(player)}>Edit</button>
+                          <button className="secondary-button" onClick={() => deletePlayer(player)}>Delete</button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1780,8 +3117,7 @@ function playerAtPosition(position: string) {
                     position_preferences: { ...prefs },
                     avoid_positions: [...avoid],
                     coach_notes: player.coach_notes || '',
-                  })
-                }
+                  })                }
 
                 const cancelEdit = () => {
                   setCoachProfilePlayerId(null)
@@ -1791,7 +3127,7 @@ function playerAtPosition(position: string) {
                 return (
                   <div key={player.id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '10px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                      <strong>#{player.jersey_number ?? '-'} {player.name}</strong>
+                      <strong>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
                       <button onClick={open ? cancelEdit : startEdit}>
                         {open ? 'Close' : 'Edit Coach Input'}
                       </button>
@@ -1830,12 +3166,13 @@ function playerAtPosition(position: string) {
                         <div>
                           <strong>Role Strength</strong>
                           <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '3px', marginBottom: '6px' }}>1 = weak fit, 5 = excellent fit</div>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: '8px', marginTop: '8px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px', marginTop: '8px' }}>
                             {['GK', 'DEF', 'MID', 'STR'].map((role) => (
                               <label key={role} style={{ display: 'contents' }}>
                                 <span style={{ alignSelf: 'center', fontWeight: 600 }}>{role}</span>
                                 <select
                                   aria-label={`${role} strength`}
+                                  style={{ width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}
                                   value={String(draft.position_preferences[role] || 0)}
                                   onChange={(e) => setCoachDraft({
                                     ...draft,
@@ -1843,11 +3180,11 @@ function playerAtPosition(position: string) {
                                   })}
                                 >
                                   <option value="0">Not rated</option>
-                                  <option value="1">1 — Weak</option>
+                                  <option value="1">1 - Weak</option>
                                   <option value="2">2</option>
-                                  <option value="3">3 — Solid</option>
+                                  <option value="3">3 - Solid</option>
                                   <option value="4">4</option>
-                                  <option value="5">5 — Excellent</option>
+                                  <option value="5">5 - Excellent</option>
                                 </select>
                               </label>
                             ))}
@@ -1943,17 +3280,38 @@ function playerAtPosition(position: string) {
               onChange={(e) => setOpponent(e.target.value)}
             />
 
-            <input
-              type="date"
-              value={gameDate}
-              onChange={(e) => setGameDate(e.target.value)}
-            />
+            <div className="game-date-time-grid">
+              <label>
+                <span>Game Date</span>
+                <select
+                  aria-label="Game Date"
+                  value={gameDate}
+                  onChange={(e) => {
+                    setGameDate(e.target.value)
+                  }}
+                >
+                  {buildGameDateOptions().map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
 
-            <input
-              type="time"
-              value={gameTime}
-              onChange={(e) => setGameTime(e.target.value)}
-            />
+              <label>
+                <span>Game Time</span>
+                <select
+                  aria-label="Game Time"
+                  value={gameTime}
+                  onChange={(e) => {
+                    setGameTime(e.target.value)
+                  }}
+                >
+                  <option value="">Select time</option>
+                  {buildGameTimeOptions().map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
             <input
               type="text"
@@ -1986,145 +3344,6 @@ function playerAtPosition(position: string) {
           </div>
         </section>
       </>
-    )
-  }
-
-  function renderFormationOverview() {
-    const formationLines = [
-      {
-        key: 'striker',
-        label: 'Attack',
-        positions: positionsForFormation(optimizationFormation).filter((position) =>
-          position.includes('Striker')
-        ),
-      },
-      {
-        key: 'mid',
-        label: 'Midfield',
-        positions: positionsForFormation(optimizationFormation).filter((position) =>
-          position.includes('Mid')
-        ),
-      },
-      {
-        key: 'defense',
-        label: 'Defense',
-        positions: positionsForFormation(optimizationFormation).filter((position) =>
-          position.includes('Defense')
-        ),
-      },
-      {
-        key: 'goalkeeper',
-        label: 'Goalkeeper',
-        positions: positionsForFormation(optimizationFormation).filter((position) =>
-          position === 'Goalkeeper'
-        ),
-      },
-    ].filter((line) => line.positions.length > 0)
-
-    const playerLabel = (playerId: string) => {
-      const player = players.find((item) => item.id === playerId)
-      if (!player) return 'Unknown'
-      return '#' + (player.jersey_number ?? '-') + ' ' + player.name
-    }
-
-    return (
-      <section className="team-card formation-overview-card">
-        <div className="section-header">
-          <div>
-            <h2>4-Quarter Formation</h2>
-            <span>
-              {optimizationFormation} • Tap a quarter to edit it.
-            </span>
-          </div>
-        </div>
-
-        <div className="formation-grid">
-          {[1, 2, 3, 4].map((quarter) => {
-            const quarterLineup = allGameLineups.filter(
-              (item) => item.quarter === quarter
-            )
-            const count = quarterLineup.length
-            const isActive = selectedQuarter === quarter
-
-            return (
-              <div
-                key={quarter}
-                className={isActive ? 'formation-quarter-card active' : 'formation-quarter-card'}
-                role="button"
-                tabIndex={0}
-                onClick={() => changeQuarter(quarter)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    changeQuarter(quarter)
-                  }
-                }}
-              >
-                <div className="formation-quarter-header">
-                  <strong>Q{quarter}</strong>
-                  <span className={count > 0 ? 'formation-count' : 'formation-count empty'}>
-                    ({count})
-                  </span>
-                  {isActive && <span className="formation-editing">Editing</span>}
-                </div>
-
-                {count === 0 ? (
-                  <div className="formation-empty-state">
-                    <strong>No lineup yet</strong>
-                    <span>Tap to build Q{quarter}</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="formation-pitch">
-                      {formationLines.map((line) => (
-                        <div className="formation-line" key={line.key}>
-                          {line.positions.map((position) => {
-                            const assignment = quarterLineup.find(
-                              (item) => item.position === position
-                            )
-                            return (
-                              <div
-                                className={assignment ? 'formation-player' : 'formation-player empty'}
-                                key={position}
-                              >
-                                <span className="formation-position">
-                                  {positionShort(position)}
-                                </span>
-                                <strong>
-                                  {assignment
-                                    ? playerLabel(assignment.player_id)
-                                    : 'Open'}
-                                </strong>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="formation-bench">
-                      <span>Bench</span>
-                      {players
-                        .filter(
-                          (player) =>
-                            !quarterLineup.some(
-                              (item) => item.player_id === player.id
-                            ) &&
-                            playerAvailableForQuarter(player.id, quarter)
-                        )
-                        .map((player) => (
-                          <strong key={player.id}>
-                            #{player.jersey_number ?? '-'} {player.name}
-                          </strong>
-                        ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </section>
     )
   }
 
@@ -2165,6 +3384,11 @@ function playerAtPosition(position: string) {
                   style={{
                     textAlign: 'left',
                     padding: '8px 6px',
+                    position: 'sticky',
+                    left: 0,
+                    zIndex: 2,
+                    background: '#fff',
+                    boxShadow: '2px 0 4px rgba(0,0,0,0.06)',
                   }}
                 >
                   Player
@@ -2191,12 +3415,17 @@ function playerAtPosition(position: string) {
                     style={{
                       padding: '8px 6px',
                       fontWeight: 600,
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 1,
+                      background: '#fff',
+                      boxShadow: '2px 0 4px rgba(0,0,0,0.06)',
                     }}
                   >
                     {player.jersey_number !== null
                       ? `#${player.jersey_number} `
                       : ''}
-                    {player.name}
+                    {player.first_name || player.name.split(' ')[0]}
                   </td>
 
                   {plannedQuarters.map((quarter) => {
@@ -2258,7 +3487,7 @@ function playerAtPosition(position: string) {
           borderBottom: '1px solid #eee',
         }}
       >
-        <strong>vs. {game.opponent}</strong>
+        <strong>{game.home_away === 'Away' ? 'at' : 'vs.'} {game.opponent}</strong>
 
         <div style={{ marginTop: 4, fontSize: 13 }}>
           {game.game_date}
@@ -2288,6 +3517,15 @@ function playerAtPosition(position: string) {
 
           {game.status !== 'Completed' && (
             <button onClick={() => openLineup(game)}>Lineup</button>
+          )}
+
+          {currentUserRole !== 'viewer' && (
+            <button
+              className="secondary-button"
+              onClick={() => resetGame(game)}
+            >
+              Reset Game
+            </button>
           )}
         </div>
       </div>
@@ -2351,11 +3589,115 @@ function playerAtPosition(position: string) {
         lineups={allGameLineups}
         captainIds={[selectedGame.captain_1_id, selectedGame.captain_2_id].filter(Boolean) as string[]}
         userRole={currentUserRole || 'viewer'}
-        onBack={() => setScreen('home')}
+        onBack={async () => { await loadApp(); setScreen('home') }}
       />
     )
   }
 
+  async function saveCaptains() {
+    if (!selectedGame) return
+
+    if (!captain1Id || !captain2Id) {
+      alert('Select two captains.')
+      return
+    }
+
+    if (captain1Id === captain2Id) {
+      alert('Choose two different captains.')
+      return
+    }
+
+    const { error } = await supabase
+      .from('games')
+      .update({ captain_1_id: captain1Id, captain_2_id: captain2Id })
+      .eq('id', selectedGame.id)
+
+    if (error) {
+      console.error(error)
+      alert('Could not save captains.')
+      return
+    }
+
+    setSelectedGame((current) =>
+      current ? { ...current, captain_1_id: captain1Id, captain_2_id: captain2Id } : current
+    )
+
+    setGames((current) =>
+      current.map((game) =>
+        game.id === selectedGame.id
+          ? { ...game, captain_1_id: captain1Id, captain_2_id: captain2Id }
+          : game
+      )
+    )
+
+    alert('Captains saved.')
+  }
+
+  async function saveLineupData(items: LineupItem[], quarter: number, announceSuccess = true) {
+    if (!selectedGame) return false
+
+    // Validate lineup data before sending anything to Supabase.
+    // player_id MUST be an actual player UUID; position is the position string.
+    const validRows = items
+      .filter((item) => {
+        const player = players.find((p) => p.id === item.player_id)
+        const validPosition = typeof item.position === 'string' && item.position.length > 0
+
+        if (!player || !validPosition) {
+          console.warn('Skipping invalid lineup item:', item)
+          return false
+        }
+
+        return true
+      })
+      .map((item) => ({
+        game_id: selectedGame.id,
+        quarter,
+        player_id: item.player_id,
+        position: item.position,
+      }))
+
+    // If the UI somehow created a malformed lineup, stop before deleting
+    // the existing saved lineup so we never destroy good data.
+    if (validRows.length !== items.length) {
+      console.error('Invalid lineup data:', items)
+      alert('Could not save lineup: one or more player assignments are invalid. Please reassign the affected position.')
+      return false
+    }
+
+    const { error: deleteError } = await supabase
+      .from('game_lineups')
+      .delete()
+      .eq('game_id', selectedGame.id)
+      .eq('quarter', quarter)
+
+    if (deleteError) {
+      console.error(deleteError)
+      alert(`Could not save lineup: ${deleteError.message}`)
+      return false
+    }
+
+    if (validRows.length > 0) {
+      const { error: insertError } = await supabase
+        .from('game_lineups')
+        .insert(validRows)
+
+      if (insertError) {
+        console.error(insertError)
+        alert(`Could not save lineup: ${insertError.message}`)
+        return false
+      }
+    }
+
+    if (announceSuccess) {
+      alert(`Q${quarter} lineup saved successfully.`)
+    }
+    return true
+  }
+
+  async function saveLineup() {
+    return saveLineupData(lineup, selectedQuarter, true)
+  }
   function renderLineup() {
     if (!selectedGame) return null
 
@@ -2367,7 +3709,7 @@ function playerAtPosition(position: string) {
           className="back-button"
           onClick={async () => {
             if (canManageGame) {
-              const saved = await saveLineup(false)
+              const saved = await saveLineup()
 
               if (!saved) {
                 alert('Could not save the current quarter.')
@@ -2396,7 +3738,7 @@ function playerAtPosition(position: string) {
 
             <button
               className="primary-button"
-              onClick={() => saveLineup(true)}
+              onClick={() => saveLineup()}
               disabled={savingLineup || !canManageGame}
             >
               {savingLineup ? 'Saving...' : 'Save Lineup'}
@@ -2415,23 +3757,14 @@ function playerAtPosition(position: string) {
             >
               Clear Q{selectedQuarter} Lineup
             </button>
-          </div>          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-            <button
-              className="secondary-button"
-              onClick={copyPreviousGameLineup}
-              disabled={savingLineup || !canManageGame}
-            >
-              Copy Previous Game
-            </button>
-          </div>
-<div style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }}>
+          </div><div style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }}>
             <h3 style={{ margin: '0 0 8px' }}>Game Captains</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <select value={captain1Id} onChange={(e) => setCaptain1Id(e.target.value)}>
                 <option value="">Captain 1</option>
                 {players.map((player) => (
                   <option key={player.id} value={player.id}>
-                    #{player.jersey_number ?? '-'} {player.name}
+                    #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
                   </option>
                 ))}
               </select>
@@ -2439,7 +3772,7 @@ function playerAtPosition(position: string) {
                 <option value="">Captain 2</option>
                 {players.map((player) => (
                   <option key={player.id} value={player.id}>
-                    #{player.jersey_number ?? '-'} {player.name}
+                    #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
                   </option>
                 ))}
               </select>
@@ -2449,52 +3782,94 @@ function playerAtPosition(position: string) {
             </button>
           </div>
 
-          <div style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }}>
-            <h3 style={{ margin: '0 0 8px' }}>Attendance</h3>
-            <div style={{ fontSize: '12px', marginBottom: '8px', opacity: 0.7 }}>
-              Set availability before building the quarters. Absent players are unavailable all game. Late players become available starting at their arrival quarter.
+          <details style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }} open={false}>
+            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
+              Attendance ({players.filter((p) => (gameAttendance[p.id]?.available_quarters || [1, 2, 3, 4]).length > 0).length} available)
+            </summary>
+            <div style={{ fontSize: '12px', margin: '8px 0', opacity: 0.7 }}>
+              Everyone starts available for all four quarters. Tap a quarter to turn a player's availability off. Use None for absent all game or All for fully available.
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              {players.map((player) => {
-                const attendance = gameAttendance[player.id] || { status: 'Present' as const, arrival_quarter: null }
+              {[...players].sort((a, b) => {
+                    if (analyticsSort === 'player') {
+                      const result = a.name.localeCompare(b.name)
+                      return analyticsSortAsc ? result : -result
+                    }
+
+                    const getValue = (player: typeof players[number]) => {
+                      const playerEvents = completedGameEvents.filter((event) => event.player_id === player.id)
+                      const playerAssists = completedGameEvents.filter((event) => event.assister_id === player.id).length
+                      const playerGoals = playerEvents.filter((event) => event.event_type === 'our_goal').length
+                      const playerShots = playerEvents.filter((event) => event.event_type === 'our_shot').length
+                      const playerSaves = playerEvents.filter((event) => event.event_type === 'save').length
+                      const playerLineups = actualSeasonLineups.filter((lineup) => lineup.player_id === player.id)
+                      const playerPlayed = playerLineups.length
+                      const playerGk = playerLineups.filter((lineup) => lineup.position === 'Goalkeeper').length
+                      const playerStr = playerLineups.filter((lineup) => lineup.position === 'Center Striker').length
+                      const playerCaptain = completedGames.filter(
+                        (game) => game.captain_1_id === player.id || game.captain_2_id === player.id
+                      ).length
+                      const playerBench = Math.max(0, completedGames.length * 4 - playerPlayed)
+
+                      return {
+                        played: playerPlayed,
+                        gk: playerGk,
+                        str: playerStr,
+                        bench: playerBench,
+                        goals: playerGoals,
+                        assists: playerAssists,
+                        shots: playerShots,
+                        saves: playerSaves,
+                        captain: playerCaptain,
+                      }[analyticsSort]
+                    }
+
+                    const aValue = getValue(a) as number
+                    const bValue = getValue(b) as number
+                    const result = bValue - aValue
+                    return analyticsSortAsc ? -result : result
+                  }).map((player) => {
+                const quarters = gameAttendance[player.id]?.available_quarters || [1, 2, 3, 4]
                 return (
-                  <div key={player.id} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gap: '6px', alignItems: 'center' }}>
-                    <strong>#{player.jersey_number ?? '-'} {player.name}</strong>
-                    <select
-                      value={attendance.status}
-                      disabled={!canManageGame}
-                      onChange={(e) => {
-                        const nextStatus = e.target.value as 'Present' | 'Absent' | 'Late'
-                        saveAttendanceStatus(player.id, nextStatus, nextStatus === 'Late' ? (attendance.arrival_quarter || 2) : null)
-                      }}
-                    >
-                      <option value="Present">Present</option>
-                      <option value="Late">Late</option>
-                      <option value="Absent">Absent</option>
-                    </select>
-                    {attendance.status === 'Late' ? (
-                      <select
-                        value={attendance.arrival_quarter || 2}
-                        disabled={!canManageGame}
-                        onChange={(e) => saveAttendanceStatus(player.id, 'Late', Number(e.target.value))}
-                      >
-                        <option value="2">Arrives Q2</option>
-                        <option value="3">Arrives Q3</option>
-                        <option value="4">Arrives Q4</option>
-                      </select>
-                    ) : (
-                      <span style={{ fontSize: '12px', opacity: 0.6 }}>Available all game</span>
-                    )}
+                  <div key={player.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                      <strong>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
+                      <span style={{ fontSize: '12px', opacity: 0.7 }}>{attendanceSummary(quarters)}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px', marginTop: '7px' }}>
+                      {[1, 2, 3, 4].map((q) => {
+                        const on = quarters.includes(q)
+                        return (
+                          <button
+                            key={q}
+                            type="button"
+                            className={on ? 'primary-button' : 'secondary-button'}
+                            disabled={!canManageGame}
+                            onClick={() => {
+                              const next = on ? quarters.filter((item) => item !== q) : [...quarters, q]
+                              void saveAttendanceAvailability(player.id, next)
+                            }}
+                            style={{ padding: '8px 6px', fontSize: '12px', width: '100%' }}
+                          >
+                            Q{q}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '6px' }}>
+                      <button type="button" className="secondary-button" disabled={!canManageGame} onClick={() => void saveAttendanceAvailability(player.id, [1, 2, 3, 4])} style={{ padding: '8px', fontSize: '12px' }}>All Quarters</button>
+                      <button type="button" className="secondary-button" disabled={!canManageGame} onClick={() => void saveAttendanceAvailability(player.id, [])} style={{ padding: '8px', fontSize: '12px' }}>Absent</button>
+                    </div>
                   </div>
                 )
               })}
             </div>
-          </div>
+          </details>
 
           {(() => {
             const advice = rotationAdvice()
             return (
-              <div
+              <details
                 style={{
                   marginBottom: '12px',
                   padding: '12px',
@@ -2502,8 +3877,12 @@ function playerAtPosition(position: string) {
                   borderRadius: '8px',
                   background: '#f7f7f7',
                 }}
+                open={false}
               >
-                <strong>Coach Assist</strong>
+                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
+                  Coach Assist
+                </summary>
+                <div style={{ marginTop: '10px' }}>
                 <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.7 }}>
                   {advice.message}
                 </div>
@@ -2528,7 +3907,7 @@ function playerAtPosition(position: string) {
                       <option>Protect Lead</option>
                       <option>Need Goal</option>
                       <option>Development</option>
-                      <option>Pull Back / AYSO Mode</option>
+                      <option>Pull Back</option>
                     </select>
                     <div style={{ marginTop: '10px' }}>
                       <strong>Formation</strong>
@@ -2586,13 +3965,74 @@ function playerAtPosition(position: string) {
                       >
                         Apply Full Game Plan
                       </button>
-                      <div style={{ marginTop: '8px', display: 'grid', gap: '4px', fontSize: '12px' }}>
+                      <div style={{ marginTop: '10px', display: 'grid', gap: '10px' }}>
                         {[1, 2, 3, 4].map((quarter) => {
                           const q = wholeGameSuggestion.filter((item) => item.quarter === quarter)
+                          const byPosition = new Map(q.map((item) => [item.position, item]))
+                          const rows = formationRows[optimizationFormation] || []
+
                           return (
-                            <div key={quarter}>
-                              <strong>Q{quarter}:</strong>{' '}
-                              {q.map((item) => `#${players.find((p) => p.id === item.player_id)?.jersey_number ?? '-'} ${players.find((p) => p.id === item.player_id)?.name ?? 'Unknown'} (${positionShort(item.position)})`).join(', ') || 'No lineup'}
+                            <div
+                              key={quarter}
+                              style={{
+                                padding: '10px',
+                                border: '1px solid #cfd8cf',
+                                borderRadius: '10px',
+                                background: '#f7faf7',
+                              }}
+                            >
+                              <div style={{ fontWeight: 800, marginBottom: '7px' }}>Q{quarter}</div>
+                              <div
+                                style={{
+                                  borderRadius: '8px',
+                                  padding: '8px',
+                                  background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)',
+                                  border: '1px solid #b8cdb8',
+                                  display: 'grid',
+                                  gap: '5px',
+                                }}
+                              >
+                                {rows.map((row, rowIndex) => (
+                                  <div
+                                    key={rowIndex}
+                                    style={{
+                                      display: 'grid',
+                                      gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
+                                      gap: '5px',
+                                    }}
+                                  >
+                                    {row.map((position) => {
+                                      const item = byPosition.get(position)
+                                      const player = item
+                                        ? players.find((p) => p.id === item.player_id)
+                                        : null
+
+                                      return (
+                                        <div
+                                          key={position}
+                                          style={{
+                                            minHeight: '42px',
+                                            padding: '5px 3px',
+                                            border: '1px solid #aab8aa',
+                                            borderRadius: '6px',
+                                            background: '#fff',
+                                            textAlign: 'center',
+                                          }}
+                                        >
+                                          <div style={{ fontSize: '9px', fontWeight: 800, opacity: 0.6 }}>
+                                            {positionShort(position)}
+                                          </div>
+                                          <div style={{ fontWeight: 700, fontSize: '12px', lineHeight: 1.15 }}>
+                                            {player
+                                              ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}`
+                                              : '—'}
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )
                         })}
@@ -2635,7 +4075,7 @@ function playerAtPosition(position: string) {
                       {quarterSuggestion.suggestedLineup.map(({ position, player }) => (
                         <div key={position}>
                           <span style={{ opacity: 0.65 }}>{positionShort(position)}:</span>{' '}
-                          #{player.jersey_number ?? '-'} {player.name}
+                          #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
                         </div>
                       ))}
                     </div>
@@ -2648,7 +4088,7 @@ function playerAtPosition(position: string) {
                     ? advice.priority
                         .map(
                           (player) =>
-                            `#${player.jersey_number ?? '-'} ${player.name} (${playerQuartersPlayed(player.id)}/4)`
+                            `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]} (${playerQuartersPlayed(player.id)}/4)`
                         )
                         .join(', ')
                     : 'None'}
@@ -2657,10 +4097,11 @@ function playerAtPosition(position: string) {
                 {advice.gk && (
                   <div style={{ marginTop: '6px' }}>
                     <strong>GK option:</strong>{' '}
-                    #{advice.gk.jersey_number ?? '-'} {advice.gk.name}
+                    #{advice.gk.jersey_number ?? '-'} {advice.gk.first_name || advice.gk.name.split(' ')[0]}
                   </div>
                 )}
-              </div>
+                </div>
+              </details>
             )
           })()}
 
@@ -2684,8 +4125,7 @@ function playerAtPosition(position: string) {
                   Q{quarter}
                   <span
                     style={{
-                      marginLeft: '4px',
-                      fontSize: '11px',
+                      marginLeft: '4px',                      fontSize: '11px',
                     }}
                   >
                     ({count})
@@ -2695,134 +4135,393 @@ function playerAtPosition(position: string) {
             })}
           </div>
 
+          <details style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }} open={false}>
+            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
+              Copy Lineups
+            </summary>
+
+            <div style={{ marginTop: '10px' }}>
+              <div className="quarter-copy-controls">
+                <label>
+                  <span>Copy lineup from</span>
+                  <select
+                    value={copySourceQuarter}
+                    onChange={(e) => setCopySourceQuarter(Number(e.target.value))}
+                    disabled={savingLineup || !canManageGame}
+                  >
+                    <option value={0}>Choose quarter</option>
+                    {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
+                      <option key={quarter} value={quarter}>Q{quarter}</option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={!copySourceQuarter || savingLineup || !canManageGame}
+                  onClick={() => void copyQuarterFromCurrentGame(copySourceQuarter)}
+                >
+                  Copy Q{copySourceQuarter || '?'} → Q{selectedQuarter}
+                </button>
+              </div>
+
+              {previousGamesForCopy().length > 0 && (
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #eee' }}>
+                  <h3 style={{ margin: '0 0 8px' }}>Copy From Previous Game</h3>
+                  <div style={{ display: 'grid', gap: '8px' }}>
+                    <select
+                      value={copySourceGameId}
+                      onChange={(e) => setCopySourceGameId(e.target.value)}
+                      disabled={savingLineup || !canManageGame}
+                    >
+                      <option value="">Select a previous game...</option>
+                      {previousGamesForCopy().map((game) => (
+                        <option key={game.id} value={game.id}>
+                          {game.game_date} — {game.opponent}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={copyEntireGameFromGame}
+                      disabled={savingLineup || !canManageGame || !copySourceGameId}
+                    >
+                      Copy Entire Game
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </details>
+
           <h3 className="lineup-heading">
             Q{selectedQuarter} Positions
           </h3>
 
-          <div className="position-list">
-            {positionsForFormation(optimizationFormation).map((position) => {
-              const assignment = playerAtPosition(position)
-
-              return (
-                <div
-                  className="position-row"
-                  key={position}
-                >
-                  <strong>{position}</strong>
-
-                  <select
-                    value={assignment?.player_id || ''}
-                    disabled={!canManageGame}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        assignPlayer(
-                          e.target.value,
-                          position
-                        )
-                      } else {
-                        removePlayerFromPosition(position)
-                      }
-                    }}
-                  >
-                    <option value="">
-                      Select player
-                    </option>
-
-                    {players
-                      .filter(
-                        (player) =>
-                          !lineup.some(
-                            (item) =>
-                              item.player_id === player.id &&
-                              item.position !== position
-                          )
-                      )
-                      .map((player) => {
-                        const gkCount =
-                          goalkeeperQuarterCount(
-                            player.id
-                          )
-
-                        return (
-                          <option
-                            key={player.id}
-                            value={player.id}
-                            disabled={
-                              !playerAvailableForQuarter(player.id, selectedQuarter) ||
-                              (position === 'Goalkeeper' && gkCount >= 2)
-                            }
-                          >
-                            #{player.jersey_number}{' '}
-                            {player.name}
-                            {!playerAvailableForQuarter(player.id, selectedQuarter)
-                              ? gameAttendance[player.id]?.status === 'Absent'
-                                ? '  ABSENT'
-                                : `  AVAILABLE Q${gameAttendance[player.id]?.arrival_quarter || 2}`
-                              : position === 'Goalkeeper' && gkCount >= 2
-                                ? '  GK LIMIT REACHED'
-                                : ''}
-                          </option>
-                        )
-                      })}
-                  </select>
-                </div>
-              )
-            })}
+          <div style={{ borderRadius: 14, padding: 12, background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)', border: '2px solid #b8cdb8', display: 'grid', gap: 8 }}>
+            {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
+              <div key={rowIndex} style={{ display: 'grid', gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`, gap: 8 }}>
+                {row.map((position) => {
+                  const assignment = playerAtPosition(position)
+                  const player = assignment ? players.find((p) => p.id === assignment.player_id) : null
+                  return (
+                    <button
+                      key={position}
+                      type="button"
+                      onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
+                      disabled={!canManageGame}
+                      style={{ minHeight: 64, padding: 6, border: '1px solid #aab8aa', borderRadius: 8, background: 'white', cursor: canManageGame ? 'pointer' : 'default' }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.65 }}>{positionShort(position)}</div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{player ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}` : 'Tap to assign'}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
           </div>
+
+          <div style={{ marginTop: 12, padding: 12, border: '1px solid #d4dce5', borderRadius: 10, background: '#f7f9fb' }}>
+            <strong>Bench / Unused Players</strong>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+              {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
+                <button key={player.id} type="button" className="secondary-button" onClick={() => setSelectedPreplanPlayerId(player.id)} disabled={!canManageGame}>
+                  #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
+                </button>
+              ))}
+              {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).length === 0 && (
+                <span style={{ fontSize: 13, opacity: .7 }}>No unused players</span>
+              )}
+            </div>
+          </div>
+
+
+          {selectedPreplanPlayerId && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+              <div style={{ background: 'white', width: 'min(560px, 100%)', borderRadius: '18px 18px 0 0', padding: 18, maxHeight: '75vh', overflowY: 'auto' }}>
+                {(() => {
+                  const isEmptyPosition = selectedPreplanPlayerId.startsWith('__empty__:')
+                  const selectedAssignment = lineup.find(
+                    (item) => item.player_id === selectedPreplanPlayerId
+                  )
+                  const selectedPlayer = players.find(
+                    (player) => player.id === selectedPreplanPlayerId
+                  )
+
+                  const assignToPosition = (position: string) => {
+                    if (isEmptyPosition) {
+                      const playerId = selectedPreplanPlayerId.replace('__empty__:', '')
+                      assignPlayer(playerId, position)
+                    } else {
+                      assignPlayer(selectedPreplanPlayerId, position)
+                    }
+                    setSelectedPreplanPlayerId(null)
+                  }
+
+                  const replaceWithBenchPlayer = (benchPlayerId: string) => {
+                    if (!selectedAssignment) return
+                    assignPlayer(benchPlayerId, selectedAssignment.position)
+                    setSelectedPreplanPlayerId(null)
+                  }
+
+                  return (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong>
+                          {isEmptyPosition
+                            ? `Assign ${positionShort(selectedPreplanPlayerId.replace('__empty__:', ''))}`
+                            : `Move ${selectedPlayer?.first_name || selectedPlayer?.name?.split(' ')[0] || 'Player'}`}
+                        </strong>
+                        <button type="button" onClick={() => setSelectedPreplanPlayerId(null)}>
+                          Close
+                        </button>
+                      </div>
+
+                      {isEmptyPosition ? (
+                        <div style={{ marginTop: 12 }}>
+                          <div style={{ fontWeight: 800, marginBottom: 8 }}>
+                            Assign player
+                          </div>
+                          <div style={{ display: 'grid', gap: 8 }}>
+                            {players
+                              .filter((p) => !lineup.some((item) => item.player_id === p.id))
+                              .map((player) => (
+                                <button
+                                  key={player.id}
+                                  type="button"
+                                  className="secondary-button"
+                                  disabled={!playerAvailableForQuarter(player.id, selectedQuarter)}
+                                  onClick={() => {
+                                    const position = selectedPreplanPlayerId.replace('__empty__:', '')
+                                    assignPlayer(player.id, position)
+                                    setSelectedPreplanPlayerId(null)
+                                  }}
+                                >
+                                  #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
+                                </button>
+                              ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ marginTop: 12 }}>
+                          {selectedAssignment && (
+                            <>
+                              <div style={{ fontWeight: 800, marginBottom: 8 }}>
+                                Replace {selectedPlayer?.first_name || selectedPlayer?.name?.split(' ')[0] || 'player'} with bench player
+                              </div>
+
+                              <div style={{ display: 'grid', gap: 8 }}>
+                                {players
+                                  .filter((p) => !lineup.some((item) => item.player_id === p.id))
+                                  .map((benchPlayer) => (
+                                    <button
+                                      key={benchPlayer.id}
+                                      type="button"
+                                      className="secondary-button"
+                                      disabled={!playerAvailableForQuarter(benchPlayer.id, selectedQuarter)}
+                                      onClick={() => replaceWithBenchPlayer(benchPlayer.id)}
+                                    >
+                                      Replace {selectedPlayer?.first_name || selectedPlayer?.name?.split(' ')[0] || 'player'} with {benchPlayer.first_name || benchPlayer.name.split(' ')[0]}
+                                    </button>
+                                  ))}
+                              </div>
+                            </>
+                          )}
+
+                          <div style={{ fontWeight: 800, margin: '16px 0 8px' }}>
+                            {selectedAssignment ? 'Move to another position' : 'Assign to position'}
+                          </div>
+
+                          <div style={{ display: 'grid', gap: 8 }}>
+                            {positionsForFormation(optimizationFormation).map((position) => {
+                              
+                              const isCurrentPosition =
+                                selectedAssignment?.position === position
+
+                              return (
+                                <button
+                                  key={position}
+                                  type="button"
+                                  className="secondary-button"
+                                  disabled={isCurrentPosition}
+                                  onClick={() => {
+                                    if (isCurrentPosition) return
+
+                                    if (selectedAssignment) {
+                                      const selectedId = selectedPreplanPlayerId
+
+                                      if (!selectedId || selectedId.startsWith("__empty__:")) {
+                                        return
+                                      }
+
+                                      const selectedPlayer = players.find(
+                                        (player) => player.id === selectedId
+                                      )
+
+                                      if (!selectedPlayer) {
+                                        alert("Please select a valid player.")
+                                        return
+                                      }
+
+                                      assignPlayer(selectedId, position)
+
+                                      setSelectedPreplanPlayerId(null)
+                                    } else {
+                                      assignToPosition(position)
+                                    }
+                                  }}
+                                >
+                                  {position}
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          {selectedAssignment && (
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              style={{ marginTop: 10 }}
+                              onClick={() => {
+                                removePlayerFromPosition(selectedAssignment.position)
+                                setSelectedPreplanPlayerId(null)
+                              }}
+                            >
+                              Remove from lineup
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
+              </div>
+            </div>
+          )}
         </section>
 
-        <div className="lineup-view-toggle" role="group" aria-label="Lineup overview">
-          <button
-            className={lineupView === 'table' ? 'primary-button' : 'secondary-button'}
-            onClick={() => setLineupView('table')}
-          >
-            Table
-          </button>
-          <button
-            className={lineupView === 'formation' ? 'primary-button' : 'secondary-button'}
-            onClick={() => setLineupView('formation')}
-          >
-            Formations
-          </button>
-        </div>
-
-        {lineupView === 'formation'
-          ? renderFormationOverview()
-          : renderPlayingTimeTracker()}
+        {renderPlayingTimeTracker()}
 
       </>
     )
   }
 
   return (
-    <div className="app">
+    <>
+      <div className="app">
       <header className="app-header">
         <div className="header-content">
           <h1>Beautiful Game IQ</h1>
           <p>Know the game. Coach the moment.</p>
           <p style={{ marginTop: '4px', opacity: 0.85 }}>Your AI copilot for game day.</p>
-          <button
-            type="button"
-            onClick={signOut}
-            style={{ marginTop: '10px' }}
-          >
-            Sign Out
-          </button>
-          <button
-            type="button"
-            onClick={() => setBugReportOpen(true)}
-            style={{ marginTop: '10px' }}
-          >
-            Report a Bug
-          </button>
+          <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>Signed in as: {currentUserEmail}</p>
+          <div className="header-account-actions">
+            <button
+              type="button"
+              onClick={signOut}
+            >
+              Sign Out
+            </button>
+            <button
+              type="button"
+              onClick={deleteAccount}
+              disabled={deletingAccount}
+              style={{ marginTop: '10px' }}
+            >
+              {deletingAccount ? 'Deleting Account...' : 'Delete Account'}
+            </button>
+                        <button
+              type="button"
+              onClick={() => setBugReportOpen(true)}
+            >
+              Report a Bug
+            </button>
+            <Monetization userId={currentUserId} />
+          </div>
         </div>
       </header>
+
+      {showNewTeamForm && (
+        <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="new-team-title">
+          <section className="team-card app-modal-card">
+            <div className="section-header">
+              <div>
+                <h2 id="new-team-title">Create Your Team</h2>
+                <span>Start a clean new team without leaving the current account.</span>
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <label>
+                Team Name
+                <input value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="Enter team name" autoFocus />
+              </label>
+              <label>
+                City
+                <input value={newTeamCity} onChange={(e) => setNewTeamCity(e.target.value)} placeholder="e.g. Redlands" />
+              </label>
+
+              <label>
+                Coach Name
+                <input value={newTeamCoachName} onChange={(e) => setNewTeamCoachName(e.target.value)} placeholder="Head coach name" />
+              </label>
+
+
+              <label>
+                Age Group
+                <select value={newTeamAgeGroup} onChange={(e) => setNewTeamAgeGroup(e.target.value)}>
+                  {['U08','U09','U10','U11','U12','U13','U14','U15','U16','U17','U18'].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Format
+                <select value={newTeamFormat} onChange={(e) => setNewTeamFormat(e.target.value)}>
+                  <option value="6v6">6v6</option>
+                  <option value="7v7">7v7</option>
+                  <option value="9v9">9v9</option>
+                  <option value="11v11">11v11</option>
+                </select>
+              </label>
+
+              <label>
+                Season
+                <select value={newTeamSeasonType} onChange={(e) => setNewTeamSeasonType(e.target.value)}>
+                  {['Fall','Winter','Spring','Summer','Year Round'].map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Year
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={newTeamSeasonYear}
+                  onChange={(e) => setNewTeamSeasonYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="YYYY"
+                />
+              </label>
+            </div>
+
+            <div className="app-modal-actions">
+              <button type="button" className="primary-button" onClick={() => void createTeam()}>Create Team</button>
+              <button type="button" className="secondary-button" onClick={() => setShowNewTeamForm(false)}>Cancel</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {bugReportOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '20px' }}>
           <section style={{ background: 'white', color: '#111', borderRadius: '16px', padding: '22px', width: 'min(560px, 100%)', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
             <h2 style={{ marginTop: 0 }}>Report a Bug</h2>
-            <p style={{ marginTop: 0 }}>Tell me what went wrong. The report will include the team, screen, format, browser URL, and your account email.</p>
+            <p style={{ marginTop: 0 }}>Tell us what went wrong. The report is securely tracked and sent to Beautiful Game IQ support with useful diagnostic information.</p>
             <label style={{ display: 'block', marginBottom: '12px' }}>
               <span>Severity</span>
               <select value={bugReport.severity} onChange={(e) => setBugReport({ ...bugReport, severity: e.target.value })} style={{ width: '100%' }}>
@@ -2846,33 +4545,61 @@ function playerAtPosition(position: string) {
       )}
 
       <main className="main-content">
-        {screen === 'home' && renderHome()}
-        {screen === 'roster' && renderRoster()}
-        {screen === 'new-game' && renderNewGame()}
-        {screen === 'lineup' && renderLineup()}
-        {screen === 'live-game' && renderLiveGame()}
-        {screen === 'games' && renderGames()}
-        {screen === 'team-rules' && renderTeamRules()}
-        {screen === 'coaches' && renderCoaches()}
+        {archivedViewTeam ? (
+          renderArchivedTeamView()
+        ) : showNewUserOnboarding ? (
+          renderNewUserOnboarding()
+        ) : (
+          <>
+            {screen === 'home' && renderHome()}
+            {screen === 'roster' && renderRoster()}
+            {screen === 'new-game' && renderNewGame()}
+            {screen === 'lineup' && renderLineup()}
+            {screen === 'live-game' && renderLiveGame()}
+            {screen === 'games' && renderGames()}
+            {screen === 'team-rules' && renderTeamRules()}
+            {screen === 'coaches' && renderCoaches()}
+          </>
+        )}
       </main>
 
-      <nav className="bottom-nav">
-        <button onClick={() => setScreen('home')}>
-
-          <span>Home</span>
-        </button>
-
-        <button onClick={() => setScreen('roster')}>
-
-          <span>Roster</span>
-        </button>
-
-        <button onClick={() => setScreen('games')}>
-          <span>Games</span>
-        </button>
-      </nav>
     </div>
+
+      {!showNewUserOnboarding && (
+        <nav className="bottom-nav">
+          <button onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
+            <span>Home</span>
+          </button>
+          <button onClick={() => setScreen('roster')}>
+            <span>Roster</span>
+          </button>
+          <button onClick={() => setScreen('games')}>
+            <span>Games</span>
+          </button>
+        </nav>
+      )}
+    </>
   )
 }
 
 export default App
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

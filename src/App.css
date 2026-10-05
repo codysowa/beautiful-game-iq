@@ -1,4 +1,4 @@
-/* Beautiful Game IQ — App styling */
+﻿/* Beautiful Game IQ â€” App styling */
 
 :root {
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -12,9 +12,18 @@
   box-sizing: border-box;
 }
 
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-width: 320px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   background: #f3f5f8;
 }
 
@@ -57,6 +66,9 @@ textarea {
 
 .app {
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   padding-bottom: 84px;
 }
 
@@ -84,7 +96,10 @@ textarea {
 
 .main-content {
   width: min(1180px, calc(100% - 28px));
+  max-width: 100%;
+  min-width: 0;
   margin: 24px auto;
+  overflow-x: hidden;
 }
 
 .welcome {
@@ -225,6 +240,8 @@ textarea {
   border-color: #e4caca;
 }
 
+.roster-actions button.primary-button { background: #1f6f4a; color: white; }
+
 .roster-actions button:hover {
   background: #f1f4f8;
 }
@@ -332,185 +349,6 @@ textarea {
 }
 
 
-
-
-/* Lineup overview views */
-.lineup-view-toggle {
-  display: flex;
-  gap: 8px;
-  margin: 0 0 12px;
-}
-
-.formation-overview-card {
-  margin-bottom: 18px;
-}
-
-.formation-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.formation-quarter-card {
-  min-width: 0;
-  padding: 12px;
-  border: 2px solid #dfe4eb;
-  border-radius: 14px;
-  background: #f8fafc;
-  cursor: pointer;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
-}
-
-.formation-quarter-card:hover {
-  border-color: #9fb3a9;
-  box-shadow: 0 4px 14px rgba(25, 35, 55, 0.08);
-}
-
-.formation-quarter-card:focus {
-  outline: 3px solid rgba(31, 111, 74, 0.2);
-  outline-offset: 2px;
-}
-
-.formation-quarter-card.active {
-  border-color: #1f6f4a;
-  box-shadow: 0 0 0 2px rgba(31, 111, 74, 0.08);
-}
-
-.formation-quarter-header {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 9px;
-}
-
-.formation-quarter-header > strong {
-  font-size: 17px;
-}
-
-.formation-count {
-  color: #1f6f4a;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.formation-count.empty {
-  color: #98a2b3;
-}
-
-.formation-editing {
-  margin-left: auto;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: #edf6f1;
-  color: #1f6f4a;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.formation-pitch {
-  min-height: 285px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  gap: 7px;
-  padding: 12px 8px;
-  border: 1px solid #cbd8d0;
-  border-radius: 12px;
-  background: linear-gradient(to bottom, #edf7f0, #f7fbf8);
-}
-
-.formation-line {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-}
-
-.formation-player {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 7px 4px;
-  border: 1px solid #d5ddd8;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  text-align: center;
-}
-
-.formation-player.empty {
-  opacity: 0.55;
-  border-style: dashed;
-}
-
-.formation-position {
-  display: block;
-  margin-bottom: 2px;
-  color: #667085;
-  font-size: 9px;
-  font-weight: 800;
-}
-
-.formation-player strong {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
-}
-
-.formation-bench {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-  font-size: 10px;
-}
-
-.formation-bench > span {
-  color: #667085;
-  font-weight: 800;
-  margin-right: 2px;
-}
-
-.formation-bench strong {
-  padding: 3px 6px;
-  border-radius: 6px;
-  background: #e9edf3;
-  font-size: 10px;
-}
-
-.formation-empty-state {
-  min-height: 285px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 5px;
-  border: 1px dashed #cbd3dc;
-  border-radius: 12px;
-  color: #667085;
-  text-align: center;
-}
-
-.formation-empty-state strong {
-  color: #344054;
-}
-
-.formation-empty-state span {
-  font-size: 12px;
-}
-
-@media (max-width: 700px) {
-  .formation-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .formation-pitch,
-  .formation-empty-state {
-    min-height: 250px;
-  }
-}
 
 /* Home team identity */
 .home-team-identity {
@@ -790,6 +628,11 @@ textarea {
 }
 
 .analytics-table .player-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #f6f8fb;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.06);
   text-align: left;
 }
 
@@ -797,6 +640,28 @@ textarea {
   border-bottom: 0;
 }
 
+@media (max-width: 600px) {
+  .analytics-table {
+    min-width: 520px;
+    width: max-content;
+  }
+
+  .analytics-table th,
+  .analytics-table td {
+    padding: 8px 6px;
+  }
+
+  .analytics-table .player-col {
+    width: 105px;
+    min-width: 105px;
+  }
+
+  .analytics-table th:not(.player-col),
+  .analytics-table td:not(.player-col) {
+    width: 50px;
+    min-width: 50px;
+  }
+}
 .analytics-table tbody tr:hover td {
   background: #fafbfd;
 }
@@ -892,6 +757,14 @@ textarea {
   font-weight: 700;
 }
 
+/* Prevent iOS from auto-zooming the viewport when signing in or switching accounts. */
+.auth-form input,
+.auth-form select,
+.auth-form textarea {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
 .auth-form button {
   margin-top: 3px;
   background: #1f6f4a;
@@ -934,5 +807,380 @@ textarea {
   .auth-card {
     padding: 26px 20px;
     border-radius: 16px;
+  }
+}
+
+.inline-player-editor { display: grid; gap: 8px; width: 100%; }
+.inline-player-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 90px; gap: 8px; }
+.inline-player-fields input { min-width: 0; }
+
+@media (max-width: 600px) {
+  .inline-player-fields { grid-template-columns: 1fr; }
+  .coach-knowledge-card select, .inline-player-fields select { min-width: 120px; max-width: 100%; }
+}
+
+@media (max-width: 600px) {
+  .team-card select { min-width: 0; max-width: 100%; }
+}
+
+
+
+
+
+/* iOS safe-area support for the Capacitor shell. */
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (max-width: 700px) {
+  .bottom-nav {
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+}
+
+
+/* Native Premium / subscription UI */
+.header-account-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.header-account-actions .premium-launch-button,
+.header-account-actions .premium-active-badge {
+  position: static;
+}
+
+.premium-launch-button {
+  background: #1f6f4a;
+  color: white;
+  box-shadow: 0 5px 16px rgba(20, 30, 50, 0.18);
+}
+
+.premium-active-badge {
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #edf6f1;
+  color: #1f6f4a;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 3px 12px rgba(20, 30, 50, 0.12);
+}
+
+.premium-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.premium-modal {
+  position: relative;
+  width: min(480px, 100%);
+  padding: 26px;
+  border-radius: 18px;
+  background: white;
+  color: #172033;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.premium-modal h2 {
+  margin: 4px 0 8px;
+  font-size: 28px;
+}
+
+.premium-modal > p:not(.eyebrow):not(.premium-message):not(.premium-footnote) {
+  color: #667085;
+  line-height: 1.5;
+}
+
+.premium-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  background: transparent;
+  font-size: 24px;
+  box-shadow: none;
+}
+
+.premium-package-list {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 12px;
+}
+
+.premium-package {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #d7dce5;
+  background: #f8fafc;
+}
+
+.premium-package span {
+  color: #1f6f4a;
+  font-weight: 800;
+}
+
+.premium-restore {
+  width: 100%;
+}
+
+.premium-not-configured {
+  margin: 18px 0 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f6f8fb;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.premium-message {
+  margin: 12px 0 0;
+  color: #344054;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.premium-footnote {
+  margin: 16px 0 0;
+  color: #98a2b3;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+@media (max-width: 600px) {
+  .header-account-actions {
+    gap: 6px;
+  }
+
+  .header-account-actions .premium-launch-button {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+.premium-modal-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+
+
+.form-grid label > span {
+  display: block;
+}
+
+.add-player-form input[type="text"][aria-label="Game Date"],
+.add-player-form input[type="text"][aria-label="Game Time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  opacity: 1;
+  color: #172033;
+  -webkit-text-fill-color: #172033;
+  background: #fff;
+  min-height: 46px;
+}
+
+/* iOS layout hardening. Fixed navigation and modals stay outside the scrolling app shell. */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+#root {
+  display: block;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow-x: clip;
+}
+
+html,
+body,
+#root,
+.app {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.app {
+  width: 100%;
+  margin: 0;
+}
+
+.section-header > *,
+.home-action-row > *,
+.home-quick-actions > *,
+.home-team-bar > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.app {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: visible;
+  padding-bottom: 110px;
+}
+
+.main-content,
+.app-header,
+.header-content,
+.welcome,
+.team-card,
+.next-game-card,
+.analytics-card,
+.section-card,
+.home-next-game,
+.home-record-card,
+.home-team-bar {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.home-coach,
+.home-coach-list,
+.home-coach strong,
+.home-coach > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bottom-nav {
+  left: max(10px, env(safe-area-inset-left));
+  right: max(10px, env(safe-area-inset-right));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  width: auto;
+  max-width: 520px;
+  transform: none;
+  margin: 0 auto;
+}
+
+.bottom-nav button {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.game-date-time-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.game-date-time-grid label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.game-date-time-grid select {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  color: #172033;
+  background: #fff;
+  -webkit-text-fill-color: #172033;
+}
+
+.quarter-copy-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 6px;
+  padding: 12px;
+  border: 1px solid #d7dce5;
+  border-radius: 12px;
+  background: #f7f9fb;
+}
+
+.quarter-copy-controls label {
+  display: grid;
+  gap: 6px;
+  min-width: 160px;
+  flex: 1 1 180px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.quarter-copy-controls select {
+  min-width: 0;
+}
+
+.app-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+  overflow-y: auto;
+}
+
+.app-modal-card {
+  width: min(620px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: 0;
+  padding: 22px;
+}
+
+.app-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .game-date-time-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .app-modal-backdrop {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .app-modal-card {
+    max-height: calc(100vh - 28px);
+  }
+
+  .quarter-copy-controls {
+    align-items: stretch;
+  }
+
+  .quarter-copy-controls button {
+    width: 100%;
   }
 }

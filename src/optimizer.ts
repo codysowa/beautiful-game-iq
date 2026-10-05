@@ -1,6 +1,8 @@
 export type Player = {
   id: string
   name: string
+  first_name: string | null
+  last_name: string | null
   jersey_number: number | null
   usage_priority: 'Core' | 'Regular' | 'Development' | 'Situational' | 'Limited' | null
   bench_tolerance: 'Minimal' | 'Normal' | 'Flexible' | null
@@ -20,6 +22,8 @@ export type TeamRules = {
 export type AttendanceRecord = {
   status: 'Present' | 'Absent' | 'Late'
   arrival_quarter: number | null
+  departure_quarter: number | null
+  available_quarters?: number[] | null
 }
 
 export type LineupItem = {
@@ -28,7 +32,7 @@ export type LineupItem = {
   position: string
 }
 
-export type GameSituation = 'Normal' | 'Protect Lead' | 'Need Goal' | 'Development' | 'Pull Back / AYSO Mode'
+export type GameSituation = 'Normal' | 'Protect Lead' | 'Need Goal' | 'Development' | 'Pull Back'
 
 export type OptimizerInput = {
   players: Player[]
@@ -62,7 +66,7 @@ export const FORMATIONS_BY_FORMAT: Record<string, string[]> = {
   '5v5': ['2-1-2', '2-2-1', '1-3-1'],
   '6v6': ['2-1-2', '2-2-1', '1-3-1'],
   // Region 50 U10 is 7v7: six field players plus a goalkeeper.
-  '7v7': ['3-1-2', '4-1-1', '2-2-2', '1-2-1-2'],
+  '7v7': ['3-2-1', '3-1-2', '4-1-1', '2-2-2', '1-2-1-2'],
   // Region 50 U12 is 9v9: eight field players plus a goalkeeper.
   '9v9': ['4-3-1', '4-2-2', '3-4-1', '3-3-2', '2-4-2'],
   // 11v11 standard formations.
@@ -76,6 +80,7 @@ export const optimizationFormations: Record<string, string[]> = {
   '1-3-1': ['Goalkeeper', 'Center Defense', 'Left Mid', 'Center Mid', 'Right Mid', 'Center Striker'],
 
   // 7v7
+  '3-2-1': ['Goalkeeper', 'Left Defense', 'Center Defense', 'Right Defense', 'Left Mid', 'Right Mid', 'Center Striker'],
   '3-1-2': ['Goalkeeper', 'Left Defense', 'Center Defense', 'Right Defense', 'Center Mid', 'Left Striker', 'Right Striker'],
   '4-1-1': ['Goalkeeper', 'Left Defense', 'Left Center Defense', 'Right Center Defense', 'Right Defense', 'Center Mid', 'Center Striker'],
   '2-2-2': ['Goalkeeper', 'Left Defense', 'Right Defense', 'Left Mid', 'Right Mid', 'Left Striker', 'Right Striker'],
@@ -100,6 +105,7 @@ export const formationRows: Record<string, string[][]> = {
   '2-1-2': [['Left Striker', 'Right Striker'], ['Center Mid'], ['Left Defense', 'Right Defense'], ['Goalkeeper']],
   '2-2-1': [['Center Striker'], ['Left Mid', 'Right Mid'], ['Left Defense', 'Right Defense'], ['Goalkeeper']],
   '1-3-1': [['Center Striker'], ['Left Mid', 'Center Mid', 'Right Mid'], ['Center Defense'], ['Goalkeeper']],
+  '3-2-1': [['Center Striker'], ['Left Mid', 'Right Mid'], ['Left Defense', 'Center Defense', 'Right Defense'], ['Goalkeeper']],
   '3-1-2': [['Left Striker', 'Right Striker'], ['Center Mid'], ['Left Defense', 'Center Defense', 'Right Defense'], ['Goalkeeper']],
   '4-1-1': [['Center Striker'], ['Center Mid'], ['Left Defense', 'Left Center Defense', 'Right Center Defense', 'Right Defense'], ['Goalkeeper']],
   '2-2-2': [['Left Striker', 'Right Striker'], ['Left Mid', 'Right Mid'], ['Left Defense', 'Right Defense'], ['Goalkeeper']],
@@ -126,9 +132,13 @@ export function getDefaultFormationForFormat(format: string): string {
 
 function playerAvailableForQuarter(attendance: Record<string, AttendanceRecord>, playerId: string, quarter: number) {
   const record = attendance[playerId]
-  if (!record || record.status === 'Present') return true
+  if (!record) return true
+  if (Array.isArray(record.available_quarters)) return record.available_quarters.includes(quarter)
+  if (record.status === 'Present') return true
   if (record.status === 'Absent') return false
-  return quarter >= (record.arrival_quarter || 2)
+  if (quarter < (record.arrival_quarter || 2)) return false
+  if (record.departure_quarter !== null && quarter > record.departure_quarter) return false
+  return true
 }
 
 function roleForPosition(position: string) {
@@ -191,7 +201,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
     if (input.gameSituation === 'Protect Lead') return role === 'GK' ? 45 : role === 'DEF' ? 35 : role === 'MID' ? 10 : -10
     if (input.gameSituation === 'Need Goal') return role === 'STR' ? 110 : role === 'MID' ? 80 : role === 'DEF' ? -20 : -100
     if (input.gameSituation === 'Development') return role === 'GK' ? 5 : 0
-    if (input.gameSituation === 'Pull Back / AYSO Mode') return role === 'GK' ? 85 : role === 'DEF' ? 70 : role === 'MID' ? -15 : -95
+    if (input.gameSituation === 'Pull Back') return role === 'GK' ? 85 : role === 'DEF' ? 70 : role === 'MID' ? -15 : -95
     return 0
   }
 
@@ -200,7 +210,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
       if (player.usage_priority === 'Development') return 55
       if (player.usage_priority === 'Core') return -15
     }
-    if (input.gameSituation === 'Pull Back / AYSO Mode') {
+    if (input.gameSituation === 'Pull Back') {
       if (player.usage_priority === 'Core') return -15
       if (player.usage_priority === 'Development') return 45
       if (player.usage_priority === 'Regular') return 15
@@ -246,7 +256,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
     const needGoalScorerBonus = input.gameSituation === 'Need Goal' && recentGoalScorers.has(player.id)
       ? role === 'STR' ? 90 : role === 'MID' ? 50 : 0
       : 0
-    const pullBackRoleAdjustment = input.gameSituation === 'Pull Back / AYSO Mode'
+    const pullBackRoleAdjustment = input.gameSituation === 'Pull Back'
       ? (() => {
           const attackFit = Math.max(
             Number(player.position_preferences?.STR || 0),
@@ -267,7 +277,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
         })()
       : 0
     const pullBackRecentScorerBlocked =
-      input.gameSituation === 'Pull Back / AYSO Mode' &&
+      input.gameSituation === 'Pull Back' &&
       comfortablyAhead &&
       recentGoalScorers.has(player.id) &&
       role === 'STR'
@@ -300,7 +310,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
       if (input.gameSituation === 'Need Goal') {
         return role === 'STR' ? 0 : role === 'MID' ? 1 : role === 'DEF' ? 2 : 3
       }
-      if (input.gameSituation === 'Pull Back / AYSO Mode') {
+      if (input.gameSituation === 'Pull Back') {
         return role === 'GK' ? 0 : role === 'DEF' ? 1 : role === 'MID' ? 2 : 3
       }
       if (input.gameSituation === 'Protect Lead') {
@@ -421,12 +431,12 @@ export function optimizeWholeGame(input: OptimizerInput): WholeGamePlan {
     const gk = roleRating(player, 'GK'), def = roleRating(player, 'DEF'), mid = roleRating(player, 'MID'), str = roleRating(player, 'STR')
     if (input.gameSituation === 'Need Goal') return role === 'STR' ? str * 85 + mid * 35 : role === 'MID' ? mid * 65 + str * 40 : role === 'DEF' ? def * 25 : gk * 45
     if (input.gameSituation === 'Protect Lead') return role === 'GK' ? gk * 50 + def * 20 : role === 'DEF' ? def * 50 + gk * 10 : role === 'MID' ? mid * 35 + def * 20 : str * 15 + def * 10
-    if (input.gameSituation === 'Pull Back / AYSO Mode') return role === 'GK' ? gk * 65 + def * 30 : role === 'DEF' ? def * 70 + gk * 15 : role === 'MID' ? mid * 20 + def * 35 : str * 10 + mid * 10 - def * 20
+    if (input.gameSituation === 'Pull Back') return role === 'GK' ? gk * 65 + def * 30 : role === 'DEF' ? def * 70 + gk * 15 : role === 'MID' ? mid * 20 + def * 35 : str * 10 + mid * 10 - def * 20
     return roleRating(player, role) * 35
   }
   const playerSituationBonus = (player: Player) => {
     if (input.gameSituation === 'Development') return player.usage_priority === 'Development' ? 80 : player.usage_priority === 'Core' ? -20 : 0
-    if (input.gameSituation === 'Pull Back / AYSO Mode') return player.usage_priority === 'Core' ? -35 : player.usage_priority === 'Development' ? 45 : 0
+    if (input.gameSituation === 'Pull Back') return player.usage_priority === 'Core' ? -35 : player.usage_priority === 'Development' ? 45 : 0
     return 0
   }
 
@@ -465,7 +475,7 @@ export function optimizeWholeGame(input: OptimizerInput): WholeGamePlan {
           if (role === 'MID') special += 50
         }
       }
-      if (input.gameSituation === 'Pull Back / AYSO Mode') {
+      if (input.gameSituation === 'Pull Back') {
         if (role === 'GK' && roleRating(player, 'GK') >= 4) special += 100
         if (role === 'DEF' && roleRating(player, 'DEF') >= 4) special += 120
         if (role === 'STR' && roleRating(player, 'DEF') >= 4) special -= 140

@@ -99,13 +99,7 @@ export default function LiveGame({
   const canStatTrack = userRole === 'owner' || userRole === 'coach' || userRole === 'viewer'
   const [quarter, setQuarter] = useState(1)
   const [events, setEvents] = useState<Event[]>([])
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
-  const [editEventQuarter, setEditEventQuarter] = useState(1)
-  const [editEventScorer, setEditEventScorer] = useState('')
-  const [editEventAssister, setEditEventAssister] = useState('')
   const [showGoal, setShowGoal] = useState(false)
-  const [showShot, setShowShot] = useState(false)
-  const [shotPlayer, setShotPlayer] = useState('')
   const [goalScorer, setGoalScorer] = useState('')
   const [goalAssister, setGoalAssister] = useState('')
   const [saving, setSaving] = useState(false)
@@ -113,8 +107,7 @@ export default function LiveGame({
   const [gameFormat, setGameFormat] = useState('7v7')
   const [liveLineup, setLiveLineup] = useState<Lineup[]>([])
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
-  const [selectedPosition, setSelectedPosition] = useState('')
-  const [selectedBenchPlayerId, setSelectedBenchPlayerId] = useState('')
+  const [subOutPlayerId, setSubOutPlayerId] = useState('')
   const [subInPlayerId, setSubInPlayerId] = useState('')
   const [liveFormation, setLiveFormation] = useState('3-2-1')
   const [lineupLoading, setLineupLoading] = useState(true)
@@ -159,9 +152,7 @@ export default function LiveGame({
           defaultFormation = teamData.default_formation
         }
       }
-      // The live formation is derived from the loaded quarter lineup.
-      // Do not overwrite it here: loadGame and loadLiveLineup run independently,
-      // and the team default can otherwise race in after the saved lineup loads.
+      setLiveFormation(defaultFormation)
       setNextQuarterFormation(defaultFormation)
       setCurrentQuarterFormation(defaultFormation)
     }
@@ -211,217 +202,30 @@ export default function LiveGame({
     setLineupLoading(true)
     setLiveLineup([])
 
-    const [{ data: gameData }, { data: plannedData, error: plannedError }, { data: actualData, error: actualError }] =
-      await Promise.all([
-        supabase.from('games').select('status').eq('id', gameId).single(),
-        supabase
-          .from('game_lineups')
-          .select('player_id, quarter, position')
-          .eq('game_id', gameId)
-          .eq('quarter', targetQuarter)
-          .order('created_at', { ascending: true }),
-        supabase
-          .from('game_live_lineups')
-          .select('player_id, quarter, position')
-          .eq('game_id', gameId)
-          .eq('quarter', targetQuarter)
-          .order('created_at', { ascending: true }),
-      ])
-
-    if (requestId !== lineupLoadId.current) return
-    if (plannedError) console.error(plannedError)
-    if (actualError) console.error(actualError)
-
-    // Before kickoff, the coach's saved quarter plan is authoritative.
-    // Once live, actual live lineups are authoritative.
-    const useActual = gameData?.status === 'Live' || gameData?.status === 'Completed'
-    const selected = useActual && actualData && actualData.length > 0
-      ? actualData
-      : (plannedData && plannedData.length > 0 ? plannedData : lineups.filter((item) => item.quarter === targetQuarter))
-
-    const nextLineup = selected as Lineup[]
-    setLiveLineup(nextLineup)
-    setLiveFormation(formationForLineup(nextLineup))
-    setLineupLoading(false)
-  }
-
-  async function startPositionTracking(targetQuarter: number, targetLineup: Lineup[], startedAt = new Date().toISOString()) {
-    const { data: existing, error: existingError } = await supabase
-      .from('game_position_segments')
-      .select('id')
-      .eq('game_id', gameId)
-      .eq('quarter', targetQuarter)
-      .limit(1)
-
-    if (existingError) {
-      console.error(existingError)
-      alert(`Could not start position tracking: ${existingError.message}`)
-      return false
-    }
-
-    if (existing && existing.length > 0) return true
-
-    const activeByPlayer = new Map(targetLineup.map((item) => [item.player_id, item.position]))
-    const rows = players.map((player) => ({
-      game_id: gameId,
-      quarter: targetQuarter,
-      player_id: player.id,
-      position: activeByPlayer.get(player.id) || 'Bench',
-      started_at: startedAt,
-    }))
-
-    const { error } = await supabase.from('game_position_segments').insert(rows)
-    if (error) {
-      console.error(error)
-      alert(`Could not start position tracking: ${error.message}`)
-      return false
-    }
-
-    return true
-  }
-
-  async function closePositionTracking(targetQuarter: number, endedAt = new Date().toISOString()) {
-    const { error } = await supabase
-      .from('game_position_segments')
-      .update({ ended_at: endedAt })
-      .eq('game_id', gameId)
-      .eq('quarter', targetQuarter)
-      .is('ended_at', null)
-
-    if (error) {
-      console.error(error)
-      alert(`Could not close position tracking: ${error.message}`)
-      return false
-    }
-
-    return true
-  }
-
-  async function syncPositionTracking(targetLineup: Lineup[], targetQuarter = quarter, changedAt = new Date().toISOString()) {
-    const { data: openSegments, error } = await supabase
-      .from('game_position_segments')
-      .select('id, player_id, position')
-      .eq('game_id', gameId)
-      .eq('quarter', targetQuarter)
-      .is('ended_at', null)
-
-    if (error) {
-      console.error(error)
-      alert(`Could not update position tracking: ${error.message}`)
-      return false
-    }
-
-    if (!openSegments || openSegments.length === 0) {
-      return startPositionTracking(targetQuarter, targetLineup, changedAt)
-    }
-
-    const desired = new Map(targetLineup.map((item) => [item.player_id, item.position]))
-    const changes = openSegments.filter(
-      (segment) => (desired.get(segment.player_id) || 'Bench') !== segment.position
-    )
-
-    for (const segment of changes) {
-      const nextPosition = desired.get(segment.player_id) || 'Bench'
-      const { error: closeError } = await supabase
-        .from('game_position_segments')
-        .update({ ended_at: changedAt })
-        .eq('id', segment.id)
-
-      if (closeError) {
-        console.error(closeError)
-        alert(`Could not save position change: ${closeError.message}`)
-        return false
-      }
-
-      const { error: insertError } = await supabase
-        .from('game_position_segments')
-        .insert({
-          game_id: gameId,
-          quarter: targetQuarter,
-          player_id: segment.player_id,
-          position: nextPosition,
-          started_at: changedAt,
-        })
-
-      if (insertError) {
-        console.error(insertError)
-        alert(`Could not save new position segment: ${insertError.message}`)
-        return false
-      }
-    }
-
-    return true
-  }
-
-  async function loadLineupForTracking(targetQuarter: number) {
-    const { data: plannedData, error: plannedError } = await supabase
-      .from('game_lineups')
-      .select('player_id, quarter, position')
-      .eq('game_id', gameId)
-      .eq('quarter', targetQuarter)
-
-    if (plannedError) console.error(plannedError)
-    if (plannedData && plannedData.length > 0) return plannedData as Lineup[]
-
-    const { data: liveData, error: liveError } = await supabase
+    const { data, error } = await supabase
       .from('game_live_lineups')
       .select('player_id, quarter, position')
       .eq('game_id', gameId)
       .eq('quarter', targetQuarter)
+      .order('created_at', { ascending: true })
 
-    if (!liveError && liveData && liveData.length > 0) return liveData as Lineup[]
+    if (requestId !== lineupLoadId.current) return
 
-    return lineups.filter((item) => item.quarter === targetQuarter) as Lineup[]
-  }
-
-  async function updateGameStatus(nextStatus: 'Scheduled' | 'Live' | 'Completed') {
-    if (!canManageGame) return
-
-    setSaving(true)
-
-    if (nextStatus === 'Live' && gameStatus === 'Scheduled') {
-      const saved = await persistLiveLineup(activeLineup, quarter)
-      if (!saved) {
-        setSaving(false)
-        return
-      }
-      const trackingStarted = await startPositionTracking(quarter, activeLineup)
-      if (!trackingStarted) {
-        setSaving(false)
-        return
-      }
-    }
-
-    if (nextStatus === 'Completed') {
-      const saved = await persistLiveLineup(activeLineup, quarter)
-      if (!saved) {
-        setSaving(false)
-        return
-      }
-      const trackingClosed = await closePositionTracking(quarter)
-      if (!trackingClosed) {
-        setSaving(false)
-        return
-      }
-    }
-
-    const { error } = await supabase
-      .from('games')
-      .update({ status: nextStatus })
-      .eq('id', gameId)
-
-    if (error) {
-      console.error(error)
-      alert(`Could not update game status: ${error.message}`)
-      setSaving(false)
+    if (!error && data && data.length > 0) {
+      const actual = data as Lineup[]
+      setLiveLineup(actual)
+      setLiveFormation(formationForLineup(actual))
+      setLineupLoading(false)
       return
     }
 
-    setGameStatus(nextStatus)
-    setSaving(false)
+    const planned = lineups.filter((item) => item.quarter === targetQuarter)
+    setLiveLineup(planned)
+    setLiveFormation(formationForLineup(planned))
+    setLineupLoading(false)
   }
 
-  async function persistLiveLineup(nextLineup: Lineup[], targetQuarter = quarter, syncTracking = true) {
+  async function persistLiveLineup(nextLineup: Lineup[], targetQuarter = quarter) {
     const { error: deleteError } = await supabase
       .from('game_live_lineups')
       .delete()
@@ -458,35 +262,7 @@ export default function LiveGame({
       ...current.filter((item) => item.quarter !== targetQuarter),
       ...nextLineup.map((item) => ({ ...item, quarter: targetQuarter })),
     ])
-
-    if (syncTracking && gameStatus === 'Live' && targetQuarter === quarter) {
-      const trackingSynced = await syncPositionTracking(nextLineup, targetQuarter)
-      if (!trackingSynced) return false
-    }
-
     return true
-  }
-
-  async function changeQuarter(nextQuarter: number) {
-    if (!canManageGame || nextQuarter === quarter || lineupLoading) return
-
-    const changedAt = new Date().toISOString()
-    // Save the current quarter without doing a second tracking sync.
-    const saved = await persistLiveLineup(activeLineup, quarter, false)
-    if (!saved) return
-
-    if (gameStatus === 'Live') {
-      const [closed, nextLineup] = await Promise.all([
-        closePositionTracking(quarter, changedAt),
-        loadLineupForTracking(nextQuarter),
-      ])
-      if (!closed) return
-
-      const started = await startPositionTracking(nextQuarter, nextLineup, changedAt)
-      if (!started) return
-    }
-
-    setQuarter(nextQuarter)
   }
 
   useEffect(() => {
@@ -498,11 +274,25 @@ export default function LiveGame({
   useEffect(() => {
     loadLiveLineup(quarter)
     setSelectedPlayerId('')
+    setSubOutPlayerId('')
     setSubInPlayerId('')
   }, [lineups, quarter, gameId, gameFormat])
 
-  const ourGoals = events.filter((event) => event.event_type === 'our_goal' && event.quarter <= quarter).length
-  const theirGoals = events.filter((event) => event.event_type === 'their_goal' && event.quarter <= quarter).length
+  async function updateGameStatus(status: string) {
+    if (!canManageGame) return
+    setSaving(true)
+    const { error } = await supabase
+      .from('games')
+      .update({ status })
+      .eq('id', gameId)
+
+    if (!error) setGameStatus(status)
+    else alert('Could not update game status.')
+    setSaving(false)
+  }
+
+  const ourGoals = events.filter((event) => event.event_type === 'our_goal').length
+  const theirGoals = events.filter((event) => event.event_type === 'their_goal').length
 
   const currentLineup = useMemo(
     () => lineups.filter((item) => item.quarter === quarter),
@@ -523,9 +313,8 @@ export default function LiveGame({
   )
 
   const selectedPlayer = currentPlayers.find((player) => player.id === selectedPlayerId)
-
-  const ourShots = events.filter((event) => event.event_type === 'our_shot').length
-  const teamSaves = events.filter((event) => event.event_type === 'save').length
+  const subOutPlayer = currentPlayers.find((player) => player.id === subOutPlayerId)
+  const subInPlayer: Player | undefined = benchPlayers.find((player) => player.id === subInPlayerId)
 
   const playerStats = players
     .map((player) => {
@@ -535,17 +324,14 @@ export default function LiveGame({
       const assists = events.filter(
         (event) => event.event_type === 'our_goal' && event.assister_id === player.id
       ).length
-      const saves = events.filter(
-        (event) => event.event_type === 'save' && event.player_id === player.id
-      ).length
-      return { ...player, goals, assists, saves }
+      return { ...player, goals, assists }
     })
-    .filter((player) => player.goals > 0 || player.assists > 0 || player.saves > 0)
+    .filter((player) => player.goals > 0 || player.assists > 0)
 
   const formationSituationWarning =
-    nextQuarterSituation === 'Pull Back' && nextQuarterFormation !== '4-1-1'
+    nextQuarterSituation === 'Pull Back / AYSO Mode' && nextQuarterFormation !== '4-1-1'
   const currentFormationSituationWarning =
-    currentQuarterSituation === 'Pull Back' && currentQuarterFormation !== '4-1-1'
+    currentQuarterSituation === 'Pull Back / AYSO Mode' && currentQuarterFormation !== '4-1-1'
 
   function playerName(id: string | null) {
     if (!id) return '-'
@@ -553,37 +339,57 @@ export default function LiveGame({
     return player ? `#${player.jersey_number ?? ''} ${player.first_name || player.name.split(' ')[0]}` : '-'
   }
 
-  function assignPlayerToPosition(playerId: string, position: string) {
-    if (!canManageGame || gameStatus !== 'Live') return
-
+  function movePlayerToPosition(playerId: string, position: string) {
+    if (!canManageGame) return
     const source = activeLineup.find((item) => item.player_id === playerId)
-    const occupant = activeLineup.find((item) => item.position === position)
+    if (!source) return
 
-    let nextLineup: Lineup[]
+    const occupant = activeLineup.find(
+      (item) => item.position === position && item.player_id !== playerId
+    )
 
-    if (source) {
-      nextLineup = activeLineup.map((item) => {
-        if (item.player_id === playerId) return { ...item, position }
-        if (occupant && item.player_id === occupant.player_id && occupant.player_id !== playerId) {
-          return { ...item, position: source.position }
-        }
-        return item
-      })
-    } else {
-      nextLineup = [
-        ...activeLineup.filter((item) => item.player_id !== occupant?.player_id),
-        { quarter, player_id: playerId, position },
-      ]
-    }
+    const nextLineup = activeLineup.map((item) => {
+      if (item.player_id === playerId) {
+        return { ...item, position }
+      }
+      if (occupant && item.player_id === occupant.player_id) {
+        return { ...item, position: source.position }
+      }
+      return item
+    })
 
     setLiveLineup(nextLineup)
     void persistLiveLineup(nextLineup)
-    setSelectedPosition('')
+    setSelectedPlayerId('')
+  }
+
+  function substituteIn(playerId: string) {
+    if (!canManageGame) return
+    if (!playerId || !subOutPlayerId) return
+
+    const outgoing = activeLineup.find((item) => item.player_id === subOutPlayerId)
+    if (!outgoing) return
+
+    const nextLineup = [
+      ...activeLineup.filter((item) => item.player_id !== subOutPlayerId),
+      {
+        quarter,
+        player_id: playerId,
+        position: outgoing.position,
+      },
+    ]
+
+    setLiveLineup(nextLineup)
+    void persistLiveLineup(nextLineup)
+    setSubOutPlayerId('')
+    setSubInPlayerId('')
   }
 
   function changeFormation(newFormation: string) {
     if (!canManageGame) return
     const slots = optimizationFormations[newFormation]
+    if (!slots || activeLineup.length === 0) return
+
     const goalkeeper = activeLineup.find((item) => item.position === 'Goalkeeper')
     const usedPlayers = new Set<string>()
     const usedPositions = new Set<string>()
@@ -620,6 +426,7 @@ export default function LiveGame({
     void persistLiveLineup(next)
     setLiveFormation(newFormation)
     setSelectedPlayerId('')
+    setSubOutPlayerId('')
     setSubInPlayerId('')
   }
 
@@ -639,8 +446,7 @@ export default function LiveGame({
   async function recordOurGoal() {
     if (!canStatTrack || !goalScorer || gameStatus !== 'Live') return
     setSaving(true)
-
-    const { data: goalData, error: goalError } = await supabase
+    const { data, error } = await supabase
       .from('game_events')
       .insert({
         game_id: gameId,
@@ -652,94 +458,10 @@ export default function LiveGame({
       .select()
       .single()
 
-    if (goalError || !goalData) {
-      console.error(goalError)
-      alert('Could not record goal: ' + (goalError?.message || 'Unknown error'))
-      setSaving(false)
-      return
-    }
-
-    // A goal is also a shot by the player who scored it.
-    const { data: shotData, error: shotError } = await supabase
-      .from('game_events')
-      .insert({
-        game_id: gameId,
-        quarter,
-        event_type: 'our_shot',
-        player_id: goalScorer,
-      })
-      .select()
-      .single()
-
-    if (shotError || !shotData) {
-      console.error(shotError)
-      alert('Goal recorded, but the automatic shot could not be recorded: ' + (shotError?.message || 'Unknown error'))
-      setEvents((current) => [goalData, ...current])
-    } else {
-      setEvents((current) => [shotData, goalData, ...current])
-    }
-
+    if (!error && data) setEvents((current) => [data, ...current])
     setGoalScorer('')
     setGoalAssister('')
     setShowGoal(false)
-    setSaving(false)
-  }
-
-  async function recordSave() {
-    if (!canStatTrack || gameStatus !== 'Live') return
-
-    const goalkeeper = activeLineup.find((item) => item.position === 'Goalkeeper')
-    if (!goalkeeper) {
-      alert('No goalkeeper is currently on the field.')
-      return
-    }
-
-    setSaving(true)
-    const { data, error } = await supabase
-      .from('game_events')
-      .insert({
-        game_id: gameId,
-        quarter,
-        event_type: 'save',
-        player_id: goalkeeper.player_id,
-      })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setEvents((current) => [data, ...current])
-    } else if (error) {
-      console.error(error)
-      alert(`Could not record save: ${error.message}`)
-    }
-
-    setSaving(false)
-  }
-
-  async function recordOurShot() {
-    if (!canStatTrack || gameStatus !== 'Live' || !shotPlayer) return
-
-    setSaving(true)
-    const { data, error } = await supabase
-      .from('game_events')
-      .insert({
-        game_id: gameId,
-        quarter,
-        event_type: 'our_shot',
-        player_id: shotPlayer,
-      })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setEvents((current) => [data, ...current])
-      setShotPlayer('')
-      setShowShot(false)
-    } else if (error) {
-      console.error(error)
-      alert(`Could not record shot: ${error.message}`)
-    }
-
     setSaving(false)
   }
 
@@ -752,78 +474,6 @@ export default function LiveGame({
     } else {
       alert('Could not delete event.')
     }
-    setSaving(false)
-  }
-  function openEditEvent(event: Event) {
-    if (!canManageGame) return
-
-    setEditingEvent(event)
-    setEditEventQuarter(event.quarter)
-    setEditEventScorer(event.player_id || '')
-    setEditEventAssister(event.assister_id || '')
-    setSaving(false)
-  }
-
-  function closeEditEvent() {
-    if (saving) return
-    setEditingEvent(null)
-    setEditEventQuarter(1)
-    setEditEventScorer('')
-    setEditEventAssister('')
-  }
-
-  async function saveEditedEvent() {
-    if (!editingEvent || !canManageGame) return
-
-    if (
-      (editingEvent.event_type === 'our_goal' ||
-        editingEvent.event_type === 'save' ||
-        editingEvent.event_type === 'our_shot') &&
-      !editEventScorer
-    ) {
-      alert(editingEvent.event_type === 'our_goal' ? 'Select the goal scorer.' : 'Select the player.')
-      return
-    }
-
-    setSaving(true)
-
-    const playerAttributedEvent =
-      editingEvent.event_type === 'our_goal' ||
-      editingEvent.event_type === 'save' ||
-      editingEvent.event_type === 'our_shot'
-
-    const payload = {
-      quarter: editEventQuarter,
-      player_id: playerAttributedEvent ? editEventScorer : null,
-      assister_id: editingEvent.event_type === 'our_goal' ? editEventAssister || null : null,
-    }
-
-    const { data, error } = await supabase
-      .from('game_events')
-      .update(payload)
-      .eq('id', editingEvent.id)
-      .select()
-      .single()
-
-    if (error || !data) {
-      console.error(error)
-      alert(`Could not update event: ${error?.message || 'Unknown error'}`)
-      setSaving(false)
-      return
-    }
-
-    setEvents((current) =>
-      current.map((event) =>
-        event.id === editingEvent.id
-          ? (data as Event)
-          : event
-      )
-    )
-
-    setEditingEvent(null)
-    setEditEventQuarter(1)
-    setEditEventScorer('')
-    setEditEventAssister('')
     setSaving(false)
   }
 
@@ -935,7 +585,7 @@ export default function LiveGame({
     return (
       <button
         key={`${position}-${player.id}`}
-        onClick={() => canManageGame && gameStatus === 'Live' && setSelectedPosition(position)}
+        onClick={() => canManageGame && gameStatus === 'Live' && setSelectedPlayerId(player.id)}
         disabled={!canManageGame || gameStatus !== 'Live'}
         style={{
           width: '100%',
@@ -1014,7 +664,7 @@ export default function LiveGame({
         {[1, 2, 3, 4].map((q) => (
           <button
             key={q}
-            onClick={() => changeQuarter(q)}
+            onClick={() => setQuarter(q)}
             disabled={lineupLoading}
             style={{ padding: '13px 4px', fontWeight: quarter === q ? 'bold' : 'normal', fontSize: 16, minHeight: 48 }}
           >
@@ -1043,7 +693,7 @@ export default function LiveGame({
             {optimizerLoading ? 'PREPARING...' : `OPTIMIZE Q${quarter + 1}`}
           </button>
           <button
-            onClick={() => changeQuarter(quarter + 1)}
+            onClick={() => setQuarter(quarter + 1)}
             disabled={lineupLoading}
             style={{ minHeight: 52, fontSize: 18, fontWeight: 'bold' }}
           >
@@ -1056,30 +706,16 @@ export default function LiveGame({
         <button
           onClick={() => setShowGoal(true)}
           disabled={gameStatus !== 'Live' || saving}
-          style={{ minHeight: 68, fontSize: 17, fontWeight: 'bold' }}
+          style={{ minHeight: 76, fontSize: 18, fontWeight: 'bold' }}
         >
           OUR GOAL
         </button>
         <button
           onClick={recordTheirGoal}
           disabled={gameStatus !== 'Live' || saving}
-          style={{ minHeight: 68, fontSize: 17, fontWeight: 'bold' }}
+          style={{ minHeight: 76, fontSize: 18, fontWeight: 'bold' }}
         >
           THEIR GOAL
-        </button>
-        <button
-          onClick={recordSave}
-          disabled={gameStatus !== 'Live' || saving || lineupLoading}
-          style={{ minHeight: 68, fontSize: 17, fontWeight: 'bold' }}
-        >
-          SAVE
-        </button>
-        <button
-          onClick={() => { setShotPlayer(''); setShowShot(true) }}
-          disabled={gameStatus !== 'Live' || saving || lineupLoading}
-          style={{ minHeight: 68, fontSize: 17, fontWeight: 'bold' }}
-        >
-          OUR SHOT
         </button>
       </div>
 
@@ -1137,8 +773,8 @@ export default function LiveGame({
               ))}
             </div>
 
-            <div style={{ marginTop: 10, fontSize: 12, opacity: 0.65, textAlign: 'center' }}>
-              Tap a player to move or swap positions.
+            <div style={{ marginTop: 10, fontSize: 12, opacity: 0.65 }}>
+              Planned lineup stays unchanged. Live changes are saved to this game's actual lineup.
             </div>
 
             <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #ddd' }}>
@@ -1154,7 +790,7 @@ export default function LiveGame({
                 {benchPlayers.map((player) => (
                   <button
                     key={player.id}
-                    onClick={() => canManageGame && gameStatus === 'Live' && setSelectedBenchPlayerId(player.id)}
+                    onClick={() => canManageGame && gameStatus === 'Live' && setSubInPlayerId(player.id)}
                     disabled={!canManageGame || gameStatus !== 'Live'}
                     style={{
                       padding: 9,
@@ -1166,49 +802,109 @@ export default function LiveGame({
                     }}
                   >
                     <strong>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
-                    {gameStatus === 'Live' && <div style={{ fontSize: 11, marginTop: 3, opacity: 0.65 }}>Tap to move</div>}
+                    {gameStatus === 'Live' && <div style={{ fontSize: 11, marginTop: 3, opacity: 0.65 }}>Tap for sub</div>}
                   </button>
                 ))}
               </div>
             </div>
           </>
         )}
-      </section>      
-      {canManageGame && (selectedPosition || selectedBenchPlayerId) && (
-        <div onClick={() => { setSelectedPosition(''); setSelectedBenchPlayerId('') }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', width: '100%', maxWidth: 700, padding: '18px 18px calc(18px + env(safe-area-inset-bottom))', borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
-            {selectedBenchPlayerId ? (
+      </section>
+
+      {canManageGame && selectedPlayer && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'white', width: '100%', maxWidth: 700, padding: 18, borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
+            <h2 style={{ marginTop: 0 }}>Move {selectedPlayer.name}</h2>
+            <div style={{ marginBottom: 12, opacity: 0.7 }}>
+              Current position: {selectedPlayer.position}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+              {activeLineup
+                .map((item) => item.position)
+                .sort((a, b) => positionOrder.indexOf(a) - positionOrder.indexOf(b))
+                .map((position) => (
+                  <button
+                    key={position}
+                    onClick={() => movePlayerToPosition(selectedPlayer.id, position)}
+                    disabled={position === selectedPlayer.position}
+                    style={{ padding: 12 }}
+                  >
+                    {positionShort[position] || position}
+                    <div style={{ fontSize: 11, marginTop: 3, opacity: 0.65 }}>{position}</div>
+                  </button>
+                ))}
+            </div>
+            <button
+              onClick={() => { setSelectedPlayerId(''); setSubOutPlayerId(selectedPlayer.id) }}
+              disabled={gameStatus !== 'Live'}
+              style={{ width: '100%', marginTop: 10, padding: 13, fontWeight: 'bold' }}
+            >
+              Sub Out {selectedPlayer.name}
+            </button>
+            <button onClick={() => setSelectedPlayerId('')} style={{ width: '100%', marginTop: 8, padding: 12 }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {canManageGame && (subOutPlayerId || subInPlayerId) && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'white', width: '100%', maxWidth: 700, padding: 18, borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
+            {subOutPlayerId && !subInPlayerId ? (
               <>
-                <h2 style={{ marginTop: 0 }}>Move {playerName(selectedBenchPlayerId)} to...</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                  {(formationRows[liveFormation] || []).flat().filter((position) => activeLineup.some((item) => item.position === position)).map((position) => (
-                    <button key={position} onClick={() => { assignPlayerToPosition(selectedBenchPlayerId, position); setSelectedBenchPlayerId('') }} disabled={gameStatus !== 'Live'} style={{ padding: 12 }}>
-                      <strong>{positionShort[position] || position}</strong>
-                      <div style={{ fontSize: 11, marginTop: 3, opacity: 0.65 }}>{position}</div>
-                    </button>
-                  ))}
-                </div>
-                <button onClick={() => setSelectedBenchPlayerId('')} style={{ width: '100%', marginTop: 12, padding: 12 }}>Cancel</button>
-              </>
-            ) : (
-              <>
-                <h2 style={{ marginTop: 0 }}>Move {positionShort[selectedPosition] || selectedPosition} to...</h2>
-                <div style={{ marginBottom: 12, opacity: 0.7 }}>{selectedPosition}</div>
+                <h2 style={{ marginTop: 0 }}>Sub Out {subOutPlayer?.name ?? ''}</h2>
+                <div style={{ marginBottom: 12 }}>Select the player coming in.</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-                  {players.map((player) => (
-                    <button key={player.id} onClick={() => assignPlayerToPosition(player.id, selectedPosition)} disabled={gameStatus !== 'Live'} style={{ padding: 10, minHeight: 58 }}>
+                  {benchPlayers.map((player) => (
+                    <button
+                      key={player.id}
+                      onClick={() => setSubInPlayerId(player.id)}
+                      style={{ padding: 10, minHeight: 58 }}
+                    >
                       <strong>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
-                      {activeLineup.some((item) => item.player_id === player.id) && (
-                        <div style={{ fontSize: 11, marginTop: 3, opacity: 0.65 }}>
-                          {positionShort[activeLineup.find((item) => item.player_id === player.id)?.position || ''] || activeLineup.find((item) => item.player_id === player.id)?.position}
-                        </div>
-                      )}
                     </button>
                   ))}
                 </div>
-                <button onClick={() => setSelectedPosition('')} style={{ width: '100%', marginTop: 12, padding: 12 }}>Cancel</button>
               </>
-            )}
+            ) : subInPlayerId && !subOutPlayerId ? (
+              <>
+                <h2 style={{ marginTop: 0 }}>Sub In {subInPlayer?.name ?? ''}</h2>
+                <div style={{ marginBottom: 12 }}>Select the player coming off.</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                  {currentPlayers.map((player) => (
+                    <button
+                      key={player.id}
+                      onClick={() => setSubOutPlayerId(player.id)}
+                      style={{ padding: 10, minHeight: 58 }}
+                    >
+                      <strong>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
+                      <div style={{ fontSize: 11, marginTop: 3, opacity: 0.65 }}>{positionShort[player.position] || player.position}</div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : subOutPlayerId && subInPlayerId ? (
+              <>
+                <h2 style={{ marginTop: 0 }}>Substitute</h2>
+                <div style={{ marginBottom: 12 }}>
+                  <strong>{subOutPlayer?.name}</strong> comes out of {subOutPlayer?.position}.
+                </div>
+                <button
+                  onClick={() => substituteIn(subInPlayerId)}
+                  disabled={!subInPlayer}
+                  style={{ width: '100%', padding: 14, fontWeight: 'bold' }}
+                >
+                  Sub in #{subInPlayer?.jersey_number ?? '-'} {subInPlayer?.name ?? ''}
+                </button>
+              </>
+            ) : null}
+            <button
+              onClick={() => { setSubOutPlayerId(''); setSubInPlayerId('') }}
+              style={{ width: '100%', marginTop: 12, padding: 12 }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
@@ -1235,7 +931,7 @@ export default function LiveGame({
               + THEIR GOAL
             </button>
             {quarter < 4 ? (
-              <button onClick={() => changeQuarter(quarter + 1)} disabled={lineupLoading} style={{ minHeight: 50, fontWeight: 'bold' }}>
+              <button onClick={() => setQuarter(quarter + 1)} disabled={lineupLoading} style={{ minHeight: 50, fontWeight: 'bold' }}>
                 Q{quarter + 1} -&gt;
               </button>
             ) : (
@@ -1251,186 +947,47 @@ export default function LiveGame({
         </div>
       )}
 
-      {(playerStats.length > 0 || ourShots > 0 || teamSaves > 0) && (
-        <section style={{ marginTop: 12, border: '1px solid #ddd', borderRadius: 12, padding: 12 }}>
-          <h2 style={{ margin: '0 0 10px', fontSize: 20 }}>{gameStatus === 'Completed' ? 'Game Stats' : 'Game Stats'}</h2>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: playerStats.length > 0 ? 10 : 0 }}>
-            <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>Shots {ourShots}</span>
-            <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>Saves {teamSaves}</span>
-          </div>
-          {playerStats.length > 0 && (
-            <div style={{ display: 'grid', gap: 8 }}>
-              {playerStats.map((player) => (
-                <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', border: '1px solid #e5e5e5', borderRadius: 10, background: '#fafafa' }}>
-                  <strong style={{ fontSize: 16 }}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {player.goals > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>⚽ {player.goals}</span>}
-                    {player.assists > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>A {player.assists}</span>}
-                    {player.saves > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>🧤 {player.saves}</span>}
-                  </div>
-                </div>
-              ))}
+      {playerStats.length > 0 && (
+        <section style={{ marginTop: 10, border: '1px solid #ddd', borderRadius: 10, padding: 10 }}>
+          <h2 style={{ margin: '0 0 8px', fontSize: 18 }}>Game Stats</h2>
+          {playerStats.map((player) => (
+            <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #eee' }}>
+              <strong>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
+              <span>
+                {player.goals > 0 && `${player.goals} G`}
+                {player.goals > 0 && player.assists > 0 && '  '}
+                {player.assists > 0 && `${player.assists} A`}
+              </span>
             </div>
-          )}
+          ))}
         </section>
       )}
 
-      <details style={{ marginTop: 10, border: '1px solid #ddd', borderRadius: 10, padding: '0 10px' }}>
-        <summary style={{ padding: '12px 2px', fontWeight: 700, cursor: 'pointer' }}>Recent Events ({events.length})</summary>
-        <div style={{ paddingBottom: 4 }}>
-          {events.length === 0 ? (
-            <p style={{ margin: '0 0 10px' }}>No events yet.</p>
-          ) : (
-            events.slice(0, 10).map((event) => (
-              <div key={event.id} style={{ padding: '9px 0', borderTop: '1px solid #eee' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong>{
-                    event.event_type === 'our_goal'
-                      ? 'OUR GOAL'
-                      : event.event_type === 'their_goal'
-                        ? 'THEIR GOAL'
-                        : event.event_type === 'save'
-                          ? 'SAVE'
-                          : event.event_type === 'our_shot'
-                            ? 'OUR SHOT'
-                            : event.event_type.toUpperCase()
-                  }</strong>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {canManageGame && (
-                      <button onClick={() => openEditEvent(event)} disabled={saving} style={{ padding: '4px 8px', fontSize: 12 }}>
-                        Edit
-                      </button>
-                    )}
-                    <button onClick={() => deleteEvent(event.id)} disabled={saving} style={{ padding: '4px 8px', fontSize: 12 }}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                {(event.event_type === 'our_goal' || event.event_type === 'save' || event.event_type === 'our_shot') && event.player_id && (
-                  <div style={{ marginTop: 3 }}>
-                    {playerName(event.player_id)}
-                    {event.event_type === 'our_goal' && event.assister_id && <span> - Assist: {playerName(event.assister_id)}</span>}
-                  </div>
-                )}
-                <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>Q{event.quarter}</div>
+      <section style={{ marginTop: 10, border: '1px solid #ddd', borderRadius: 10, padding: 10 }}>
+        <h2 style={{ margin: '0 0 8px', fontSize: 18 }}>Recent Events</h2>
+        {events.length === 0 ? (
+          <p style={{ margin: 0 }}>No events yet.</p>
+        ) : (
+          events.slice(0, 10).map((event) => (
+            <div key={event.id} style={{ padding: '9px 0', borderBottom: '1px solid #eee' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong>{event.event_type === 'our_goal' ? 'OUR GOAL' : 'THEIR GOAL'}</strong>
+                <button onClick={() => deleteEvent(event.id)} disabled={saving} style={{ padding: '4px 8px', fontSize: 12 }}>
+                  Delete
+                </button>
               </div>
-            ))
-          )}
-        </div>
-      </details>
-      {canManageGame && editingEvent && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.55)',
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            zIndex: 1200,
-          }}
-        >
-          <div
-            style={{
-              background: 'white',
-              width: '100%',
-              maxWidth: 700,
-              padding: 18,
-              borderRadius: '14px 14px 0 0',
-              boxSizing: 'border-box',
-            }}
-          >
-            <h2 style={{ margin: '0 0 4px' }}>
-              Edit {editingEvent.event_type === 'our_goal' ? 'Our Goal' : 'Their Goal'}
-            </h2>
-
-            <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 14 }}>
-              Correct the event without rewinding the game.
+              {event.event_type === 'our_goal' && (
+                <div style={{ marginTop: 3 }}>
+                  {playerName(event.player_id)}
+                  {event.assister_id && <span> - Assist: {playerName(event.assister_id)}</span>}
+                </div>
+              )}
+              <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>Q{event.quarter}</div>
             </div>
+          ))
+        )}
+      </section>
 
-            <label style={{ display: 'block', marginBottom: 12 }}>
-              <span style={{ display: 'block', marginBottom: 4, fontWeight: 700 }}>
-                Quarter
-              </span>
-              <select
-                value={editEventQuarter}
-                onChange={(e) => setEditEventQuarter(Number(e.target.value))}
-                style={{ width: '100%', padding: 10, boxSizing: 'border-box' }}
-              >
-                <option value={1}>Q1</option>
-                <option value={2}>Q2</option>
-                <option value={3}>Q3</option>
-                <option value={4}>Q4</option>
-              </select>
-            </label>
-
-            {editingEvent.event_type === 'our_goal' && (
-              <>
-                <label style={{ display: 'block', marginBottom: 12 }}>
-                  <span style={{ display: 'block', marginBottom: 4, fontWeight: 700 }}>
-                    Goal Scorer
-                  </span>
-                  <select
-                    value={editEventScorer}
-                    onChange={(e) => setEditEventScorer(e.target.value)}
-                    style={{ width: '100%', padding: 10, boxSizing: 'border-box' }}
-                  >
-                    <option value="">Select scorer</option>
-                    {players.map((player) => (
-                      <option key={player.id} value={player.id}>
-                        #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label style={{ display: 'block', marginBottom: 16 }}>
-                  <span style={{ display: 'block', marginBottom: 4, fontWeight: 700 }}>
-                    Assist
-                  </span>
-                  <select
-                    value={editEventAssister}
-                    onChange={(e) => setEditEventAssister(e.target.value)}
-                    style={{ width: '100%', padding: 10, boxSizing: 'border-box' }}
-                  >
-                    <option value="">No assist</option>
-                    {players.map((player) => (
-                      <option key={player.id} value={player.id}>
-                        #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </>
-            )}
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={saveEditedEvent}
-                disabled={saving}
-                style={{
-                  flex: 1,
-                  padding: '11px 14px',
-                  fontWeight: 700,
-                }}
-              >
-                {saving ? 'SAVING...' : 'SAVE CHANGES'}
-              </button>
-
-              <button
-                onClick={closeEditEvent}
-                disabled={saving}
-                style={{
-                  padding: '11px 14px',
-                  fontWeight: 700,
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {canManageGame && showNextQuarterOptimizer && quarter < 4 && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1100 }}>
           <div style={{ background: 'white', width: '100%', maxWidth: 700, maxHeight: '88vh', overflowY: 'auto', padding: 16, borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
@@ -1447,7 +1004,7 @@ export default function LiveGame({
                   <option>Protect Lead</option>
                   <option>Need Goal</option>
                   <option>Development</option>
-                  <option>Pull Back</option>
+                  <option>Pull Back / AYSO Mode</option>
                 </select>
               </label>
               <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>
@@ -1483,7 +1040,7 @@ export default function LiveGame({
             ) : (
               <>
                 <div style={{ marginTop: 14, padding: 10, border: '1px solid #ddd', borderRadius: 8 }}>
-                  <strong>Q{quarter + 1} - {nextQuarterFormation}</strong>
+                  <strong>Q{quarter + 1} · {nextQuarterFormation}</strong>
                   <div style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>
                     {nextQuarterSituation}: {nextQuarterAdvice.message}
                   </div>
@@ -1536,7 +1093,7 @@ export default function LiveGame({
                   <option>Protect Lead</option>
                   <option>Need Goal</option>
                   <option>Development</option>
-                  <option>Pull Back</option>
+                  <option>Pull Back / AYSO Mode</option>
                 </select>
               </label>
               <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>
@@ -1572,7 +1129,7 @@ export default function LiveGame({
             ) : (
               <>
                 <div style={{ marginTop: 14, padding: 10, border: '1px solid #ddd', borderRadius: 8 }}>
-                  <strong>Q{quarter} - {currentQuarterFormation}</strong>
+                  <strong>Q{quarter} · {currentQuarterFormation}</strong>
                   <div style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>
                     {currentQuarterSituation}: {currentQuarterAdvice.message}
                   </div>
@@ -1609,28 +1166,9 @@ export default function LiveGame({
         </div>
       )}
 
-      {showShot && (
-        <div onClick={() => { setShowShot(false); setShotPlayer('') }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', width: '100%', maxWidth: 700, padding: '18px 18px calc(18px + env(safe-area-inset-bottom))', borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
-            <h2 style={{ marginTop: 0 }}>Our Shot - Q{quarter}</h2>
-            <p style={{ marginTop: 0, color: '#666' }}>Who took the shot?</p>
-            <select value={shotPlayer} onChange={(e) => setShotPlayer(e.target.value)} style={{ width: '100%', padding: 14, marginTop: 5, fontSize: 16 }}>
-              <option value="">Select player</option>
-              {currentPlayers.map((player) => (
-                <option key={player.id} value={player.id}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</option>
-              ))}
-            </select>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 16 }}>
-              <button onClick={() => { setShowShot(false); setShotPlayer('') }} style={{ padding: 15, fontSize: 16 }}>Cancel</button>
-              <button onClick={recordOurShot} disabled={!shotPlayer || saving} style={{ padding: 15, fontSize: 16, fontWeight: 'bold' }}>Record Shot</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {showGoal && (
-        <div onClick={() => { setSelectedPosition(''); setSelectedBenchPlayerId('') }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', width: '100%', maxWidth: 700, padding: '18px 18px calc(18px + env(safe-area-inset-bottom))', borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'white', width: '100%', maxWidth: 700, padding: 18, borderRadius: '14px 14px 0 0', boxSizing: 'border-box' }}>
             <h2 style={{ marginTop: 0 }}>Our Goal - Q{quarter}</h2>
             <label>Scorer</label>
             <select value={goalScorer} onChange={(e) => setGoalScorer(e.target.value)} style={{ width: '100%', padding: 14, marginTop: 5, fontSize: 16 }}>
@@ -1660,4 +1198,3 @@ export default function LiveGame({
     </div>
   )
 }
-

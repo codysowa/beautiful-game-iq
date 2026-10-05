@@ -8,6 +8,7 @@ const config: CapacitorConfig = {
   ios: {
     scheme: 'beautifulgameiq',
   },
+
 }
 
 export default config

@@ -23,7 +23,14 @@ npx cap copy ios
 ASSET_DIR="$REPO_ROOT/ios/App/App/public/assets"
 
 test -d "$ASSET_DIR"
+grep -R -q "Copy Lineup" "$ASSET_DIR"
+grep -R -q "Copy From Previous Game" "$ASSET_DIR"
+grep -R -q "Copy Entire Game" "$ASSET_DIR"
+grep -R -q "Select time" "$ASSET_DIR"
 
 echo "=== Verified iOS web bundle ==="
 echo "Assets: $ASSET_DIR"
-echo "Capacitor copy: complete"
+echo "Copy Lineup: present"
+echo "Copy From Previous Game: present"
+echo "Copy Entire Game: present"
+echo "Select time: present"
