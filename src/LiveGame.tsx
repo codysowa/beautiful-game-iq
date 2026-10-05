@@ -1270,7 +1270,7 @@ export default function LiveGame({
                     {player.goals > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>⚽ {player.goals}</span>}
                     {player.assists > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>A {player.assists}</span>}
                     {player.shots > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>S {player.shots}</span>}
-                    {player.saves > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>🧤 {player.saves}</span>
+                    {player.saves > 0 && <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>🧤 {player.saves}</span>}
                   </div>
                 </div>
               ))}
