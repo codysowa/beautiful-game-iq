@@ -14,7 +14,6 @@ export type Player = {
 export type TeamRules = {
   max_gk_quarters: number | null
   max_bench_quarters: number | null
-  min_quarters_played: number | null
   target_quarters_played: number | null
   require_everyone_play: boolean | null
 } | null
@@ -287,7 +286,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
     }
 
     const coachFitScore = rating * 55
-    return coachFitScore + situationRoleBonus(role) + situationPriorityBonus(player) + needGoalAdjustment + needGoalScorerBonus + pullBackRoleAdjustment + priorityBonus[player.usage_priority || 'Regular'] + toleranceBonus[player.bench_tolerance || 'Normal'] + targetNeed + minimumNeed + lastPositionBonus + lastRoleBonus + benchFairnessBonus + consecutiveBenchBonus + doubleBenchBonus + maxBenchProtectionBonus - stats.played * 15
+    return coachFitScore + situationRoleBonus(role) + situationPriorityBonus(player) + needGoalAdjustment + needGoalScorerBonus + pullBackRoleAdjustment + priorityBonus[player.usage_priority || 'Regular'] + toleranceBonus[player.bench_tolerance || 'Normal'] + targetNeed + lastPositionBonus + lastRoleBonus + benchFairnessBonus + consecutiveBenchBonus + doubleBenchBonus + maxBenchProtectionBonus - stats.played * 15
   }
 
   const chooseBest = (position: string) => available
@@ -456,7 +455,6 @@ export function optimizeWholeGame(input: OptimizerInput): WholeGamePlan {
       const doubleBenchProtection = streak >= 2 ? 12000 : 0
       const maxBenchProtection = stats.bench >= maxBench ? 8000 : 0
       const need = Math.max(0, (input.teamRules?.target_quarters_played ?? 3) - stats.played) * 22
-      const minimumNeed = Math.max(0, (input.teamRules?.min_quarters_played ?? 0) - stats.played) * 40
       const roleDiversity = strongRoles.length > 1 && !roleAlreadyUsed ? 95 : 0
       const repeatedRolePenalty = strongRoles.length > 1 && roleAlreadyUsed && unusedStrongRoles.length > 0 ? -120 : 0
       const lastPositionBonus = stats.lastPosition === position ? 10 : 0
