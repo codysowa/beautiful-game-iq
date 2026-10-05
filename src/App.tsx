@@ -244,6 +244,7 @@ function App() {
 
   const [loading, setLoading] = useState(true)
   const [savingLineup, setSavingLineup] = useState(false)
+  const [changingQuarter, setChangingQuarter] = useState(false)
   const [wholeGameSuggestion, setWholeGameSuggestion] = useState<LineupItem[] | null>(null)
   const [gameSituation, setGameSituation] = useState<'Normal' | 'Protect Lead' | 'Need Goal' | 'Development' | 'Pull Back'>('Normal')
   const [optimizationFormation, setOptimizationFormation] = useState('3-2-1')
@@ -1123,36 +1124,42 @@ function App() {
   }
 
   async function changeQuarter(quarter: number) {
-    if (!selectedGame || quarter === selectedQuarter) return
+    if (!selectedGame || quarter === selectedQuarter || changingQuarter || savingLineup) return
 
-    // Auto-save the quarter being edited before switching away from it.
-    // This keeps iOS behavior consistent with the explicit Save Lineup button.
-    if (currentUserRole === 'owner' || currentUserRole === 'coach') {
-      const saved = await saveLineupData(lineup, selectedQuarter, false)
-      if (!saved) return
+    setChangingQuarter(true)
+    try {
+      // Auto-save the quarter being edited before switching away from it.
+      // Lock quarter navigation while this save/load sequence is in progress so
+      // repeated taps cannot start overlapping delete/insert operations.
+      if (currentUserRole === 'owner' || currentUserRole === 'coach') {
+        const saved = await saveLineupData(lineup, selectedQuarter, false)
+        if (!saved) return
+      }
+
+      const { data, error } = await supabase
+        .from('game_lineups')
+        .select('*')
+        .eq('game_id', selectedGame.id)
+        .eq('quarter', quarter)
+
+      if (error) {
+        console.error(error)
+        alert('Could not load that quarter.')
+        return
+      }
+
+      const nextLineup = data || []
+
+      setSelectedQuarter(quarter)
+      setLineup(nextLineup)
+
+      setAllGameLineups((current) => [
+        ...current.filter((item) => item.quarter !== quarter),
+        ...nextLineup,
+      ])
+    } finally {
+      setChangingQuarter(false)
     }
-
-    const { data, error } = await supabase
-      .from('game_lineups')
-      .select('*')
-      .eq('game_id', selectedGame.id)
-      .eq('quarter', quarter)
-
-    if (error) {
-      console.error(error)
-      alert('Could not load that quarter.')
-      return
-    }
-
-    const nextLineup = data || []
-
-    setSelectedQuarter(quarter)
-    setLineup(nextLineup)
-
-    setAllGameLineups((current) => [
-      ...current.filter((item) => item.quarter !== quarter),
-      ...nextLineup,
-    ])
   }
 
   async function copyQuarterFromCurrentGame(sourceQuarter: number) {
@@ -3344,17 +3351,26 @@ function playerAtPosition(position: string) {
             <div className="game-date-time-grid">
               <label>
                 <span>Game Date</span>
-                <select
-                  aria-label="Game Date"
-                  value={gameDate}
-                  onChange={(e) => {
-                    setGameDate(e.target.value)
-                  }}
-                >
-                  {buildGameDateOptions().map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
+                {editingGameId ? (
+                  <input
+                    type="date"
+                    aria-label="Game Date"
+                    value={gameDate}
+                    onChange={(e) => setGameDate(e.target.value)}
+                  />
+                ) : (
+                  <select
+                    aria-label="Game Date"
+                    value={gameDate}
+                    onChange={(e) => {
+                      setGameDate(e.target.value)
+                    }}
+                  >
+                    {buildGameDateOptions().map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                )}
               </label>
 
               <label>
@@ -4222,8 +4238,8 @@ function playerAtPosition(position: string) {
                       ? 'primary-button'
                       : 'secondary-button'
                   }
-                  onClick={() => changeQuarter(quarter)}
-                  disabled={savingLineup}
+                  onClick={() => void changeQuarter(quarter)}
+                  disabled={savingLineup || changingQuarter}
                 >
                   Q{quarter}
                   <span
