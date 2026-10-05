@@ -261,6 +261,7 @@ function App() {
   const [newPlayerNumber, setNewPlayerNumber] = useState('')
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null)
   const [coachProfilePlayerId, setCoachProfilePlayerId] = useState<string | null>(null)
+  const [editingGameId, setEditingGameId] = useState<string | null>(null)
 
   const [maxGkQuarters, setMaxGkQuarters] = useState('2')
   const [maxBenchQuarters, setMaxBenchQuarters] = useState('2')
@@ -938,6 +939,65 @@ function App() {
     alert('Game reset. It is back to Scheduled with a clean slate.')
   }
 
+  function startEditGame(game: Game) {
+    setEditingGameId(game.id)
+    setOpponent(game.opponent)
+    setGameDate(game.game_date)
+    setGameTime(game.game_time || '')
+    setLocation(game.location || '')
+    setHomeAway(game.home_away)
+    setGameNotes(game.notes || '')
+    setScreen('new-game')
+  }
+
+  async function updateGame() {
+    if (!editingGameId) return
+
+    if (!opponent.trim()) {
+      alert('Enter an opponent.')
+      return
+    }
+
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(gameDate)) {
+      alert('Choose a valid game date.')
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('games')
+      .update({
+        opponent: opponent.trim(),
+        game_date: gameDate,
+        game_time: gameTime || null,
+        location: location.trim() || null,
+        home_away: homeAway,
+        notes: gameNotes.trim() || null,
+      })
+      .eq('id', editingGameId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error(error)
+      alert('Could not update game.')
+      return
+    }
+
+    setGames((current) =>
+      current.map((game) => (game.id === editingGameId ? data : game))
+    )
+    setSelectedGame((current) => (current?.id === editingGameId ? data : current))
+
+    setEditingGameId(null)
+    setOpponent('')
+    setGameDate(localDateInputValue())
+    setGameTime('')
+    setLocation('')
+    setHomeAway('Home')
+    setGameNotes('')
+    setScreen('games')
+  }
+
   async function createGame() {
     if (!opponent.trim()) {
       alert('Enter an opponent.')
@@ -974,6 +1034,7 @@ function App() {
       return
     }
 
+    setEditingGameId(null)
     setOpponent('')
     const resetDate = localDateInputValue()
     setGameDate(resetDate)
@@ -3265,9 +3326,9 @@ function playerAtPosition(position: string) {
         <section className="team-card">
           <div className="section-header">
             <div>
-              <h2>New Game</h2>
+              <h2>{editingGameId ? 'Edit Game' : 'New Game'}</h2>
               <span>
-                Create a game and build the lineup.
+                {editingGameId ? 'Update the game details.' : 'Create a game and build the lineup.'}
               </span>
             </div>
           </div>
@@ -3337,10 +3398,28 @@ function playerAtPosition(position: string) {
 
             <button
               className="primary-button"
-              onClick={createGame}
+              onClick={editingGameId ? updateGame : createGame}
             >
-              Create Game
+              {editingGameId ? 'Save Changes' : 'Create Game'}
             </button>
+
+            {editingGameId && (
+              <button
+                className="secondary-button"
+                onClick={() => {
+                  setEditingGameId(null)
+                  setOpponent('')
+                  setGameDate(localDateInputValue())
+                  setGameTime('')
+                  setLocation('')
+                  setHomeAway('Home')
+                  setGameNotes('')
+                  setScreen('games')
+                }}
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </section>
       </>
@@ -3522,6 +3601,15 @@ function playerAtPosition(position: string) {
           {currentUserRole !== 'viewer' && (
             <button
               className="secondary-button"
+              onClick={() => startEditGame(game)}
+            >
+              Edit Game
+            </button>
+          )}
+
+          {currentUserRole !== 'viewer' && (
+            <button
+              className="secondary-button"
               onClick={() => resetGame(game)}
             >
               Reset Game
@@ -3688,6 +3776,21 @@ function playerAtPosition(position: string) {
         return false
       }
     }
+
+    const { data: refreshedLineups, error: refreshError } = await supabase
+      .from('game_lineups')
+      .select('player_id, quarter, position')
+      .eq('game_id', selectedGame.id)
+
+    if (refreshError) {
+      console.error(refreshError)
+      alert('Lineup saved, but the usage display could not be refreshed.')
+      return false
+    }
+
+    const refreshed = (refreshedLineups || []) as LineupItem[]
+    setAllGameLineups(refreshed)
+    setLineup(refreshed.filter((item) => item.quarter === selectedQuarter))
 
     if (announceSuccess) {
       alert(`Q${quarter} lineup saved successfully.`)
