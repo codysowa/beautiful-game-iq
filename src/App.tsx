@@ -3723,7 +3723,7 @@ function playerAtPosition(position: string) {
         lineups={allGameLineups}
         captainIds={[selectedGame.captain_1_id, selectedGame.captain_2_id].filter(Boolean) as string[]}
         userRole={currentUserRole || 'viewer'}
-        onBack={async () => { await loadApp(); setScreen('home') }}
+        onBack={() => { setScreen('home'); void loadApp(selectedTeamId, false) }}
       />
     )
   }
