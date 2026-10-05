@@ -4224,6 +4224,93 @@ function playerAtPosition(position: string) {
             )
           })()}
 
+          <section style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }}>
+            <div style={{ marginBottom: '10px' }}>
+              <strong style={{ fontSize: 18 }}>Full Game Lineup</strong>
+              <div style={{ fontSize: 12, opacity: 0.7, marginTop: 3 }}>
+                Q1-Q4 at a glance. The current quarter reflects any unsaved changes.
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+              {[1, 2, 3, 4].map((quarter) => {
+                const quarterLineup = quarter === selectedQuarter
+                  ? lineup
+                  : allGameLineups.filter((item) => item.quarter === quarter)
+                const byPosition = new Map(quarterLineup.map((item) => [item.position, item]))
+                const benchCount = Math.max(0, players.length - quarterLineup.length)
+                const rows = formationRows[optimizationFormation] || []
+
+                return (
+                  <div
+                    key={quarter}
+                    style={{
+                      padding: 10,
+                      border: selectedQuarter === quarter ? '2px solid #888' : '1px solid #cfd8cf',
+                      borderRadius: 10,
+                      background: selectedQuarter === quarter ? '#f7faf7' : '#fafafa',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+                      <strong>Q{quarter} ({quarterLineup.length})</strong>
+                      <span style={{ fontSize: 12, opacity: 0.7 }}>Bench: {benchCount}</span>
+                    </div>
+
+                    <div
+                      style={{
+                        borderRadius: 8,
+                        padding: 7,
+                        background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)',
+                        border: '1px solid #b8cdb8',
+                        display: 'grid',
+                        gap: 5,
+                      }}
+                    >
+                      {rows.map((row, rowIndex) => (
+                        <div
+                          key={rowIndex}
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
+                            gap: 5,
+                          }}
+                        >
+                          {row.map((position) => {
+                            const item = byPosition.get(position)
+                            const player = item ? players.find((p) => p.id === item.player_id) : null
+
+                            return (
+                              <div
+                                key={position}
+                                style={{
+                                  minHeight: 42,
+                                  padding: '4px 2px',
+                                  border: '1px solid #aab8aa',
+                                  borderRadius: 6,
+                                  background: '#fff',
+                                  textAlign: 'center',
+                                }}
+                              >
+                                <div style={{ fontSize: 9, fontWeight: 800, opacity: 0.6 }}>
+                                  {positionShort(position)}
+                                </div>
+                                <div style={{ fontWeight: 700, fontSize: 11, lineHeight: 1.15 }}>
+                                  {player
+                                    ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}`
+                                    : '—'}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+
           <div className="quarter-tabs">
             {[1, 2, 3, 4].map((quarter) => {
               const count = allGameLineups.filter(
