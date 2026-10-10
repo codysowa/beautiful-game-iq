@@ -501,8 +501,10 @@ export default function LiveGame({
     setSubInPlayerId('')
   }, [lineups, quarter, gameId, gameFormat])
 
-  const ourGoals = events.filter((event) => event.event_type === 'our_goal' && event.quarter <= quarter).length
-  const theirGoals = events.filter((event) => event.event_type === 'their_goal' && event.quarter <= quarter).length
+  // The scoreboard always shows the full-game score, regardless of which quarter is selected.
+  // Quarter-specific filtering here caused the displayed score to fall behind the saved event totals.
+  const ourGoals = events.filter((event) => event.event_type === 'our_goal').length
+  const theirGoals = events.filter((event) => event.event_type === 'their_goal').length
 
   const currentLineup = useMemo(
     () => lineups.filter((item) => item.quarter === quarter),
@@ -640,52 +642,69 @@ export default function LiveGame({
   }
 
   async function recordOurGoal() {
-    if (!canStatTrack || !goalScorer || gameStatus !== 'Live') return
+    if (!canStatTrack || !goalScorer || gameStatus !== 'Live' || saving) return
     setSaving(true)
+    let savedGoal: Event | null = null
 
-    const { data: goalData, error: goalError } = await supabase
-      .from('game_events')
-      .insert({
-        game_id: gameId,
-        quarter,
-        event_type: 'our_goal',
-        player_id: goalScorer,
-        assister_id: goalAssister || null,
-      })
-      .select()
-      .single()
+    try {
+      const { data: goalData, error: goalError } = await supabase
+        .from('game_events')
+        .insert({
+          game_id: gameId,
+          quarter,
+          event_type: 'our_goal',
+          player_id: goalScorer,
+          assister_id: goalAssister || null,
+        })
+        .select()
+        .single()
 
-    if (goalError || !goalData) {
-      console.error(goalError)
-      alert('Could not record goal: ' + (goalError?.message || 'Unknown error'))
+      if (goalError || !goalData) {
+        console.error(goalError)
+        alert('Could not record goal: ' + (goalError?.message || 'Unknown error'))
+        return
+      }
+
+      savedGoal = goalData as Event
+
+      // The goal event is the source of truth for the score. The shot is a separate
+      // supporting stat; a shot-save failure must never undo or hide the saved goal.
+      const { data: shotData, error: shotError } = await supabase
+        .from('game_events')
+        .insert({
+          game_id: gameId,
+          quarter,
+          event_type: 'our_shot',
+          player_id: goalScorer,
+        })
+        .select()
+        .single()
+
+      if (shotError || !shotData) {
+        console.error(shotError)
+        setEvents((current) => [savedGoal!, ...current.filter((event) => event.id !== savedGoal!.id)])
+        alert('Goal saved, but its automatic shot stat could not be saved: ' + (shotError?.message || 'Unknown error'))
+      } else {
+        setEvents((current) => [shotData as Event, savedGoal!, ...current.filter((event) => event.id !== savedGoal!.id)])
+      }
+
+      setGoalScorer('')
+      setGoalAssister('')
+      setShowGoal(false)
+    } catch (error) {
+      console.error(error)
+      if (savedGoal) {
+        setEvents((current) => [savedGoal!, ...current.filter((event) => event.id !== savedGoal!.id)])
+        setGoalScorer('')
+        setGoalAssister('')
+        setShowGoal(false)
+        alert('The goal was saved. Another stat update failed, but the score has been refreshed.')
+      } else {
+        alert('Could not save the goal. Please check Recent Events before trying again.')
+      }
+    } finally {
       setSaving(false)
-      return
     }
-
-    // A goal is also a shot by the player who scored it.
-    const { data: shotData, error: shotError } = await supabase
-      .from('game_events')
-      .insert({
-        game_id: gameId,
-        quarter,
-        event_type: 'our_shot',
-        player_id: goalScorer,
-      })
-      .select()
-      .single()
-
-    if (shotError || !shotData) {
-      console.error(shotError)
-      alert('Goal recorded, but the automatic shot could not be recorded: ' + (shotError?.message || 'Unknown error'))
-      setEvents((current) => [goalData, ...current])
-    } else {
-      setEvents((current) => [shotData, goalData, ...current])
-    }
-
-    setGoalScorer('')
-    setGoalAssister('')
-    setShowGoal(false)
-    setSaving(false)
   }
 
   async function recordSave() {
