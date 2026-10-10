@@ -38,6 +38,7 @@ type Event = {
   player_id: string | null
   assister_id: string | null
   created_at: string
+  related_goal_id?: string | null
 }
 
 type Props = {
@@ -673,6 +674,7 @@ export default function LiveGame({
           quarter,
           event_type: 'our_shot',
           player_id: goalScorer,
+          related_goal_id: savedGoal.id,
         })
         .select()
         .single()
@@ -791,7 +793,7 @@ export default function LiveGame({
         return
       }
 
-      setEvents((current) => current.filter((event) => event.id !== eventId))
+      setEvents((current) => current.filter((event) => event.id !== eventId && event.related_goal_id !== eventId))
     } catch (error) {
       console.error('Unexpected error deleting game event:', error)
       alert('Could not confirm that the event was deleted. Refreshing events now.')
