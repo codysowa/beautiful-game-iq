@@ -769,13 +769,36 @@ export default function LiveGame({
   async function deleteEvent(eventId: string) {
     if (!confirm('Delete this event?')) return
     setSaving(true)
-    const { error } = await supabase.from('game_events').delete().eq('id', eventId)
-    if (!error) {
+    try {
+      // Confirm the database actually deleted a row; RLS can make a delete
+      // affect zero rows without returning a Postgres error.
+      const { data, error } = await supabase
+        .from('game_events')
+        .delete()
+        .eq('id', eventId)
+        .select('id')
+
+      if (error) {
+        console.error('Could not delete game event:', error)
+        alert(`Could not delete event: ${error.message}`)
+        await loadEvents()
+        return
+      }
+
+      if (!data || data.length === 0) {
+        alert('The event was not deleted. It may no longer exist or you may not have permission to delete it. Refreshing events now.')
+        await loadEvents()
+        return
+      }
+
       setEvents((current) => current.filter((event) => event.id !== eventId))
-    } else {
-      alert('Could not delete event.')
+    } catch (error) {
+      console.error('Unexpected error deleting game event:', error)
+      alert('Could not confirm that the event was deleted. Refreshing events now.')
+      await loadEvents()
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
   function openEditEvent(event: Event) {
     if (!canManageGame) return
