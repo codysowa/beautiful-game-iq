@@ -83,6 +83,12 @@ begin
         group by source
       ) source_totals
     ), '[]'::jsonb),
+    'recent_feedback', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'feedback_type', feedback_type, 'message', message, 'platform', platform, 'created_at', created_at
+      ) order by created_at desc)
+      from (select feedback_type, message, platform, created_at from public.user_feedback order by created_at desc limit 10) feedback
+    ), '[]'::jsonb),
     'recent_teams', coalesce((
       select jsonb_agg(jsonb_build_object(
         'name', t.name, 'age_group', t.age_group, 'format', t.format, 'created_at', t.created_at
