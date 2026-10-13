@@ -1635,13 +1635,26 @@ function playerAtPosition(position: string) {
 
     if (error) {
       console.error(error)
-      alert('Could not send feedback right now. Please try again later.')
+      alert('Could not save feedback right now. Please try again later.')
       return
     }
 
+    const { error: notificationError } = await supabase.functions.invoke('notify-feedback', {
+      body: {
+        feedback_type: feedbackType,
+        message,
+        platform: /iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'ios' : /Macintosh/i.test(navigator.userAgent) ? 'mac' : 'web',
+      },
+    })
+
     setFeedbackOpen(false)
     setFeedbackMessage('')
-    alert('Thanks for helping make Beautiful Game IQ better!')
+    if (notificationError) {
+      console.error('Feedback saved, but email notification failed:', notificationError)
+      alert('Thanks — your feedback was saved. Email notification could not be sent, but your feedback is available in the admin dashboard.')
+      return
+    }
+    alert('Thanks for helping make Beautiful Game IQ better! Your feedback has been sent to the BG IQ team.')
   }
 
   async function submitBugReport() {
