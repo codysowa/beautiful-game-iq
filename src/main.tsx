@@ -91,7 +91,7 @@ function Root() {
     return <Auth passwordRecovery={passwordRecovery} />
   }
 
-  if (window.location.pathname.replace(/\\/+$/, '') === '/admin/analytics') {
+  if (window.location.pathname === '/admin/analytics' || window.location.pathname === '/admin/analytics/') {
     return <AdminAnalytics />
   }
 
