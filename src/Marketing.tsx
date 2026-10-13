@@ -19,9 +19,15 @@ export default function Marketing() {
               coaching decisions.
             </p>
             <div className="marketing-actions">
-              <span className="app-store-button app-store-button-disabled">
-                App Store — Coming Soon
-              </span>
+              <a
+                className="app-store-button"
+                href="https://apps.apple.com/us/app/beautiful-game-iq/id6814654300"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Download Beautiful Game IQ on the App Store"
+              >
+                Download on the App Store
+              </a>
               <a className="marketing-secondary-button" href="/support/">
                 Get Support
               </a>
