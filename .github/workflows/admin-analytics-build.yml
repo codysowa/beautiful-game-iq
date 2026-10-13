@@ -1,6 +1,9 @@
 name: Admin analytics build check
 
 on:
+  push:
+    branches:
+      - feature/admin-analytics-master
   pull_request:
     branches:
       - master
