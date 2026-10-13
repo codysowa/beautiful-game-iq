@@ -5,6 +5,8 @@ import './App.css'
 import Marketing from './Marketing'
 import App from './App'
 import Auth from './Auth'
+import AdminAnalytics from './AdminAnalytics'
+import './admin.css'
 import InviteOnboarding from './InviteOnboarding'
 import { supabase } from './supabase'
 import type { Session } from '@supabase/supabase-js'
@@ -69,6 +71,10 @@ function Root() {
 
   if (passwordRecovery) {
     return <Auth passwordRecovery={passwordRecovery} />
+  }
+
+  if (window.location.pathname === '/admin/analytics' || window.location.pathname === '/admin/analytics/') {
+    return <AdminAnalytics />
   }
 
   const currentEmail = session.user.email?.trim().toLowerCase() ?? ''
