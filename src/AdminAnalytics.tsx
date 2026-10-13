@@ -7,6 +7,7 @@ type AnalyticsPayload = {
   recent_teams: Array<{ name: string; age_group: string | null; format: string; created_at: string }>
   recent_games: Array<{ opponent: string; game_date: string; status: string; created_at: string }>
   discovery_sources: Array<{ source: string; count: number }>
+  recent_feedback: Array<{ feedback_type: string; message: string; platform: string; created_at: string }>
 }
 
 const metricLabels: Array<[string, string]> = [
@@ -101,6 +102,20 @@ export default function AdminAnalytics() {
                 <strong>{item.count}</strong>
               </div>
             })}</div>}
+        </section>
+
+        <section className="admin-panel" style={{ marginBottom: '20px' }}>
+          <div className="admin-section-title"><h2>Recent user feedback</h2><span>{data.recent_feedback.length}</span></div>
+          {data.recent_feedback.length === 0 ? <p className="admin-empty">No feedback submitted yet.</p> :
+            <div className="admin-list">{data.recent_feedback.map((item, index) => (
+              <div className="admin-list-row" key={item.created_at + index}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <strong>{item.feedback_type === 'suggestion' ? 'Feature idea / suggestion' : 'General feedback'} · {item.platform}</strong>
+                  <span style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{item.message}</span>
+                </div>
+                <time>{dateTime(item.created_at)}</time>
+              </div>
+            ))}</div>}
         </section>
 
         <section className="admin-columns">
