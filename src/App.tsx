@@ -236,6 +236,14 @@ function App() {
   const [coachDraft, setCoachDraft] = useState<{ playerId: string; usage_priority: NonNullable<Player['usage_priority']>; bench_tolerance: NonNullable<Player['bench_tolerance']>; position_preferences: Record<string, number>; avoid_positions: string[]; coach_notes: string } | null>(null)
   const [bugReportOpen, setBugReportOpen] = useState(false)
   const [bugReport, setBugReport] = useState({ severity: 'Normal', summary: '', details: '' })
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [feedbackType, setFeedbackType] = useState<'suggestion' | 'general'>('suggestion')
+  const [feedbackMessage, setFeedbackMessage] = useState('')
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+  const [discoverySource, setDiscoverySource] = useState('')
+  const [discoverySubmitted, setDiscoverySubmitted] = useState(false)
+  const [discoverySkipped, setDiscoverySkipped] = useState(false)
+  const [discoverySubmitting, setDiscoverySubmitting] = useState(false)
   const [copySourceGameId, setCopySourceGameId] = useState('')
   const [copySourceQuarter, setCopySourceQuarter] = useState(1)
 
@@ -1302,7 +1310,31 @@ function playerAtPosition(position: string) {
           </div>
         </header>
 
-        {bugReportOpen && (
+        {feedbackOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1001, display: 'grid', placeItems: 'center', padding: '20px' }}>
+          <section style={{ background: 'white', color: '#111', borderRadius: '16px', padding: '22px', width: 'min(560px, 100%)', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
+            <h2 style={{ marginTop: 0 }}>Help improve Beautiful Game IQ</h2>
+            <p style={{ marginTop: 0 }}>Have an idea or feedback? I built this for coaches and would love to hear what would make it more useful.</p>
+            <label style={{ display: 'block', marginBottom: '12px' }}>
+              <span>Feedback type</span>
+              <select value={feedbackType} onChange={(e) => setFeedbackType(e.target.value as 'suggestion' | 'general')} style={{ width: '100%' }}>
+                <option value="suggestion">Feature idea / suggestion</option>
+                <option value="general">General feedback</option>
+              </select>
+            </label>
+            <label style={{ display: 'block', marginBottom: '16px' }}>
+              <span>Your feedback</span>
+              <textarea value={feedbackMessage} onChange={(e) => setFeedbackMessage(e.target.value)} placeholder="What would make the app better for you?" rows={5} maxLength={4000} style={{ width: '100%' }} />
+            </label>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button type="button" className="secondary-button" onClick={() => setFeedbackOpen(false)}>Cancel</button>
+              <button type="button" className="primary-button" disabled={!feedbackMessage.trim() || feedbackSubmitting} onClick={() => void submitProductFeedback()}>{feedbackSubmitting ? 'Sending…' : 'Send Feedback'}</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {bugReportOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '20px' }}>
           <section style={{ background: 'white', color: '#111', borderRadius: '16px', padding: '22px', width: 'min(560px, 100%)', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
             <h2 style={{ marginTop: 0 }}>Report a Bug</h2>
@@ -1560,6 +1592,58 @@ function playerAtPosition(position: string) {
     )
   }
 
+  async function saveDiscoverySource() {
+    if (!discoverySource || discoverySubmitting) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      alert('Please sign in again before saving your response.')
+      return
+    }
+
+    setDiscoverySubmitting(true)
+    const { error } = await supabase.from('user_discovery').upsert(
+      { user_id: user.id, source: discoverySource, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    )
+    setDiscoverySubmitting(false)
+
+    if (error) {
+      console.error(error)
+      alert('Could not save your response. You can skip this question and continue.')
+      return
+    }
+    setDiscoverySubmitted(true)
+  }
+
+  async function submitProductFeedback() {
+    const message = feedbackMessage.trim()
+    if (!message || feedbackSubmitting) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      alert('Please sign in again before sending feedback.')
+      return
+    }
+
+    setFeedbackSubmitting(true)
+    const { error } = await supabase.from('user_feedback').insert({
+      user_id: user.id,
+      feedback_type: feedbackType,
+      message,
+      platform: /iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'ios' : /Macintosh/i.test(navigator.userAgent) ? 'mac' : 'web',
+    })
+    setFeedbackSubmitting(false)
+
+    if (error) {
+      console.error(error)
+      alert('Could not send feedback right now. Please try again later.')
+      return
+    }
+
+    setFeedbackOpen(false)
+    setFeedbackMessage('')
+    alert('Thanks for helping make Beautiful Game IQ better!')
+  }
+
   async function submitBugReport() {
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -1809,6 +1893,32 @@ function playerAtPosition(position: string) {
         <p style={{ marginTop: '12px', lineHeight: 1.6 }}>
           Let's get your team set up. You can create a new team or join an existing team.
         </p>
+
+        {!discoverySubmitted && !discoverySkipped && (
+          <div className="team-card" style={{ marginTop: '20px', padding: '16px', background: '#f7f9fb' }}>
+            <h3 style={{ marginTop: 0 }}>How did you hear about Beautiful Game IQ?</h3>
+            <p style={{ marginTop: 0, color: '#555', fontSize: '14px' }}>This optional answer helps us understand how coaches are finding the app.</p>
+            <label style={{ display: 'block', marginBottom: '12px' }}>
+              <span>Choose one</span>
+              <select value={discoverySource} onChange={(e) => setDiscoverySource(e.target.value)} style={{ width: '100%', marginTop: '6px' }}>
+                <option value="">Select a source…</option>
+                <option value="app_store">App Store</option>
+                <option value="web_search">Web search</option>
+                <option value="social_media">Social media</option>
+                <option value="friend_coach">Friend or fellow coach</option>
+                <option value="work_organization">Workplace or organization</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button type="button" className="primary-button" disabled={!discoverySource || discoverySubmitting} onClick={() => void saveDiscoverySource()}>
+                {discoverySubmitting ? 'Saving…' : 'Submit'}
+              </button>
+              <button type="button" className="secondary-button" onClick={() => setDiscoverySkipped(true)}>Skip</button>
+            </div>
+          </div>
+        )}
+        {discoverySubmitted && <p style={{ color: '#26734d', marginTop: '16px' }}>Thanks — that helps us reach more coaches.</p>}
 
         <div style={{ display: 'grid', gap: '12px', marginTop: '24px' }}>
           <button
@@ -3935,6 +4045,22 @@ function playerAtPosition(position: string) {
           >
             {deletingAccount ? 'Deleting Account...' : 'Delete Account'}
           </button>
+          <button
+            type="button"
+            onClick={() => setFeedbackOpen(true)}
+            style={{ marginTop: '10px' }}
+          >
+            Send Feedback
+          </button>
+          <a
+            href="https://apps.apple.com/us/app/beautiful-game-iq/id6814654300?action=write-review"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="secondary-button"
+            style={{ display: 'inline-block', marginTop: '10px', textDecoration: 'none' }}
+          >
+            Rate Beautiful Game IQ
+          </a>
           <button
             type="button"
             onClick={() => setBugReportOpen(true)}
