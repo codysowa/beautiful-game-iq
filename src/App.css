@@ -244,3 +244,47 @@ input, select, textarea {
   .coach-knowledge-card select, .inline-player-fields select { min-width: 120px; max-width: 100%; }
   .team-card select { min-width: 0; max-width: 100%; }
 }
+
+/* Account actions: clear spacing, consistent buttons, and responsive wrapping. */
+.app-header .header-content > button,
+.app-header .header-content > a.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: top;
+  min-height: 42px;
+  margin: 12px 8px 0 0 !important;
+  padding: 10px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: #f4f6fa;
+  color: #20324d;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+.app-header .header-content > button:hover,
+.app-header .header-content > a.secondary-button:hover {
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
+}
+.app-header .header-content > button:nth-of-type(2) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: white;
+}
+.app-header .header-content > button:nth-of-type(2):hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+@media (max-width: 600px) {
+  .app-header { padding: 22px 14px; }
+  .app-header .header-content > button,
+  .app-header .header-content > a.secondary-button {
+    margin-right: 6px !important;
+    margin-top: 9px !important;
+    padding: 9px 11px;
+    font-size: 13px;
+  }
+}
