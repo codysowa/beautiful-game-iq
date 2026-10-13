@@ -6,6 +6,7 @@ type AnalyticsPayload = {
   metrics: Record<string, number>
   recent_teams: Array<{ name: string; age_group: string | null; format: string; created_at: string }>
   recent_games: Array<{ opponent: string; game_date: string; status: string; created_at: string }>
+  discovery_sources: Array<{ source: string; count: number }>
 }
 
 const metricLabels: Array<[string, string]> = [
@@ -19,6 +20,7 @@ const metricLabels: Array<[string, string]> = [
   ['teams_30d', 'Teams created · 30 days'],
   ['games_7d', 'Games created · 7 days'],
   ['games_30d', 'Games created · 30 days'],
+  ['feedback_submissions', 'Feedback submissions'],
 ]
 
 function dateTime(value: string) {
@@ -80,6 +82,25 @@ export default function AdminAnalytics() {
               <strong>{(data.metrics[key] ?? 0).toLocaleString()}</strong>
             </article>
           ))}
+        </section>
+
+        <section className="admin-panel" style={{ marginBottom: '20px' }}>
+          <div className="admin-section-title"><h2>How people found us</h2><span>{data.discovery_sources.reduce((sum, item) => sum + item.count, 0)} responses</span></div>
+          {data.discovery_sources.length === 0 ? <p className="admin-empty">No responses yet. The optional question appears during first-time setup.</p> :
+            <div className="admin-list">{data.discovery_sources.map((item) => {
+              const labels: Record<string, string> = {
+                app_store: 'App Store',
+                web_search: 'Web search',
+                social_media: 'Social media',
+                friend_coach: 'Friend or fellow coach',
+                work_organization: 'Workplace or organization',
+                other: 'Other',
+              }
+              return <div className="admin-list-row" key={item.source}>
+                <div><strong>{labels[item.source] || item.source}</strong></div>
+                <strong>{item.count}</strong>
+              </div>
+            })}</div>}
         </section>
 
         <section className="admin-columns">
