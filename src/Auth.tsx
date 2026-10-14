@@ -57,7 +57,7 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
         setError(error.message)
       } else {
         setMessage(
-          'Account created. Check your inbox for a confirmation email. If you don't see it, check your spam or junk folder.'
+          "Account created. Check your inbox for a confirmation email. If you don't see it, check your spam or junk folder."
         )
       }
     } else {
