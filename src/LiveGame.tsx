@@ -860,12 +860,57 @@ export default function LiveGame({
       return
     }
 
+    let linkedShots: Event[] = []
+
+    // Automatic shots are tied to their goal. Keep the shot's player and quarter
+    // in sync when the coach corrects the goal entry.
+    if (editingEvent.event_type === 'our_goal') {
+      const { data: shotData, error: shotError } = await supabase
+        .from('game_events')
+        .update({
+          quarter: editEventQuarter,
+          player_id: editEventScorer,
+        })
+        .eq('related_goal_id', editingEvent.id)
+        .eq('event_type', 'our_shot')
+        .select()
+
+      if (shotError) {
+        console.error('Could not update the shot linked to the edited goal:', shotError)
+
+        // Roll back the goal edit so the goal and its automatic shot do not disagree.
+        const { error: rollbackError } = await supabase
+          .from('game_events')
+          .update({
+            quarter: editingEvent.quarter,
+            player_id: editingEvent.player_id,
+            assister_id: editingEvent.assister_id,
+          })
+          .eq('id', editingEvent.id)
+
+        if (rollbackError) {
+          console.error('Could not roll back goal after linked-shot update failed:', rollbackError)
+        }
+
+        await loadEvents()
+        alert(
+          rollbackError
+            ? 'The linked shot could not be updated, and the goal could not be rolled back cleanly. The event list has been refreshed; please verify both entries.'
+            : 'The linked shot could not be updated, so the goal edit was rolled back. Please try again.'
+        )
+        setSaving(false)
+        return
+      }
+
+      linkedShots = (shotData || []) as Event[]
+    }
+
     setEvents((current) =>
-      current.map((event) =>
-        event.id === editingEvent.id
-          ? (data as Event)
-          : event
-      )
+      current.map((event) => {
+        if (event.id === editingEvent.id) return data as Event
+        const linkedShot = linkedShots.find((shot) => shot.id === event.id)
+        return linkedShot || event
+      })
     )
 
     setEditingEvent(null)
