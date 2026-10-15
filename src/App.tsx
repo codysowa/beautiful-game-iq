@@ -1948,7 +1948,7 @@ function playerAtPosition(position: string) {
             </div>
           )}
 
-          {currentUserRole === 'owner' && (
+          {(currentUserRole === 'owner' || staff.some((member) => member.user_id === currentUserId && member.is_head_coach)) && (
           <div style={{ marginTop: '18px', padding: '14px', border: '1px solid #ddd', borderRadius: '10px' }}>
             <strong>Invite a Coach</strong>
             <p style={{ margin: '6px 0 12px', fontSize: '13px', opacity: 0.75 }}>
