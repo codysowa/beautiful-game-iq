@@ -226,6 +226,26 @@ function App() {
   const [actualSeasonLineups, setActualSeasonLineups] = useState<(LineupItem & { game_id: string })[]>([])
   const [positionSegments, setPositionSegments] = useState<PositionSegment[]>([])
 
+  useEffect(() => {
+    // /analytics is a direct link to the analytics section of the coach dashboard.
+    if (!/^\\/analytics\\/?$/.test(window.location.pathname)) return
+    if (loading) return
+
+    let attempts = 0
+    let timer = 0
+    const revealAnalytics = () => {
+      const analytics = document.querySelector<HTMLElement>('.home-season-analytics')
+      if (analytics) {
+        analytics.scrollIntoView({ behavior: 'auto', block: 'start' })
+        return
+      }
+      attempts += 1
+      if (attempts < 30) timer = window.setTimeout(revealAnalytics, 150)
+    }
+    timer = window.setTimeout(revealAnalytics, 100)
+    return () => window.clearTimeout(timer)
+  }, [loading, screen])
+
   const [screen, setScreen] = useState<
     'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'
   >('home')
@@ -1819,7 +1839,7 @@ function playerAtPosition(position: string) {
         </div>
       )}
 
-      <main className="main-content">
+      <main className={/^\\/analytics\\/?$/.test(window.location.pathname) ? 'main-content analytics-route' : 'main-content'}>
           <p>Loading...</p>
         </main>
       </div>
