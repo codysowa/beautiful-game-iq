@@ -226,14 +226,31 @@ function App() {
   const [actualSeasonLineups, setActualSeasonLineups] = useState<(LineupItem & { game_id: string })[]>([])
   const [positionSegments, setPositionSegments] = useState<PositionSegment[]>([])
 
+  const [screen, setScreen] = useState<
+    'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'
+  >('home')
+
   useEffect(() => {
-    // Support the public analytics URL as a direct entry point.
-    if (!/\/(?:admin\/)?analytics\/?$/.test(window.location.pathname)) return
-    const timer = window.setTimeout(() => {
-      document.querySelector('.home-season-analytics')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 800)
+    if (!/^\\/(?:admin\\/)?analytics\\/?$/.test(window.location.pathname)) return
+    if (loading) return
+
+    // Analytics lives on the home dashboard. Wait until the team data and
+    // analytics section have rendered before navigating to it.
+    let attempts = 0
+    let timer = 0
+    const revealAnalytics = () => {
+      const analytics = document.querySelector<HTMLElement>('.home-season-analytics')
+      if (analytics) {
+        analytics.scrollIntoView({ behavior: 'auto', block: 'start' })
+        return
+      }
+      attempts += 1
+      if (attempts < 20) timer = window.setTimeout(revealAnalytics, 150)
+    }
+    timer = window.setTimeout(revealAnalytics, 100)
     return () => window.clearTimeout(timer)
-  }, [])
+  }, [loading, screen])
+
 
   const [screen, setScreen] = useState<
     'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'
