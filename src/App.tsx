@@ -2002,6 +2002,10 @@ function playerAtPosition(position: string) {
       { title: 'Add your players', goal: 'Build a roster the lineup planner can actually use.', detail: 'Add every player who may attend, including jersey numbers. Keep names accurate so you can identify players quickly during a match.', takeaway: 'A complete roster makes attendance, rotations and game stats more reliable.', action: 'Open Roster', screen: 'roster' },
       { title: 'Schedule a game', goal: 'Create the match before planning who plays.', detail: 'Record the opponent, date and game details. Then mark who is available. The lineup should reflect the players who can attend, not the full roster by default.', takeaway: 'Schedule first, then set attendance, then build the lineup.', action: 'Schedule a Game', screen: 'new-game' },
       { title: 'Build your lineup', goal: 'Plan the whole match—not just the opening whistle.', detail: 'Choose a formation and review each quarter. A player can be in a different position or sit for a quarter, so look across all four quarters before saving.', takeaway: 'Use Rotation Check to catch playing-time or goalkeeper issues before game day.', action: 'Open Games', screen: 'games' },
+      { title: 'Optimize the lineup', goal: 'Use the optimizer as a second set of eyes—not as a replacement for coaching.', detail: 'Optimize All 4 Quarters considers team rules, player availability, position fit, goalkeeper limits and bench rotation. Review the suggested plan and warnings, then adjust for what you know about the players and match.', takeaway: 'Optimization is a recommendation. Check every quarter and make the final coaching decision yourself.', action: 'Open Games', screen: 'games' },
+      { title: 'Use attendance in Build Lineup', goal: 'Make sure the plan only relies on players who can actually play.', detail: 'Set each player’s availability for the game before optimizing. If someone is absent or only available for certain quarters, the lineup should reflect that. Revisit attendance if plans change.', takeaway: 'Update attendance first, then rebuild or re-check the lineup so unavailable players are not accidentally planned in.', action: 'Open Attendance', screen: 'attendance' },
+      { title: 'Set player ratings', goal: 'Give the planner useful coaching context about each player.', detail: 'Use player ratings or profile guidance where available to reflect your assessment of position fit and development needs. Keep ratings honest, consistent and focused on soccer performance—not a player’s worth.', takeaway: 'Ratings are coaching inputs, not labels. Revisit them as players learn and develop.', action: 'Open Roster', screen: 'roster' },
+      { title: 'Review analytics', goal: 'Use the season view to spot patterns over time.', detail: 'Player Analytics can help you review quarters played, goalkeeper and striker usage, bench time, goals, assists, shots and saves. Look for trends across games rather than judging a player from one match.', takeaway: 'Use analytics to ask better coaching questions—especially about balanced playing time and development.', action: 'View Analytics', screen: 'home' },
       { title: 'Track the match', goal: 'Record events as they happen and correct mistakes when needed.', detail: 'During the game, record goals, assists, shots and saves in Live Game. A goal also records a shot automatically. If you delete a goal, its linked shot should be removed too.', takeaway: 'Use the event log to verify entries instead of relying on memory after the match.', action: 'Open Games', screen: 'games' },
     ] as const
     const step = guideSteps[helpStep] || guideSteps[0]
@@ -2054,6 +2058,31 @@ function playerAtPosition(position: string) {
               <p className="guide-visual-caption">Illustration only. Check each quarter and review Rotation Check before saving.</p>
             </>}
             {helpStep === 4 && <>
+              <div className="guide-visual-heading">OPTIMIZE ALL 4 QUARTERS</div>
+              <div className="guide-check-row"><span className="guide-check-mark">✓</span><div><strong>Availability considered</strong><small>Build around players who can attend</small></div></div>
+              <div className="guide-check-row"><span className="guide-check-mark">✓</span><div><strong>Team rules checked</strong><small>Playing time, GK limits and bench limits</small></div></div>
+              <div className="guide-check-row"><span className="guide-check-mark">!</span><div><strong>Review warnings</strong><small>Inspect Rotation Check before saving</small></div></div>
+              <p className="guide-visual-caption">Treat the suggested rotation as a starting point, then apply your coaching judgment.</p>
+            </>}
+            {helpStep === 5 && <>
+              <div className="guide-visual-heading">PLAYER AVAILABILITY</div>
+              {['Alex Morgan','Jordan Lee','Sam Rivera','Taylor Chen'].map((player, index) => <div className="guide-roster-player" key={player}><strong>{player}</strong><span>{['All quarters','Q1–Q2','Absent','Q2–Q4'][index]}</span></div>)}
+              <p className="guide-visual-caption">Example only. Mark availability for the actual game before optimizing the lineup.</p>
+            </>}
+            {helpStep === 6 && <>
+              <div className="guide-visual-heading">PLAYER PROFILE · EXAMPLE</div>
+              <div className="guide-rating-card"><div className="guide-rating-avatar">7</div><div><strong>Jordan Lee</strong><small>Sample player profile</small></div></div>
+              {['Position fit','Ball control','Decision-making'].map((label,index) => <div className="guide-rating-row" key={label}><span>{label}</span><span className="guide-rating-stars">{['★★★★☆','★★★☆☆','★★★★☆'][index]}</span></div>)}
+              <p className="guide-visual-caption">Illustrative ratings, not actual player data. Rate consistently and focus on development.</p>
+            </>}
+            {helpStep === 7 && <>
+              <div className="guide-visual-heading">PLAYER ANALYTICS</div>
+              <div className="guide-analytics-row"><span>Quarters played</span><strong>12</strong><div className="guide-analytics-bar"><i style={{width:'75%'}} /></div></div>
+              <div className="guide-analytics-row"><span>Bench quarters</span><strong>4</strong><div className="guide-analytics-bar"><i style={{width:'35%'}} /></div></div>
+              <div className="guide-analytics-row"><span>Goals / Assists</span><strong>3 / 2</strong><div className="guide-analytics-bar"><i style={{width:'55%'}} /></div></div>
+              <p className="guide-visual-caption">Fictional sample numbers. Compare patterns over multiple games, not one result.</p>
+            </>}
+            {helpStep === 8 && <>
               <div className="guide-visual-heading">LIVE GAME EVENT LOG</div>
               <div className="guide-event"><span className="guide-event-icon">GOAL</span><div><strong>Alex Morgan</strong><small>Assisted by Jordan Lee · Q2</small></div></div>
               <div className="guide-event"><span className="guide-event-icon">SHOT</span><div><strong>Sam Rivera</strong><small>Shot on goal · Q2</small></div></div>
