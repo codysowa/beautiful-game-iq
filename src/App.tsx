@@ -227,7 +227,7 @@ function App() {
   const [positionSegments, setPositionSegments] = useState<PositionSegment[]>([])
 
   const [screen, setScreen] = useState<
-    'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches'
+    'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'
   >('home')
 
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
@@ -277,6 +277,7 @@ function App() {
   const [gameNotes, setGameNotes] = useState('')
   const [showNewTeamForm, setShowNewTeamForm] = useState(false)
   const [showNewUserOnboarding, setShowNewUserOnboarding] = useState(false)
+  const [showGettingStarted, setShowGettingStarted] = useState(() => localStorage.getItem('bgiq-getting-started-dismissed') !== 'true')
   const [showJoinTeam, setShowJoinTeam] = useState(false)
   const [showArchivedTeams, setShowArchivedTeams] = useState(false)
   const [joinTeamSearch, setJoinTeamSearch] = useState('')
@@ -4816,6 +4817,7 @@ function playerAtPosition(position: string) {
             {screen === 'games' && renderGames()}
             {screen === 'team-rules' && renderTeamRules()}
             {screen === 'coaches' && renderCoaches()}
+            {screen === 'help' && renderHelp()}
           </>
         )}
       </main>
@@ -4832,6 +4834,9 @@ function playerAtPosition(position: string) {
           </button>
           <button onClick={() => setScreen('games')}>
             <span>Games</span>
+          </button>
+          <button onClick={() => setScreen('help')} aria-label="Coach Guide">
+            <span>Help</span>
           </button>
         </nav>
       )}
