@@ -1839,7 +1839,7 @@ function playerAtPosition(position: string) {
         </div>
       )}
 
-      <main className="main-content">
+      <main className={/^\/(?:admin\/)?analytics\/?$/.test(window.location.pathname) ? 'main-content analytics-route' : 'main-content'}>
           <p>Loading...</p>
         </main>
       </div>
