@@ -1415,7 +1415,7 @@ body,
 .guide-progress button.active .guide-progress-number { background: #2563eb; color: white; }
 .guide-lesson {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, .9fr);
+  grid-template-columns: minmax(0, .85fr) minmax(360px, 1.15fr);
   gap: 22px;
   align-items: start;
   padding: 22px;
@@ -1429,7 +1429,7 @@ body,
 .guide-lesson-copy > p:not(.eyebrow) { margin: 0; }
 .guide-visual {
   min-width: 0;
-  padding: 18px;
+  padding: 10px;
   border: 1px solid #dbe4ed;
   border-radius: 14px;
   background: white;
@@ -1692,7 +1692,18 @@ body,
   background: #fff;
 }
 .guide-app-content:has(.guide-real-screenshot) {
-  padding: 12px;
-  max-height: 600px;
-  overflow: auto;
+  padding: 6px;
+}
+.guide-screenshot-link {
+  display: block;
+  cursor: zoom-in;
+}
+.guide-screenshot-link:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+.guide-real-screenshot {
+  max-height: none;
+  image-rendering: auto;
 }
