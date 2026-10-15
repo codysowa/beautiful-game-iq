@@ -1998,42 +1998,80 @@ function playerAtPosition(position: string) {
 
   function renderHelp() {
     const guideSteps = [
-      { title: 'Set up your team', detail: 'Start by confirming the team age group and game format. Owners can review goalkeeper, bench and playing-time limits in Team Rules.', action: currentUserRole === 'owner' ? 'Review Team Rules' : 'Continue', screen: currentUserRole === 'owner' ? 'team-rules' : 'roster' },
-      { title: 'Add your players', detail: 'Enter your full roster and jersey numbers. Accurate player details make lineup suggestions and match tracking more useful.', action: 'Open Roster', screen: 'roster' },
-      { title: 'Schedule a game', detail: 'Add the opponent and match details. Then set player availability so the lineup can account for who can attend.', action: 'Schedule a Game', screen: 'new-game' },
-      { title: 'Build your lineup', detail: 'Choose a formation, review all four quarters, and pay attention to Rotation Check warnings before saving your lineup.', action: 'Build Lineup', screen: 'lineup' },
-      { title: 'Track the match', detail: 'Open Live Game during the match to record goals, assists, shots and saves. Review the event log if you need to correct an entry.', action: 'View Games', screen: 'games' },
+      { title: 'Set up your team', goal: 'Make sure the app is using the right rules for your team.', detail: 'Your age group and game format determine how many players are on the field. Team Rules lets the owner set playing-time expectations, goalkeeper limits and bench limits.', takeaway: 'Set these once before planning lineups.', action: currentUserRole === 'owner' ? 'Open Team Rules' : 'Open Roster', screen: currentUserRole === 'owner' ? 'team-rules' : 'roster' },
+      { title: 'Add your players', goal: 'Build a roster the lineup planner can actually use.', detail: 'Add every player who may attend, including jersey numbers. Keep names accurate so you can identify players quickly during a match.', takeaway: 'A complete roster makes attendance, rotations and game stats more reliable.', action: 'Open Roster', screen: 'roster' },
+      { title: 'Schedule a game', goal: 'Create the match before planning who plays.', detail: 'Record the opponent, date and game details. Then mark who is available. The lineup should reflect the players who can attend, not the full roster by default.', takeaway: 'Schedule first, then set attendance, then build the lineup.', action: 'Schedule a Game', screen: 'new-game' },
+      { title: 'Build your lineup', goal: 'Plan the whole match—not just the opening whistle.', detail: 'Choose a formation and review each quarter. A player can be in a different position or sit for a quarter, so look across all four quarters before saving.', takeaway: 'Use Rotation Check to catch playing-time or goalkeeper issues before game day.', action: 'Open Games', screen: 'games' },
+      { title: 'Track the match', goal: 'Record events as they happen and correct mistakes when needed.', detail: 'During the game, record goals, assists, shots and saves in Live Game. A goal also records a shot automatically. If you delete a goal, its linked shot should be removed too.', takeaway: 'Use the event log to verify entries instead of relying on memory after the match.', action: 'Open Games', screen: 'games' },
     ] as const
     const step = guideSteps[helpStep] || guideSteps[0]
     return (
-      <>
-        <section className="team-card coach-guide">
-          <p className="eyebrow">HELP &amp; LEARNING</p>
-          <h2>Getting Started</h2>
-          <p className="coach-guide-intro">Follow these steps to get ready for game day. You can leave at any time and return here to continue.</p>
-          <div className="getting-started-steps" aria-label="Tutorial steps">
-            {guideSteps.map((item, index) => (
-              <button key={item.title} type="button" aria-current={helpStep === index ? 'step' : undefined} className={helpStep === index ? 'active' : ''} onClick={() => setHelpStep(index)}>
-                <strong>{index + 1}. {item.title}</strong>
-                <span>{helpStep === index ? 'Current step' : 'View this step'}</span>
-              </button>
-            ))}
-          </div>
-          <div className="coach-guide-section">
-            <p className="eyebrow">STEP {helpStep + 1} OF {guideSteps.length}</p>
+      <section className="team-card coach-guide">
+        <p className="eyebrow">HELP &amp; LEARNING</p>
+        <h2>Getting Started</h2>
+        <p className="coach-guide-intro">A practical tour of the decisions you make before and during game day. Work through a lesson, then try it with your own team when you're ready.</p>
+        <div className="guide-progress" aria-label={`Step ${helpStep + 1} of ${guideSteps.length}`}>
+          {guideSteps.map((item, index) => (
+            <button key={item.title} type="button" aria-current={helpStep === index ? 'step' : undefined} className={helpStep === index ? 'active' : ''} onClick={() => setHelpStep(index)}>
+              <span className="guide-progress-number">{index + 1}</span>
+              <span>{item.title}</span>
+            </button>
+          ))}
+        </div>
+        <div className="guide-lesson">
+          <div className="guide-lesson-copy">
+            <p className="eyebrow">LESSON {helpStep + 1} OF {guideSteps.length}</p>
             <h3>{step.title}</h3>
+            <h4>Your goal</h4>
+            <p>{step.goal}</p>
+            <h4>What to know</h4>
             <p>{step.detail}</p>
-            <button className="secondary-button" type="button" onClick={() => {
-              setHelpReturnScreen('help')
-              setScreen(step.screen)
-            }}>{step.action}</button>
+            <div className="coach-guide-note"><strong>Coach's takeaway</strong><p>{step.takeaway}</p></div>
           </div>
-          <div className="quick-actions">
-            <button type="button" className="secondary-button" disabled={helpStep === 0} onClick={() => setHelpStep((current) => Math.max(0, current - 1))}>Previous</button>
-            <button type="button" className="secondary-button" disabled={helpStep === guideSteps.length - 1} onClick={() => setHelpStep((current) => Math.min(guideSteps.length - 1, current + 1))}>Next Step</button>
+          <div className="guide-visual" aria-label="Illustrated example">
+            {helpStep === 0 && <>
+              <div className="guide-visual-heading">TEAM RULES</div>
+              <div className="guide-example-row"><span>Game format</span><strong>7v7</strong></div>
+              <div className="guide-example-row"><span>Players on field</span><strong>6 + GK</strong></div>
+              <div className="guide-example-row"><span>Target playing time</span><strong>3 quarters</strong></div>
+              <div className="guide-example-row"><span>Max GK time</span><strong>2 quarters</strong></div>
+              <p className="guide-visual-caption">Example settings only — use your league's rules and your team's needs.</p>
+            </>}
+            {helpStep === 1 && <>
+              <div className="guide-visual-heading">SAMPLE ROSTER</div>
+              {['#4  Alex Morgan', '#7  Jordan Lee', '#10  Sam Rivera', '#12  Taylor Chen', '#18  Casey Brooks'].map((player) => <div className="guide-roster-player" key={player}><span className="guide-player-shirt">{player.split(' ')[0]}</span><strong>{player.slice(player.indexOf('  ') + 2)}</strong><span>Added</span></div>)}
+              <p className="guide-visual-caption">Example players — your roster will show your team's names and numbers.</p>
+            </>}
+            {helpStep === 2 && <>
+              <div className="guide-visual-heading">MATCH PREPARATION</div>
+              <div className="guide-check-row"><span className="guide-check-mark">1</span><div><strong>Schedule the game</strong><small>Opponent, date and location</small></div></div>
+              <div className="guide-check-row"><span className="guide-check-mark">2</span><div><strong>Confirm availability</strong><small>Present, absent or arriving late</small></div></div>
+              <div className="guide-check-row"><span className="guide-check-mark">3</span><div><strong>Plan all four quarters</strong><small>Build around available players</small></div></div>
+            </>}
+            {helpStep === 3 && <>
+              <div className="guide-visual-heading">SAMPLE 7v7 ROTATION</div>
+              <div className="guide-quarter-grid">{['Q1','Q2','Q3','Q4'].map((quarter, index) => <div className="guide-quarter" key={quarter}><strong>{quarter}</strong><div className="guide-mini-pitch"><span className="guide-dot dot-a">A</span><span className="guide-dot dot-b">B</span><span className="guide-dot dot-c">C</span><span className="guide-dot dot-d">D</span><span className="guide-dot dot-e">E</span><span className="guide-dot dot-f">F</span><span className="guide-dot dot-g">G</span></div><small>{['Starting group','Rotate 2 players','Rotate 2 players','Finish strong'][index]}</small></div>)}</div>
+              <p className="guide-visual-caption">Illustration only. Check each quarter and review Rotation Check before saving.</p>
+            </>}
+            {helpStep === 4 && <>
+              <div className="guide-visual-heading">LIVE GAME EVENT LOG</div>
+              <div className="guide-event"><span className="guide-event-icon">GOAL</span><div><strong>Alex Morgan</strong><small>Assisted by Jordan Lee · Q2</small></div></div>
+              <div className="guide-event"><span className="guide-event-icon">SHOT</span><div><strong>Sam Rivera</strong><small>Shot on goal · Q2</small></div></div>
+              <div className="guide-event"><span className="guide-event-icon">SAVE</span><div><strong>Goalkeeper</strong><small>Save recorded · Q2</small></div></div>
+              <p className="guide-visual-caption">Sample events. Your game log records the events entered for your match.</p>
+            </>}
           </div>
-        </section>
-      </>
+        </div>
+        <div className="guide-practice">
+          <div><strong>Ready to try it?</strong><p>The lesson stays here. Use this button only when you want to work in the actual app.</p></div>
+          <button className="secondary-button" type="button" onClick={() => { setHelpReturnScreen('help'); setScreen(step.screen) }}>{step.action}</button>
+        </div>
+        <div className="quick-actions guide-navigation">
+          <button type="button" className="secondary-button" disabled={helpStep === 0} onClick={() => setHelpStep((current) => Math.max(0, current - 1))}>Previous Lesson</button>
+          <span>{helpStep + 1} / {guideSteps.length}</span>
+          <button type="button" className="secondary-button" disabled={helpStep === guideSteps.length - 1} onClick={() => setHelpStep((current) => Math.min(guideSteps.length - 1, current + 1))}>Next Lesson</button>
+        </div>
+      </section>
     )
   }
 
