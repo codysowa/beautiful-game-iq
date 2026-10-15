@@ -277,9 +277,8 @@ function App() {
   const [gameNotes, setGameNotes] = useState('')
   const [showNewTeamForm, setShowNewTeamForm] = useState(false)
   const [showNewUserOnboarding, setShowNewUserOnboarding] = useState(false)
-  const [showGettingStarted, setShowGettingStarted] = useState(false)
   const [helpStep, setHelpStep] = useState(0)
-  const [helpReturnScreen, setHelpReturnScreen] = useState<'help' | 'home'>('help')
+  const [helpReturnScreen, setHelpReturnScreen] = useState<'help' | 'home'>('home')
   const [showJoinTeam, setShowJoinTeam] = useState(false)
   const [showArchivedTeams, setShowArchivedTeams] = useState(false)
   const [joinTeamSearch, setJoinTeamSearch] = useState('')
@@ -3152,7 +3151,7 @@ function playerAtPosition(position: string) {
       <>
         <button
           className="back-button"
-          onClick={() => setScreen('home')}
+          onClick={() => setScreen(helpReturnScreen)}
         >
            Back
         </button>
@@ -3714,7 +3713,7 @@ function playerAtPosition(position: string) {
       <>
         <button
           className="back-button"
-          onClick={() => setScreen('home')}
+          onClick={() => setScreen(helpReturnScreen)}
         >
           Back
         </button>
