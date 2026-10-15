@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './App.css'
 import App from './App'
+import AdminAnalytics from './AdminAnalytics'
+import './admin.css'
 import Auth from './Auth'
 import InviteOnboarding from './InviteOnboarding'
 import { supabase } from './supabase'
@@ -87,6 +89,10 @@ function Root() {
 
   if (passwordRecovery) {
     return <Auth passwordRecovery={passwordRecovery} />
+  }
+
+  if (window.location.pathname === '/admin/analytics' || window.location.pathname === '/admin/analytics/') {
+    return <AdminAnalytics />
   }
 
   const displayName = session.user.user_metadata?.display_name
