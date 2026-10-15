@@ -2053,9 +2053,18 @@ function playerAtPosition(position: string) {
               <div className="guide-app-content">
                 <img
                   className="guide-real-screenshot"
-                  src={`/2026-10-15%2014_31_48-Clipboard.png`}
-                  alt="Beautiful Game IQ tutorial screenshot"
-                  onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = `/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png`; }}
+                  src={([
+                    '/2026-10-15%2014_31_48-Clipboard.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_40%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_47%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_50%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_54%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png'
+                  ])[helpStep] || '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_04%20PM.png'}
+                  alt={`Beautiful Game IQ screenshot for ${step.title}`}
                 />
               </div>
             </div>
