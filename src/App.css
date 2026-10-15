@@ -1356,3 +1356,10 @@ body,
     align-items: flex-start;
   }
 }
+
+
+/* Direct analytics URLs display the analytics panels without the dashboard. */
+main.analytics-route > * { display: none !important; }
+main.analytics-route > .home-season-analytics,
+main.analytics-route > .player-analytics-card { display: block !important; }
+main.analytics-route { padding-top: 24px; }
