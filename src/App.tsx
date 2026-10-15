@@ -2003,7 +2003,7 @@ function playerAtPosition(position: string) {
       { title: 'Schedule a game', detail: 'Add the opponent and match details. Then set player availability so the lineup can account for who can attend.', action: 'Schedule a Game', screen: 'new-game' },
       { title: 'Build your lineup', detail: 'Choose a formation, review all four quarters, and pay attention to Rotation Check warnings before saving your lineup.', action: 'Build Lineup', screen: 'lineup' },
       { title: 'Track the match', detail: 'Open Live Game during the match to record goals, assists, shots and saves. Review the event log if you need to correct an entry.', action: 'View Games', screen: 'games' },
-    ]
+    ] as const
     const step = guideSteps[helpStep] || guideSteps[0]
     return (
       <>
@@ -4718,7 +4718,7 @@ function playerAtPosition(position: string) {
           <p>Know the game. Coach the moment.</p>
           <p style={{ marginTop: '4px', opacity: 0.85 }}>Your AI copilot for game day.</p>
           <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>Signed in as: {currentUserEmail}</p>
-          <button type="button" className="header-help-button" onClick={() => { setHelpReturnScreen('help'); setScreen('help'); setHelpStep(0) }}>Help</button>
+          <button type="button" className="header-help-button" onClick={() => { setHelpReturnScreen('home'); setScreen('help'); setHelpStep(0) }}>Help</button>
           <div className="header-account-actions">
             <button
               type="button"
