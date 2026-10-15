@@ -2092,8 +2092,8 @@ function playerAtPosition(position: string) {
                 </>}
                 {helpStep === 7 && <>
                   <div className="guide-screen-title">Season Analytics</div>
-                  {['Games played','Quarters played','Goalkeeper time','Goals and assists'].map(label=><div className="guide-analytics-tile" key={label}><span>{label}</span><i /></div>)}
-                  <div className="guide-callout"><b>1</b> Compare trends across games.</div>
+                  <img className="guide-real-screenshot" src="/tutorial/season-analytics.jpg" alt="Actual Beautiful Game IQ season analytics screen" />
+                  <div className="guide-callout"><b>1</b> Review the real season analytics screen.</div>
                 </>}
                 {helpStep === 8 && <>
                   <div className="guide-screen-title">Live Game</div><div className="guide-screen-tabs"><span>Goals</span><span>Shots</span><span>Saves</span><span>Events</span></div>
