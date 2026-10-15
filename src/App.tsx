@@ -230,12 +230,24 @@ function App() {
     'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'
   >('home')
 
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null)
+  const [selectedQuarter, setSelectedQuarter] = useState(1)
+  const [copySourceGameId, setCopySourceGameId] = useState('')
+  const [copySourceQuarter, setCopySourceQuarter] = useState(0)
+
+  const [lineup, setLineup] = useState<LineupItem[]>([])
+  const [allGameLineups, setAllGameLineups] = useState<LineupItem[]>([])
+  const [gameAttendance, setGameAttendance] = useState<Record<string, AttendanceRecord>>({})
+  const [captain1Id, setCaptain1Id] = useState('')
+  const [captain2Id, setCaptain2Id] = useState('')
+  const [selectedPreplanPlayerId, setSelectedPreplanPlayerId] = useState<string | null>(null)
+
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => {
-    if (!/^\\/(?:admin\\/)?analytics\\/?$/.test(window.location.pathname)) return
+    if (!/^\/(?:admin\/)?analytics\/?$/.test(window.location.pathname)) return
     if (loading) return
 
-    // Analytics lives on the home dashboard. Wait until the team data and
-    // analytics section have rendered before navigating to it.
     let attempts = 0
     let timer = 0
     const revealAnalytics = () => {
@@ -250,25 +262,6 @@ function App() {
     timer = window.setTimeout(revealAnalytics, 100)
     return () => window.clearTimeout(timer)
   }, [loading, screen])
-
-
-  const [screen, setScreen] = useState<
-    'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'
-  >('home')
-
-  const [selectedGame, setSelectedGame] = useState<Game | null>(null)
-  const [selectedQuarter, setSelectedQuarter] = useState(1)
-  const [copySourceGameId, setCopySourceGameId] = useState('')
-  const [copySourceQuarter, setCopySourceQuarter] = useState(0)
-
-  const [lineup, setLineup] = useState<LineupItem[]>([])
-  const [allGameLineups, setAllGameLineups] = useState<LineupItem[]>([])
-  const [gameAttendance, setGameAttendance] = useState<Record<string, AttendanceRecord>>({})
-  const [captain1Id, setCaptain1Id] = useState('')
-  const [captain2Id, setCaptain2Id] = useState('')
-  const [selectedPreplanPlayerId, setSelectedPreplanPlayerId] = useState<string | null>(null)
-
-  const [loading, setLoading] = useState(true)
   const [savingLineup, setSavingLineup] = useState(false)
   const [changingQuarter, setChangingQuarter] = useState(false)
   const [wholeGameSuggestion, setWholeGameSuggestion] = useState<LineupItem[] | null>(null)
