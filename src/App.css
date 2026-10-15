@@ -1491,3 +1491,36 @@ body,
 .guide-analytics-row strong { color: #172033; }
 .guide-analytics-bar { grid-column: 1 / -1; height: 7px; overflow: hidden; border-radius: 8px; background: #edf0f4; }
 .guide-analytics-bar i { display: block; height: 100%; border-radius: inherit; background: #367c58; }
+
+
+/* Numbered, task-focused instructions for every walkthrough lesson */
+.guide-numbered-actions {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 18px;
+  padding: 0;
+  list-style: none;
+}
+.guide-numbered-actions li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+.guide-numbered-actions li > span {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #e7f4ec;
+  color: #1f6f4a;
+  font-size: 12px;
+  font-weight: 900;
+}
+.guide-numbered-actions li p {
+  margin: 3px 0 0;
+  color: #344054;
+  font-size: 13px;
+  line-height: 1.5;
+}
