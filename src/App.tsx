@@ -2946,6 +2946,26 @@ function playerAtPosition(position: string) {
           </div>
         </section>
 
+        {showGettingStarted && (
+          <section className="team-card getting-started-card">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">NEW COACH CHECKLIST</p>
+                <h2>Start here</h2>
+                <span>Four quick steps to get your team ready for game day.</span>
+              </div>
+              <button type="button" className="secondary-button" onClick={() => { localStorage.setItem('bgiq-getting-started-dismissed', 'true'); setShowGettingStarted(false) }}>Dismiss</button>
+            </div>
+            <div className="getting-started-steps">
+              <button type="button" onClick={() => setScreen('help')}><strong>1. Learn the basics</strong><span>See the recommended setup flow and what each feature does.</span></button>
+              <button type="button" onClick={() => setScreen('roster')}><strong>2. Add your players</strong><span>Enter your roster and jersey numbers before building lineups.</span></button>
+              {currentUserRole === 'owner' && <button type="button" onClick={() => setScreen('team-rules')}><strong>3. Confirm league rules</strong><span>Check game format, goalkeeper limits and playing-time rules.</span></button>}
+              <button type="button" onClick={() => games.length ? openLineup(upcomingGames[0] || games[0]) : setScreen('new-game')}><strong>{currentUserRole === 'owner' ? '4.' : '3.'} Prepare a game</strong><span>Set attendance, build a lineup and review all four quarters.</span></button>
+            </div>
+            <button type="button" className="secondary-button" style={{ marginTop: 12, width: '100%' }} onClick={() => setScreen('help')}>Open Coach Guide</button>
+          </section>
+        )}
+
         <div className="quick-actions home-quick-actions">
           <button onClick={() => setScreen('roster')}>Roster</button>
           <button
