@@ -1677,3 +1677,22 @@ body,
   font-size: 11px;
 }
 .guide-numbered-actions .guide-action-item > span { list-style: none; }
+
+
+/* Real uploaded screenshots used by the guided walkthrough. */
+.guide-real-screenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 560px;
+  object-fit: contain;
+  object-position: top center;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+  background: #fff;
+}
+.guide-app-content:has(.guide-real-screenshot) {
+  padding: 12px;
+  max-height: 600px;
+  overflow: auto;
+}
