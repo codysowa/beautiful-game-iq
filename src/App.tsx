@@ -2835,9 +2835,9 @@ function playerAtPosition(position: string) {
             <button
               type="button"
               className="secondary-button"
-              onClick={openNewTeamForm}
-              onTouchEnd={(event) => {
-                event.preventDefault()
+              onClick={() => {
+                setShowJoinTeam(false)
+                setJoinTeamResults([])
                 openNewTeamForm()
               }}
               style={{ touchAction: 'manipulation', flex: '0 1 auto', maxWidth: '100%' }}
@@ -2848,13 +2848,14 @@ function playerAtPosition(position: string) {
               type="button"
               className="secondary-button"
               onClick={async () => {
+                setShowNewTeamForm(false)
                 setShowJoinTeam(true)
                 setJoinTeamSearch('')
                 setJoinCodeSearch('')
                 setJoinTeamResults([])
                 await loadJoinRequests()
               }}
-              style={{ flex: '0 1 auto', maxWidth: '100%' }}
+              style={{ touchAction: 'manipulation', flex: '0 1 auto', maxWidth: '100%' }}
             >
               Join Existing Team
             </button>
