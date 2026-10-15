@@ -2042,9 +2042,9 @@ function playerAtPosition(position: string) {
             <h4>What to know</h4>
             <p>{step.detail}</p>
             <h4>Follow these steps in the app</h4>
-            <ol className="guide-numbered-actions">
-              {guideActions[helpStep].map((action, index) => <li key={action}><span>{index + 1}</span><p>{action}</p></li>)}
-            </ol>
+            <div className="guide-numbered-actions" role="list">
+              {guideActions[helpStep].map((action, index) => <div className="guide-action-item" role="listitem" key={action}><span aria-hidden="true">{index + 1}</span><p>{action}</p></div>)}
+            </div>
             <div className="coach-guide-note"><strong>Coach's takeaway</strong><p>{step.takeaway}</p></div>
           </div>
           <div className="guide-visual" aria-label="Illustrated example">
