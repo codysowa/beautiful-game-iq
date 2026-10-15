@@ -226,6 +226,15 @@ function App() {
   const [actualSeasonLineups, setActualSeasonLineups] = useState<(LineupItem & { game_id: string })[]>([])
   const [positionSegments, setPositionSegments] = useState<PositionSegment[]>([])
 
+  useEffect(() => {
+    // Support the public analytics URL as a direct entry point.
+    if (!/\\/(?:admin\\/)?analytics\\/?$/.test(window.location.pathname)) return
+    const timer = window.setTimeout(() => {
+      document.querySelector('.home-season-analytics')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 800)
+    return () => window.clearTimeout(timer)
+  }, [])
+
   const [screen, setScreen] = useState<
     'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'
   >('home')
