@@ -228,7 +228,7 @@ function App() {
 
   useEffect(() => {
     // Support the public analytics URL as a direct entry point.
-    if (!/\\/(?:admin\\/)?analytics\\/?$/.test(window.location.pathname)) return
+    if (!/\/(?:admin\/)?analytics\/?$/.test(window.location.pathname)) return
     const timer = window.setTimeout(() => {
       document.querySelector('.home-season-analytics')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 800)
