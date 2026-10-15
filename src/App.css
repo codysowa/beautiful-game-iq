@@ -1501,13 +1501,13 @@ body,
   padding: 0;
   list-style: none;
 }
-.guide-numbered-actions li {
+.guide-action-item {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: start;
   gap: 10px;
 }
-.guide-numbered-actions li > span {
+.guide-action-item > span {
   display: grid;
   place-items: center;
   width: 27px;
@@ -1518,7 +1518,7 @@ body,
   font-size: 12px;
   font-weight: 900;
 }
-.guide-numbered-actions li p {
+.guide-action-item p {
   margin: 3px 0 0;
   color: #344054;
   font-size: 13px;
