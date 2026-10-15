@@ -2008,6 +2008,17 @@ function playerAtPosition(position: string) {
       { title: 'Review analytics', goal: 'Use the season view to spot patterns over time.', detail: 'Player Analytics can help you review quarters played, goalkeeper and striker usage, bench time, goals, assists, shots and saves. Look for trends across games rather than judging a player from one match.', takeaway: 'Use analytics to ask better coaching questions—especially about balanced playing time and development.', action: 'View Analytics', screen: 'home' },
       { title: 'Track the match', goal: 'Record events as they happen and correct mistakes when needed.', detail: 'During the game, record goals, assists, shots and saves in Live Game. A goal also records a shot automatically. If you delete a goal, its linked shot should be removed too.', takeaway: 'Use the event log to verify entries instead of relying on memory after the match.', action: 'Open Games', screen: 'games' },
     ] as const
+    const guideActions = [
+      ['Open Team Rules from the team dashboard.', 'Confirm the game format matches your league.', 'Set goalkeeper, bench and playing-time limits before planning.'],
+      ['Open the roster and choose Add Player.', 'Enter the player name and jersey number.', 'Save, then repeat for each player on the team.'],
+      ['Create the game with opponent, date and location.', 'Open attendance for that specific game.', 'Mark who is available before planning the lineup.'],
+      ['Open the game and choose Build Lineup.', 'Choose a formation, then assign players in each quarter.', 'Review Rotation Check and save the plan.'],
+      ['Use Optimize All 4 Quarters to generate a starting plan.', 'Review each quarter and every warning.', 'Adjust for player needs and save only after checking the full match.'],
+      ['Open Attendance for the selected game.', 'Mark players absent or choose their available quarters.', 'Return to the lineup and re-check the rotation.'],
+      ['Open a player from the roster to review their profile.', 'Update coaching guidance and position preferences where available.', 'Keep notes specific, constructive and focused on development.'],
+      ['Open the team season/player analytics view.', 'Sort by minutes, goalkeeper time, bench time or match events.', 'Compare multiple games before deciding whether a pattern needs attention.'],
+      ['Open the game and enter Live Game.', 'Record goals, assists, shots and saves as they happen.', 'Check the event log and correct mistaken entries promptly.'],
+    ] as const
     const step = guideSteps[helpStep] || guideSteps[0]
     return (
       <section className="team-card coach-guide">
@@ -2030,6 +2041,10 @@ function playerAtPosition(position: string) {
             <p>{step.goal}</p>
             <h4>What to know</h4>
             <p>{step.detail}</p>
+            <h4>Follow these steps in the app</h4>
+            <ol className="guide-numbered-actions">
+              {guideActions[helpStep].map((action, index) => <li key={action}><span>{index + 1}</span><p>{action}</p></li>)}
+            </ol>
             <div className="coach-guide-note"><strong>Coach's takeaway</strong><p>{step.takeaway}</p></div>
           </div>
           <div className="guide-visual" aria-label="Illustrated example">
