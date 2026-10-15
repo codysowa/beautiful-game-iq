@@ -1684,12 +1684,15 @@ body,
   display: block;
   width: 100%;
   height: auto;
-  max-height: 560px;
+  
   object-fit: contain;
   object-position: top center;
   border: 1px solid #dce4ee;
   border-radius: 8px;
   background: #fff;
+
+  max-height: none;
+  image-rendering: auto;
 }
 .guide-app-content:has(.guide-real-screenshot) {
   padding: 6px;
