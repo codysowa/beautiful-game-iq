@@ -1524,3 +1524,156 @@ body,
   font-size: 13px;
   line-height: 1.5;
 }
+
+
+/* Guided walkthrough: app-matched workflow previews */
+.guide-app-window {
+  overflow: hidden;
+  border: 1px solid #d7e0ec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(16, 35, 63, .10);
+  color: #17263d;
+}
+.guide-app-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 11px 13px;
+  background: #192b45;
+  color: #fff;
+  font-size: 12px;
+}
+.guide-app-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 26px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: #f5f7fb;
+  color: #192b45;
+  font-size: 10px;
+  font-weight: 800;
+}
+.guide-app-context {
+  margin-left: auto;
+  color: #d6e0ed;
+  font-size: 11px;
+}
+.guide-app-content { padding: 16px; }
+.guide-screen-title { margin-bottom: 5px; color: #17263d; font-size: 17px; font-weight: 750; }
+.guide-screen-subtitle { margin: 0 0 12px; color: #65758b; font-size: 12px; }
+.guide-screen-field, .guide-screen-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9eef4;
+  font-size: 12px;
+}
+.guide-field-value {
+  margin-left: auto;
+  max-width: 54%;
+  padding: 6px 9px;
+  border: 1px solid #dce4ee;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #66768b;
+  text-align: right;
+}
+.guide-screen-action {
+  display: inline-flex;
+  margin: 4px 0 12px;
+  padding: 8px 11px;
+  border-radius: 7px;
+  background: #1c3656;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.guide-screen-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin: 10px 0;
+}
+.guide-screen-tabs span {
+  padding: 8px 3px;
+  border: 1px solid #dbe4ef;
+  border-radius: 6px;
+  background: #f7f9fc;
+  color: #304660;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+.guide-avatar {
+  display: inline-flex;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e8eef7;
+  color: #263f5e;
+  font-weight: 800;
+}
+.guide-row-end { margin-left: auto; color: #74849a; font-size: 11px; }
+.guide-checkbox, .guide-status-dot {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  border: 1px solid #b7c6d8;
+  border-radius: 4px;
+}
+.guide-status-dot { width: 9px; height: 9px; flex-basis: 9px; border: 0; border-radius: 50%; background: #6c9c82; }
+.guide-analytics-tile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid #e0e7f0;
+  border-radius: 7px;
+  color: #40546e;
+  font-size: 12px;
+}
+.guide-analytics-tile i {
+  display: block;
+  width: 32%;
+  height: 6px;
+  border-radius: 99px;
+  background: #dce8f6;
+}
+.guide-callout {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 10px;
+  border: 1px solid #c9d8ec;
+  border-radius: 8px;
+  background: #f2f6fc;
+  color: #284260;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.guide-callout b {
+  display: inline-flex;
+  flex: 0 0 23px;
+  width: 23px;
+  height: 23px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #1d3c60;
+  color: #fff;
+  font-size: 11px;
+}
+.guide-numbered-actions .guide-action-item > span { list-style: none; }
