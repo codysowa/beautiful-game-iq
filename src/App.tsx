@@ -4812,7 +4812,6 @@ function playerAtPosition(position: string) {
               type="button"
               onClick={deleteAccount}
               disabled={deletingAccount}
-              style={{ marginTop: '10px' }}
             >
               {deletingAccount ? 'Deleting Account...' : 'Delete Account'}
             </button>
