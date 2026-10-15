@@ -227,7 +227,7 @@ function App() {
   const [positionSegments, setPositionSegments] = useState<PositionSegment[]>([])
 
   const [screen, setScreen] = useState<
-    'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches'
+    'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'
   >('home')
 
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
@@ -277,6 +277,7 @@ function App() {
   const [gameNotes, setGameNotes] = useState('')
   const [showNewTeamForm, setShowNewTeamForm] = useState(false)
   const [showNewUserOnboarding, setShowNewUserOnboarding] = useState(false)
+  const [showGettingStarted, setShowGettingStarted] = useState(() => localStorage.getItem('bgiq-getting-started-dismissed') !== 'true')
   const [showJoinTeam, setShowJoinTeam] = useState(false)
   const [showArchivedTeams, setShowArchivedTeams] = useState(false)
   const [joinTeamSearch, setJoinTeamSearch] = useState('')
@@ -1994,6 +1995,52 @@ function playerAtPosition(position: string) {
     )
   }
 
+  function renderHelp() {
+    return (
+      <>
+        <button className="back-button" onClick={() => setScreen('home')}>Back</button>
+        <section className="team-card coach-guide">
+          <p className="eyebrow">BEAUTIFUL GAME IQ</p>
+          <h2>Coach Guide</h2>
+          <p className="coach-guide-intro">A practical path from team setup to game day. Come back here whenever you need a refresher.</p>
+          <div className="coach-guide-section">
+            <h3>1. Set up the right team</h3>
+            <p>Double-check the age group and game format when creating a team. The format determines available formations and field positions.</p>
+            {currentUserRole === 'owner' && <button className="secondary-button" onClick={() => setScreen('team-rules')}>Review Team Rules</button>}
+          </div>
+          <div className="coach-guide-section">
+            <h3>2. Build your roster</h3>
+            <p>Add every player and jersey number. Player position preferences and development priorities, where available, help Coach Assist make more useful suggestions.</p>
+            <button className="secondary-button" onClick={() => setScreen('roster')}>Open Roster</button>
+          </div>
+          <div className="coach-guide-section">
+            <h3>3. Prepare a game</h3>
+            <p>Create the opponent and game details, then set each player's quarter-by-quarter availability. Coach Assist needs accurate attendance to plan minutes.</p>
+            <button className="secondary-button" onClick={() => setScreen('games')}>View Games</button>
+            <button className="secondary-button" onClick={() => setScreen('new-game')}>Schedule a Game</button>
+          </div>
+          <div className="coach-guide-section">
+            <h3>4. Use Coach Assist</h3>
+            <p>In the lineup builder, choose a formation and game situation, then try Optimize All 4 Quarters. Read Rotation Check warnings and inspect the Full Game Lineup before saving. Suggestions are a starting point; you stay in control.</p>
+          </div>
+          <div className="coach-guide-section">
+            <h3>5. Track the match</h3>
+            <p>Open a game's Live Game screen to record goals, assists, shots and saves. Review the event log to correct entries, then check completed games for season statistics.</p>
+          </div>
+          <div className="coach-guide-section coach-guide-note">
+            <strong>Before your first kickoff</strong>
+            <ul>
+              <li>Confirm age group and game format.</li>
+              <li>Add the full roster and check player numbers.</li>
+              <li>Set playing-time and goalkeeper rules.</li>
+              <li>Check attendance, rotation warnings and all four quarters.</li>
+            </ul>
+          </div>
+        </section>
+      </>
+    )
+  }
+
   function renderTeamRules() {
     return (
       <>
@@ -2898,6 +2945,26 @@ function playerAtPosition(position: string) {
             <div><strong>{teamRecord.goalsAgainst}</strong><span>Goals Against</span></div>
           </div>
         </section>
+
+        {showGettingStarted && (
+          <section className="team-card getting-started-card">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">NEW COACH CHECKLIST</p>
+                <h2>Start here</h2>
+                <span>Four quick steps to get your team ready for game day.</span>
+              </div>
+              <button type="button" className="secondary-button" onClick={() => { localStorage.setItem('bgiq-getting-started-dismissed', 'true'); setShowGettingStarted(false) }}>Dismiss</button>
+            </div>
+            <div className="getting-started-steps">
+              <button type="button" onClick={() => setScreen('help')}><strong>1. Learn the basics</strong><span>See the recommended setup flow and what each feature does.</span></button>
+              <button type="button" onClick={() => setScreen('roster')}><strong>2. Add your players</strong><span>Enter your roster and jersey numbers before building lineups.</span></button>
+              {currentUserRole === 'owner' && <button type="button" onClick={() => setScreen('team-rules')}><strong>3. Confirm league rules</strong><span>Check game format, goalkeeper limits and playing-time rules.</span></button>}
+              <button type="button" onClick={() => games.length ? openLineup(upcomingGames[0] || games[0]) : setScreen('new-game')}><strong>{currentUserRole === 'owner' ? '4.' : '3.'} Prepare a game</strong><span>Set attendance, build a lineup and review all four quarters.</span></button>
+            </div>
+            <button type="button" className="secondary-button" style={{ marginTop: 12, width: '100%' }} onClick={() => setScreen('help')}>Open Coach Guide</button>
+          </section>
+        )}
 
         <div className="quick-actions home-quick-actions">
           <button onClick={() => setScreen('roster')}>Roster</button>
@@ -4816,6 +4883,7 @@ function playerAtPosition(position: string) {
             {screen === 'games' && renderGames()}
             {screen === 'team-rules' && renderTeamRules()}
             {screen === 'coaches' && renderCoaches()}
+            {screen === 'help' && renderHelp()}
           </>
         )}
       </main>
@@ -4832,6 +4900,9 @@ function playerAtPosition(position: string) {
           </button>
           <button onClick={() => setScreen('games')}>
             <span>Games</span>
+          </button>
+          <button onClick={() => setScreen('help')} aria-label="Coach Guide">
+            <span>Help</span>
           </button>
         </nav>
       )}
