@@ -1995,6 +1995,52 @@ function playerAtPosition(position: string) {
     )
   }
 
+  function renderHelp() {
+    return (
+      <>
+        <button className="back-button" onClick={() => setScreen('home')}>Back</button>
+        <section className="team-card coach-guide">
+          <p className="eyebrow">BEAUTIFUL GAME IQ</p>
+          <h2>Coach Guide</h2>
+          <p className="coach-guide-intro">A practical path from team setup to game day. Come back here whenever you need a refresher.</p>
+          <div className="coach-guide-section">
+            <h3>1. Set up the right team</h3>
+            <p>Double-check the age group and game format when creating a team. The format determines available formations and field positions.</p>
+            {currentUserRole === 'owner' && <button className="secondary-button" onClick={() => setScreen('team-rules')}>Review Team Rules</button>}
+          </div>
+          <div className="coach-guide-section">
+            <h3>2. Build your roster</h3>
+            <p>Add every player and jersey number. Player position preferences and development priorities, where available, help Coach Assist make more useful suggestions.</p>
+            <button className="secondary-button" onClick={() => setScreen('roster')}>Open Roster</button>
+          </div>
+          <div className="coach-guide-section">
+            <h3>3. Prepare a game</h3>
+            <p>Create the opponent and game details, then set each player's quarter-by-quarter availability. Coach Assist needs accurate attendance to plan minutes.</p>
+            <button className="secondary-button" onClick={() => setScreen('games')}>View Games</button>
+            <button className="secondary-button" onClick={() => setScreen('new-game')}>Schedule a Game</button>
+          </div>
+          <div className="coach-guide-section">
+            <h3>4. Use Coach Assist</h3>
+            <p>In the lineup builder, choose a formation and game situation, then try Optimize All 4 Quarters. Read Rotation Check warnings and inspect the Full Game Lineup before saving. Suggestions are a starting point; you stay in control.</p>
+          </div>
+          <div className="coach-guide-section">
+            <h3>5. Track the match</h3>
+            <p>Open a game's Live Game screen to record goals, assists, shots and saves. Review the event log to correct entries, then check completed games for season statistics.</p>
+          </div>
+          <div className="coach-guide-section coach-guide-note">
+            <strong>Before your first kickoff</strong>
+            <ul>
+              <li>Confirm age group and game format.</li>
+              <li>Add the full roster and check player numbers.</li>
+              <li>Set playing-time and goalkeeper rules.</li>
+              <li>Check attendance, rotation warnings and all four quarters.</li>
+            </ul>
+          </div>
+        </section>
+      </>
+    )
+  }
+
   function renderTeamRules() {
     return (
       <>
