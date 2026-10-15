@@ -2047,63 +2047,62 @@ function playerAtPosition(position: string) {
             </div>
             <div className="coach-guide-note"><strong>Coach's takeaway</strong><p>{step.takeaway}</p></div>
           </div>
-          <div className="guide-visual" aria-label="Illustrated example">
-            {helpStep === 0 && <>
-              <div className="guide-visual-heading">TEAM RULES</div>
-              <div className="guide-example-row"><span>Game format</span><strong>7v7</strong></div>
-              <div className="guide-example-row"><span>Players on field</span><strong>6 + GK</strong></div>
-              <div className="guide-example-row"><span>Target playing time</span><strong>3 quarters</strong></div>
-              <div className="guide-example-row"><span>Max GK time</span><strong>2 quarters</strong></div>
-              <p className="guide-visual-caption">Example settings only — use your league's rules and your team's needs.</p>
-            </>}
-            {helpStep === 1 && <>
-              <div className="guide-visual-heading">SAMPLE ROSTER</div>
-              {['#4  Alex Morgan', '#7  Jordan Lee', '#10  Sam Rivera', '#12  Taylor Chen', '#18  Casey Brooks'].map((player) => <div className="guide-roster-player" key={player}><span className="guide-player-shirt">{player.split(' ')[0]}</span><strong>{player.slice(player.indexOf('  ') + 2)}</strong><span>Added</span></div>)}
-              <p className="guide-visual-caption">Example players — your roster will show your team's names and numbers.</p>
-            </>}
-            {helpStep === 2 && <>
-              <div className="guide-visual-heading">MATCH PREPARATION</div>
-              <div className="guide-check-row"><span className="guide-check-mark">1</span><div><strong>Schedule the game</strong><small>Opponent, date and location</small></div></div>
-              <div className="guide-check-row"><span className="guide-check-mark">2</span><div><strong>Confirm availability</strong><small>Present, absent or arriving late</small></div></div>
-              <div className="guide-check-row"><span className="guide-check-mark">3</span><div><strong>Plan all four quarters</strong><small>Build around available players</small></div></div>
-            </>}
-            {helpStep === 3 && <>
-              <div className="guide-visual-heading">SAMPLE 7v7 ROTATION</div>
-              <div className="guide-quarter-grid">{['Q1','Q2','Q3','Q4'].map((quarter, index) => <div className="guide-quarter" key={quarter}><strong>{quarter}</strong><div className="guide-mini-pitch"><span className="guide-dot dot-a">A</span><span className="guide-dot dot-b">B</span><span className="guide-dot dot-c">C</span><span className="guide-dot dot-d">D</span><span className="guide-dot dot-e">E</span><span className="guide-dot dot-f">F</span><span className="guide-dot dot-g">G</span></div><small>{['Starting group','Rotate 2 players','Rotate 2 players','Finish strong'][index]}</small></div>)}</div>
-              <p className="guide-visual-caption">Illustration only. Check each quarter and review Rotation Check before saving.</p>
-            </>}
-            {helpStep === 4 && <>
-              <div className="guide-visual-heading">OPTIMIZE ALL 4 QUARTERS</div>
-              <div className="guide-check-row"><span className="guide-check-mark">✓</span><div><strong>Availability considered</strong><small>Build around players who can attend</small></div></div>
-              <div className="guide-check-row"><span className="guide-check-mark">✓</span><div><strong>Team rules checked</strong><small>Playing time, GK limits and bench limits</small></div></div>
-              <div className="guide-check-row"><span className="guide-check-mark">!</span><div><strong>Review warnings</strong><small>Inspect Rotation Check before saving</small></div></div>
-              <p className="guide-visual-caption">Treat the suggested rotation as a starting point, then apply your coaching judgment.</p>
-            </>}
-            {helpStep === 5 && <>
-              <div className="guide-visual-heading">PLAYER AVAILABILITY</div>
-              {['Alex Morgan','Jordan Lee','Sam Rivera','Taylor Chen'].map((player, index) => <div className="guide-roster-player" key={player}><strong>{player}</strong><span>{['All quarters','Q1–Q2','Absent','Q2–Q4'][index]}</span></div>)}
-              <p className="guide-visual-caption">Example only. Mark availability for the actual game before optimizing the lineup.</p>
-            </>}
-            {helpStep === 6 && <>
-              <div className="guide-visual-heading">PLAYER PROFILE · EXAMPLE</div>
-              <div className="guide-rating-card"><div className="guide-rating-avatar">7</div><div><strong>Jordan Lee</strong><small>Sample player profile</small></div></div>
-              {['Position fit','Ball control','Decision-making'].map((label,index) => <div className="guide-rating-row" key={label}><span>{label}</span><span className="guide-rating-stars">{['★★★★☆','★★★☆☆','★★★★☆'][index]}</span></div>)}
-              <p className="guide-visual-caption">Illustrative ratings, not actual player data. Rate consistently and focus on development.</p>
-            </>}
-            {helpStep === 7 && <>
-              <div className="guide-visual-heading">PLAYER ANALYTICS</div>
-              <div className="guide-analytics-row"><span>Quarters played</span><strong>12</strong><div className="guide-analytics-bar"><i style={{width:'75%'}} /></div></div>
-              <div className="guide-analytics-row"><span>Bench quarters</span><strong>4</strong><div className="guide-analytics-bar"><i style={{width:'35%'}} /></div></div>
-              <div className="guide-analytics-row"><span>Goals / Assists</span><strong>3 / 2</strong><div className="guide-analytics-bar"><i style={{width:'55%'}} /></div></div>
-              <p className="guide-visual-caption">Fictional sample numbers. Compare patterns over multiple games, not one result.</p>
-            </>}
-            {helpStep === 8 && <>
-              <div className="guide-visual-heading">LIVE GAME EVENT LOG</div>
-              <div className="guide-event"><span className="guide-event-icon">GOAL</span><div><strong>Alex Morgan</strong><small>Assisted by Jordan Lee · Q2</small></div></div>
-              <div className="guide-event"><span className="guide-event-icon">SHOT</span><div><strong>Sam Rivera</strong><small>Shot on goal · Q2</small></div></div>
-              <div className="guide-event"><span className="guide-event-icon">SAVE</span><div><strong>Goalkeeper</strong><small>Save recorded · Q2</small></div></div>
-              <p className="guide-visual-caption">Sample events. Your game log records the events entered for your match.</p>
-            </>}
+          <div className="guide-visual" aria-label={`App workflow preview: ${step.title}`}>
+            <div className="guide-app-window">
+              <div className="guide-app-toolbar"><span className="guide-app-mark">BGIQ</span><strong>Beautiful Game IQ</strong><span className="guide-app-context">{['Team Rules','Roster','New Game','Build Lineup','Optimize Lineup','Attendance','Player Profile','Analytics','Live Game'][helpStep]}</span></div>
+              <div className="guide-app-content">
+                {helpStep === 0 && <>
+                  <div className="guide-screen-title">Team Rules</div>
+                  <p className="guide-screen-subtitle">Set the league rules for this team.</p>
+                  {['Max GK quarters','Max bench quarters','Target quarters played','Default formation'].map((label,index)=><div className="guide-screen-field" key={label}><span>{label}</span><span className="guide-field-value">{['0–4','0–4','0–4','Choose formation'][index]}</span></div>)}
+                  <div className="guide-callout"><b>1</b> Set limits for your league and team.</div>
+                </>}
+                {helpStep === 1 && <>
+                  <div className="guide-screen-title">Roster</div><p className="guide-screen-subtitle">Your team's player list</p>
+                  <div className="guide-screen-action">+ Add Player</div>
+                  <div className="guide-screen-row"><span className="guide-avatar">#</span><span>Player name</span><span className="guide-row-end">Jersey no.</span></div>
+                  <div className="guide-callout"><b>1</b> Add every player who may attend.</div>
+                </>}
+                {helpStep === 2 && <>
+                  <div className="guide-screen-title">New Game</div>
+                  {['Opponent','Date','Location'].map(label=><div className="guide-screen-field" key={label}><span>{label}</span><span className="guide-field-value">Enter {label.toLowerCase()}</span></div>)}
+                  <div className="guide-callout"><b>1</b> Create the match before setting attendance.</div>
+                </>}
+                {helpStep === 3 && <>
+                  <div className="guide-screen-title">Build Lineup</div><div className="guide-screen-tabs"><span>Q1</span><span>Q2</span><span>Q3</span><span>Q4</span></div>
+                  <div className="guide-screen-field"><span>Formation</span><span className="guide-field-value">Select formation</span></div>
+                  <div className="guide-screen-field"><span>Position</span><span className="guide-field-value">Assign player</span></div>
+                  <div className="guide-callout"><b>1</b> Review every quarter before saving.</div>
+                </>}
+                {helpStep === 4 && <>
+                  <div className="guide-screen-title">Rotation Check</div>
+                  {['Playing-time targets','Goalkeeper limits','Bench rotation','Player availability'].map(label=><div className="guide-screen-row" key={label}><span className="guide-status-dot" /><span>{label}</span><span className="guide-row-end">Review</span></div>)}
+                  <div className="guide-callout"><b>1</b> Inspect warnings before accepting the plan.</div>
+                </>}
+                {helpStep === 5 && <>
+                  <div className="guide-screen-title">Attendance</div><p className="guide-screen-subtitle">Availability for this game</p>
+                  {['Available','Unavailable','Limited availability'].map(label=><div className="guide-screen-row" key={label}><span className="guide-checkbox" /><span>{label}</span></div>)}
+                  <div className="guide-callout"><b>1</b> Set attendance, then return to the lineup.</div>
+                </>}
+                {helpStep === 6 && <>
+                  <div className="guide-screen-title">Player Profile</div>
+                  <div className="guide-screen-row"><span className="guide-avatar">P</span><span>Player details and coaching notes</span></div>
+                  {['Position preferences','Strengths','Development focus'].map(label=><div className="guide-screen-field" key={label}><span>{label}</span><span className="guide-field-value">Review / edit</span></div>)}
+                  <div className="guide-callout"><b>1</b> Keep guidance specific and constructive.</div>
+                </>}
+                {helpStep === 7 && <>
+                  <div className="guide-screen-title">Season Analytics</div>
+                  {['Games played','Quarters played','Goalkeeper time','Goals and assists'].map(label=><div className="guide-analytics-tile" key={label}><span>{label}</span><i /></div>)}
+                  <div className="guide-callout"><b>1</b> Compare trends across games.</div>
+                </>}
+                {helpStep === 8 && <>
+                  <div className="guide-screen-title">Live Game</div><div className="guide-screen-tabs"><span>Goals</span><span>Shots</span><span>Saves</span><span>Events</span></div>
+                  <div className="guide-screen-row"><span className="guide-status-dot" /><span>Match event log</span><span className="guide-row-end">Review</span></div>
+                  <div className="guide-callout"><b>1</b> Record events as they happen and check the log.</div>
+                </>}
+              </div>
+            </div>
+            <p className="guide-visual-caption">Workflow preview of the app area for this lesson. Open the actual screen to see your team's live data.</p>
           </div>
         </div>
         <div className="guide-practice">
