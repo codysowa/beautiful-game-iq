@@ -278,7 +278,7 @@ function App() {
   const [showNewTeamForm, setShowNewTeamForm] = useState(false)
   const [showNewUserOnboarding, setShowNewUserOnboarding] = useState(false)
   const [helpStep, setHelpStep] = useState(0)
-  const [helpReturnScreen, setHelpReturnScreen] = useState<'help' | 'home'>('home')
+  const [helpReturnScreen, setHelpReturnScreen] = useState<'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'>('home')
   const [showJoinTeam, setShowJoinTeam] = useState(false)
   const [showArchivedTeams, setShowArchivedTeams] = useState(false)
   const [joinTeamSearch, setJoinTeamSearch] = useState('')
