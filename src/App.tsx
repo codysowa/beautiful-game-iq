@@ -297,7 +297,8 @@ function App() {
   const [gameNotes, setGameNotes] = useState('')
   const [showNewTeamForm, setShowNewTeamForm] = useState(false)
   const [showNewUserOnboarding, setShowNewUserOnboarding] = useState(false)
-  const [showGettingStarted, setShowGettingStarted] = useState(() => localStorage.getItem('bgiq-getting-started-dismissed') !== 'true')
+  const [helpStep, setHelpStep] = useState(0)
+  const [helpReturnScreen, setHelpReturnScreen] = useState<'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'>('home')
   const [showJoinTeam, setShowJoinTeam] = useState(false)
   const [showArchivedTeams, setShowArchivedTeams] = useState(false)
   const [joinTeamSearch, setJoinTeamSearch] = useState('')
@@ -2016,55 +2017,112 @@ function playerAtPosition(position: string) {
   }
 
   function renderHelp() {
+    const guideSteps = [
+      { title: 'Set up your team', goal: 'Make sure the app is using the right rules for your team.', detail: 'Your age group and game format determine how many players are on the field. Team Rules lets the owner set playing-time expectations, goalkeeper limits and bench limits.', takeaway: 'Set these once before planning lineups.', action: currentUserRole === 'owner' ? 'Open Team Rules' : 'Open Roster', screen: currentUserRole === 'owner' ? 'team-rules' : 'roster' },
+      { title: 'Add your players', goal: 'Build a roster the lineup planner can actually use.', detail: 'Add every player who may attend, including jersey numbers. Keep names accurate so you can identify players quickly during a match.', takeaway: 'A complete roster makes attendance, rotations and game stats more reliable.', action: 'Open Roster', screen: 'roster' },
+      { title: 'Schedule a game', goal: 'Create the match before planning who plays.', detail: 'Record the opponent, date and game details. Then mark who is available. The lineup should reflect the players who can attend, not the full roster by default.', takeaway: 'Schedule first, then set attendance, then build the lineup.', action: 'Schedule a Game', screen: 'new-game' },
+      { title: 'Build your lineup', goal: 'Plan the whole match—not just the opening whistle.', detail: 'Choose a formation and review each quarter. A player can be in a different position or sit for a quarter, so look across all four quarters before saving.', takeaway: 'Use Rotation Check to catch playing-time or goalkeeper issues before game day.', action: 'Open Games', screen: 'games' },
+      { title: 'Optimize the lineup', goal: 'Use the optimizer as a second set of eyes—not as a replacement for coaching.', detail: 'Optimize All 4 Quarters considers team rules, player availability, position fit, goalkeeper limits and bench rotation. Review the suggested plan and warnings, then adjust for what you know about the players and match.', takeaway: 'Optimization is a recommendation. Check every quarter and make the final coaching decision yourself.', action: 'Open Games', screen: 'games' },
+      { title: 'Use attendance in Build Lineup', goal: 'Make sure the plan only relies on players who can actually play.', detail: 'Set each player’s availability for the game before optimizing. If someone is absent or only available for certain quarters, the lineup should reflect that. Revisit attendance if plans change.', takeaway: 'Update attendance first, then rebuild or re-check the lineup so unavailable players are not accidentally planned in.', action: 'Open Attendance', screen: 'attendance' },
+      { title: 'Set player ratings', goal: 'Give the planner useful coaching context about each player.', detail: 'Use player ratings or profile guidance where available to reflect your assessment of position fit and development needs. Keep ratings honest, consistent and focused on soccer performance—not a player’s worth.', takeaway: 'Ratings are coaching inputs, not labels. Revisit them as players learn and develop.', action: 'Open Roster', screen: 'roster' },
+      { title: 'Review analytics', goal: 'Use the season view to spot patterns over time.', detail: 'Player Analytics can help you review quarters played, goalkeeper and striker usage, bench time, goals, assists, shots and saves. Look for trends across games rather than judging a player from one match.', takeaway: 'Use analytics to ask better coaching questions—especially about balanced playing time and development.', action: 'View Analytics', screen: 'home' },
+      { title: 'Track the match', goal: 'Record events as they happen and correct mistakes when needed.', detail: 'During the game, record goals, assists, shots and saves in Live Game. A goal also records a shot automatically. If you delete a goal, its linked shot should be removed too.', takeaway: 'Use the event log to verify entries instead of relying on memory after the match.', action: 'Open Games', screen: 'games' },
+    ] as const
+    const guideActions = [
+      ['Open Team Rules from the team dashboard.', 'Confirm the game format matches your league.', 'Set goalkeeper, bench and playing-time limits before planning.'],
+      ['Open the roster and choose Add Player.', 'Enter the player name and jersey number.', 'Save, then repeat for each player on the team.'],
+      ['Create the game with opponent, date and location.', 'Open attendance for that specific game.', 'Mark who is available before planning the lineup.'],
+      ['Open the game and choose Build Lineup.', 'Choose a formation, then assign players in each quarter.', 'Review Rotation Check and save the plan.'],
+      ['Use Optimize All 4 Quarters to generate a starting plan.', 'Review each quarter and every warning.', 'Adjust for player needs and save only after checking the full match.'],
+      ['Open Attendance for the selected game.', 'Mark players absent or choose their available quarters.', 'Return to the lineup and re-check the rotation.'],
+      ['Open a player from the roster to review their profile.', 'Update coaching guidance and position preferences where available.', 'Keep notes specific, constructive and focused on development.'],
+      ['Open the team season/player analytics view.', 'Sort by minutes, goalkeeper time, bench time or match events.', 'Compare multiple games before deciding whether a pattern needs attention.'],
+      ['Open the game and enter Live Game.', 'Record goals, assists, shots and saves as they happen.', 'Check the event log and correct mistaken entries promptly.'],
+    ] as const
+    const step = guideSteps[helpStep] || guideSteps[0]
     return (
-      <>
-        <button className="back-button" onClick={() => setScreen('home')}>Back</button>
-        <section className="team-card coach-guide">
-          <p className="eyebrow">BEAUTIFUL GAME IQ</p>
-          <h2>Coach Guide</h2>
-          <p className="coach-guide-intro">A practical path from team setup to game day. Come back here whenever you need a refresher.</p>
-          <div className="coach-guide-section">
-            <h3>1. Set up the right team</h3>
-            <p>Double-check the age group and game format when creating a team. The format determines available formations and field positions.</p>
-            {currentUserRole === 'owner' && <button className="secondary-button" onClick={() => setScreen('team-rules')}>Review Team Rules</button>}
+      <section className="team-card coach-guide">
+        <p className="eyebrow">HELP &amp; LEARNING</p>
+        <h2>Getting Started</h2>
+        <p className="coach-guide-intro">A practical tour of the decisions you make before and during game day. Work through a lesson, then try it with your own team when you're ready.</p>
+        <div className="guide-progress" aria-label={`Step ${helpStep + 1} of ${guideSteps.length}`}>
+          {guideSteps.map((item, index) => (
+            <button key={item.title} type="button" aria-current={helpStep === index ? 'step' : undefined} className={helpStep === index ? 'active' : ''} onClick={() => setHelpStep(index)}>
+              <span className="guide-progress-number">{index + 1}</span>
+              <span>{item.title}</span>
+            </button>
+          ))}
+        </div>
+        <div className="guide-lesson">
+          <div className="guide-lesson-copy">
+            <p className="eyebrow">LESSON {helpStep + 1} OF {guideSteps.length}</p>
+            <h3>{step.title}</h3>
+            <h4>Your goal</h4>
+            <p>{step.goal}</p>
+            <h4>What to know</h4>
+            <p>{step.detail}</p>
+            <h4>Follow these steps in the app</h4>
+            <div className="guide-numbered-actions" role="list">
+              {guideActions[helpStep].map((action, index) => <div className="guide-action-item" role="listitem" key={action}><span aria-hidden="true">{index + 1}</span><p>{action}</p></div>)}
+            </div>
+            <div className="coach-guide-note"><strong>Coach's takeaway</strong><p>{step.takeaway}</p></div>
           </div>
-          <div className="coach-guide-section">
-            <h3>2. Build your roster</h3>
-            <p>Add every player and jersey number. Player position preferences and development priorities, where available, help Coach Assist make more useful suggestions.</p>
-            <button className="secondary-button" onClick={() => setScreen('roster')}>Open Roster</button>
+          <div className="guide-visual" aria-label={`App workflow preview: ${step.title}`}>
+            <div className="guide-app-window">
+              <div className="guide-app-toolbar"><span className="guide-app-mark">BGIQ</span><strong>Beautiful Game IQ</strong><span className="guide-app-context">{['Team Rules','Roster','New Game','Build Lineup','Optimize Lineup','Attendance','Player Profile','Analytics','Live Game'][helpStep]}</span></div>
+              <div className="guide-app-content">
+                <a
+                  className="guide-screenshot-link"
+                  href={(['/2026-10-15%2014_31_48-Clipboard.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_40%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_47%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_50%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_54%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png'])[helpStep] || '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_04%20PM.png'}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open full-size screenshot for ${step.title}`}
+                  title="Open full-size screenshot"
+                >
+                  <img
+                    className="guide-real-screenshot"
+                    src={(['/2026-10-15%2014_31_48-Clipboard.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_40%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_47%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_50%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_54%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png'])[helpStep] || '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_04%20PM.png'}
+                    alt={`Beautiful Game IQ screenshot for ${step.title}`}
+                  />
+                </a>
+              </div>
+            </div>
+            <p className="guide-visual-caption">Workflow preview of the app area for this lesson. Open the actual screen to see your team's live data.</p>
           </div>
-          <div className="coach-guide-section">
-            <h3>3. Prepare a game</h3>
-            <p>Create the opponent and game details, then set each player's quarter-by-quarter availability. Coach Assist needs accurate attendance to plan minutes.</p>
-            <button className="secondary-button" onClick={() => setScreen('games')}>View Games</button>
-            <button className="secondary-button" onClick={() => setScreen('new-game')}>Schedule a Game</button>
-          </div>
-          <div className="coach-guide-section">
-            <h3>4. Use Coach Assist</h3>
-            <p>In the lineup builder, choose a formation and game situation, then try Optimize All 4 Quarters. Read Rotation Check warnings and inspect the Full Game Lineup before saving. Suggestions are a starting point; you stay in control.</p>
-          </div>
-          <div className="coach-guide-section">
-            <h3>5. Track the match</h3>
-            <p>Open a game's Live Game screen to record goals, assists, shots and saves. Review the event log to correct entries, then check completed games for season statistics.</p>
-          </div>
-          <div className="coach-guide-section coach-guide-note">
-            <strong>Before your first kickoff</strong>
-            <ul>
-              <li>Confirm age group and game format.</li>
-              <li>Add the full roster and check player numbers.</li>
-              <li>Set playing-time and goalkeeper rules.</li>
-              <li>Check attendance, rotation warnings and all four quarters.</li>
-            </ul>
-          </div>
-        </section>
-      </>
+        </div>
+        <div className="guide-practice">
+          <div><strong>Ready to try it?</strong><p>The lesson stays here. Use this button only when you want to work in the actual app.</p></div>
+          <button className="secondary-button" type="button" onClick={() => { setHelpReturnScreen('help'); setScreen(step.screen) }}>{step.action}</button>
+        </div>
+        <div className="quick-actions guide-navigation">
+          <button type="button" className="secondary-button" disabled={helpStep === 0} onClick={() => setHelpStep((current) => Math.max(0, current - 1))}>Previous Lesson</button>
+          <span>{helpStep + 1} / {guideSteps.length}</span>
+          <button type="button" className="secondary-button" disabled={helpStep === guideSteps.length - 1} onClick={() => setHelpStep((current) => Math.min(guideSteps.length - 1, current + 1))}>Next Lesson</button>
+        </div>
+      </section>
     )
   }
 
   function renderTeamRules() {
     return (
       <>
-        <button className="back-button" onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
+        <button className="back-button" onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen(helpReturnScreen) }}>
           Back
         </button>
 
@@ -2967,25 +3025,7 @@ function playerAtPosition(position: string) {
           </div>
         </section>
 
-        {showGettingStarted && (
-          <section className="team-card getting-started-card">
-            <div className="section-header">
-              <div>
-                <p className="eyebrow">NEW COACH CHECKLIST</p>
-                <h2>Start here</h2>
-                <span>Four quick steps to get your team ready for game day.</span>
-              </div>
-              <button type="button" className="secondary-button" onClick={() => { localStorage.setItem('bgiq-getting-started-dismissed', 'true'); setShowGettingStarted(false) }}>Dismiss</button>
-            </div>
-            <div className="getting-started-steps">
-              <button type="button" onClick={() => setScreen('help')}><strong>1. Learn the basics</strong><span>See the recommended setup flow and what each feature does.</span></button>
-              <button type="button" onClick={() => setScreen('roster')}><strong>2. Add your players</strong><span>Enter your roster and jersey numbers before building lineups.</span></button>
-              {currentUserRole === 'owner' && <button type="button" onClick={() => setScreen('team-rules')}><strong>3. Confirm league rules</strong><span>Check game format, goalkeeper limits and playing-time rules.</span></button>}
-              <button type="button" onClick={() => games.length ? openLineup(upcomingGames[0] || games[0]) : setScreen('new-game')}><strong>{currentUserRole === 'owner' ? '4.' : '3.'} Prepare a game</strong><span>Set attendance, build a lineup and review all four quarters.</span></button>
-            </div>
-            <button type="button" className="secondary-button" style={{ marginTop: 12, width: '100%' }} onClick={() => setScreen('help')}>Open Coach Guide</button>
-          </section>
-        )}
+
 
         <div className="quick-actions home-quick-actions">
           <button onClick={() => setScreen('roster')}>Roster</button>
@@ -3194,7 +3234,7 @@ function playerAtPosition(position: string) {
       <>
         <button
           className="back-button"
-          onClick={() => setScreen('home')}
+          onClick={() => setScreen(helpReturnScreen)}
         >
            Back
         </button>
@@ -3756,7 +3796,7 @@ function playerAtPosition(position: string) {
       <>
         <button
           className="back-button"
-          onClick={() => setScreen('home')}
+          onClick={() => setScreen(helpReturnScreen)}
         >
           Back
         </button>
@@ -4761,6 +4801,7 @@ function playerAtPosition(position: string) {
           <p>Know the game. Coach the moment.</p>
           <p style={{ marginTop: '4px', opacity: 0.85 }}>Your AI copilot for game day.</p>
           <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>Signed in as: {currentUserEmail}</p>
+          <button type="button" className="header-help-button" onClick={() => { setHelpReturnScreen('home'); setScreen('help'); setHelpStep(0) }}>Help</button>
           <div className="header-account-actions">
             <button
               type="button"
@@ -4772,7 +4813,6 @@ function playerAtPosition(position: string) {
               type="button"
               onClick={deleteAccount}
               disabled={deletingAccount}
-              style={{ marginTop: '10px' }}
             >
               {deletingAccount ? 'Deleting Account...' : 'Delete Account'}
             </button>
