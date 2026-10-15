@@ -228,7 +228,7 @@ function App() {
 
   useEffect(() => {
     // /analytics is a direct link to the analytics section of the coach dashboard.
-    if (!/^\/analytics\/?$/.test(window.location.pathname)) return
+    if (!/^\/(?:admin\/)?analytics\/?$/.test(window.location.pathname)) return
     if (loading) return
 
     let attempts = 0
@@ -1839,7 +1839,7 @@ function playerAtPosition(position: string) {
         </div>
       )}
 
-        <main className={/^\/analytics\/?$/.test(window.location.pathname) ? 'main-content analytics-route' : 'main-content'}>
+        <main className={/^\/(?:admin\/)?analytics\/?$/.test(window.location.pathname) ? 'main-content analytics-route' : 'main-content'}>
           <p>Loading...</p>
         </main>
       </div>
