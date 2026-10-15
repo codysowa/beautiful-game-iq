@@ -2051,10 +2051,9 @@ function playerAtPosition(position: string) {
             <div className="guide-app-window">
               <div className="guide-app-toolbar"><span className="guide-app-mark">BGIQ</span><strong>Beautiful Game IQ</strong><span className="guide-app-context">{['Team Rules','Roster','New Game','Build Lineup','Optimize Lineup','Attendance','Player Profile','Analytics','Live Game'][helpStep]}</span></div>
               <div className="guide-app-content">
-                <img
-                  className="guide-real-screenshot"
-                  src={([
-                    '/2026-10-15%2014_31_48-Clipboard.png',
+                <a
+                  className="guide-screenshot-link"
+                  href={(['/2026-10-15%2014_31_48-Clipboard.png',
                     '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png',
                     '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_40%20PM.png',
                     '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png',
@@ -2062,10 +2061,26 @@ function playerAtPosition(position: string) {
                     '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_50%20PM.png',
                     '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_54%20PM.png',
                     '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png'
-                  ])[helpStep] || '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_04%20PM.png'}
-                  alt={`Beautiful Game IQ screenshot for ${step.title}`}
-                />
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png'])[helpStep] || '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_04%20PM.png'}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open full-size screenshot for ${step.title}`}
+                  title="Open full-size screenshot"
+                >
+                  <img
+                    className="guide-real-screenshot"
+                    src={(['/2026-10-15%2014_31_48-Clipboard.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_40%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_47%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_50%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_54%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png',
+                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png'])[helpStep] || '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_04%20PM.png'}
+                    alt={`Beautiful Game IQ screenshot for ${step.title}`}
+                  />
+                </a>
               </div>
             </div>
             <p className="guide-visual-caption">Workflow preview of the app area for this lesson. Open the actual screen to see your team's live data.</p>
