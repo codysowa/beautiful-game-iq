@@ -1478,3 +1478,16 @@ body,
   .guide-practice { align-items: stretch; flex-direction: column; }
   .guide-practice button { width: 100%; }
 }
+
+
+.guide-roster-player > span:not(.guide-player-shirt) { margin-left: auto; color: #536176; font-size: 12px; font-weight: 700; }
+.guide-rating-card { display: flex; align-items: center; gap: 12px; padding: 12px 0 16px; border-bottom: 1px solid #edf0f4; }
+.guide-rating-avatar { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #e7f4ec; color: #1f6f4a; font-size: 18px; font-weight: 900; }
+.guide-rating-card strong, .guide-rating-card small { display: block; }
+.guide-rating-card small { margin-top: 4px; color: #667085; font-size: 11px; }
+.guide-rating-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #edf0f4; color: #536176; font-size: 12px; }
+.guide-rating-stars { color: #d18a18; letter-spacing: 2px; white-space: nowrap; }
+.guide-analytics-row { display: grid; grid-template-columns: 1fr auto; gap: 7px 12px; padding: 12px 0; border-bottom: 1px solid #edf0f4; color: #536176; font-size: 12px; }
+.guide-analytics-row strong { color: #172033; }
+.guide-analytics-bar { grid-column: 1 / -1; height: 7px; overflow: hidden; border-radius: 8px; background: #edf0f4; }
+.guide-analytics-bar i { display: block; height: 100%; border-radius: inherit; background: #367c58; }
