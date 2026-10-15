@@ -2051,55 +2051,12 @@ function playerAtPosition(position: string) {
             <div className="guide-app-window">
               <div className="guide-app-toolbar"><span className="guide-app-mark">BGIQ</span><strong>Beautiful Game IQ</strong><span className="guide-app-context">{['Team Rules','Roster','New Game','Build Lineup','Optimize Lineup','Attendance','Player Profile','Analytics','Live Game'][helpStep]}</span></div>
               <div className="guide-app-content">
-                {helpStep === 0 && <>
-                  <div className="guide-screen-title">Team Rules</div>
-                  <p className="guide-screen-subtitle">Set the league rules for this team.</p>
-                  {['Max GK quarters','Max bench quarters','Target quarters played','Default formation'].map((label,index)=><div className="guide-screen-field" key={label}><span>{label}</span><span className="guide-field-value">{['0–4','0–4','0–4','Choose formation'][index]}</span></div>)}
-                  <div className="guide-callout"><b>1</b> Set limits for your league and team.</div>
-                </>}
-                {helpStep === 1 && <>
-                  <div className="guide-screen-title">Roster</div><p className="guide-screen-subtitle">Your team's player list</p>
-                  <div className="guide-screen-action">+ Add Player</div>
-                  <div className="guide-screen-row"><span className="guide-avatar">#</span><span>Player name</span><span className="guide-row-end">Jersey no.</span></div>
-                  <div className="guide-callout"><b>1</b> Add every player who may attend.</div>
-                </>}
-                {helpStep === 2 && <>
-                  <div className="guide-screen-title">New Game</div>
-                  {['Opponent','Date','Location'].map(label=><div className="guide-screen-field" key={label}><span>{label}</span><span className="guide-field-value">Enter {label.toLowerCase()}</span></div>)}
-                  <div className="guide-callout"><b>1</b> Create the match before setting attendance.</div>
-                </>}
-                {helpStep === 3 && <>
-                  <div className="guide-screen-title">Build Lineup</div><div className="guide-screen-tabs"><span>Q1</span><span>Q2</span><span>Q3</span><span>Q4</span></div>
-                  <div className="guide-screen-field"><span>Formation</span><span className="guide-field-value">Select formation</span></div>
-                  <div className="guide-screen-field"><span>Position</span><span className="guide-field-value">Assign player</span></div>
-                  <div className="guide-callout"><b>1</b> Review every quarter before saving.</div>
-                </>}
-                {helpStep === 4 && <>
-                  <div className="guide-screen-title">Rotation Check</div>
-                  {['Playing-time targets','Goalkeeper limits','Bench rotation','Player availability'].map(label=><div className="guide-screen-row" key={label}><span className="guide-status-dot" /><span>{label}</span><span className="guide-row-end">Review</span></div>)}
-                  <div className="guide-callout"><b>1</b> Inspect warnings before accepting the plan.</div>
-                </>}
-                {helpStep === 5 && <>
-                  <div className="guide-screen-title">Attendance</div><p className="guide-screen-subtitle">Availability for this game</p>
-                  {['Available','Unavailable','Limited availability'].map(label=><div className="guide-screen-row" key={label}><span className="guide-checkbox" /><span>{label}</span></div>)}
-                  <div className="guide-callout"><b>1</b> Set attendance, then return to the lineup.</div>
-                </>}
-                {helpStep === 6 && <>
-                  <div className="guide-screen-title">Player Profile</div>
-                  <div className="guide-screen-row"><span className="guide-avatar">P</span><span>Player details and coaching notes</span></div>
-                  {['Position preferences','Strengths','Development focus'].map(label=><div className="guide-screen-field" key={label}><span>{label}</span><span className="guide-field-value">Review / edit</span></div>)}
-                  <div className="guide-callout"><b>1</b> Keep guidance specific and constructive.</div>
-                </>}
-                {helpStep === 7 && <>
-                  <div className="guide-screen-title">Season Analytics</div>
-                  <img className="guide-real-screenshot" src="/tutorial/season-analytics.jpg" alt="Actual Beautiful Game IQ season analytics screen" />
-                  <div className="guide-callout"><b>1</b> Review the real season analytics screen.</div>
-                </>}
-                {helpStep === 8 && <>
-                  <div className="guide-screen-title">Live Game</div><div className="guide-screen-tabs"><span>Goals</span><span>Shots</span><span>Saves</span><span>Events</span></div>
-                  <div className="guide-screen-row"><span className="guide-status-dot" /><span>Match event log</span><span className="guide-row-end">Review</span></div>
-                  <div className="guide-callout"><b>1</b> Record events as they happen and check the log.</div>
-                </>}
+                <img
+                  className="guide-real-screenshot"
+                  src={`/2026-10-15%2014_31_48-Clipboard.png`}
+                  alt="Beautiful Game IQ tutorial screenshot"
+                  onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = `/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png`; }}
+                />
               </div>
             </div>
             <p className="guide-visual-caption">Workflow preview of the app area for this lesson. Open the actual screen to see your team's live data.</p>
