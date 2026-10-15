@@ -1356,3 +1356,363 @@ body,
     align-items: flex-start;
   }
 }
+
+
+/* Help entry point and guided walkthrough states */
+.header-help-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+.getting-started-steps button.active {
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 0 0 1px var(--primary, #2563eb);
+}
+.getting-started-steps button:disabled,
+.coach-guide .quick-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+
+/* Illustrated, lesson-based Help walkthrough */
+.guide-progress {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 22px 0;
+}
+.guide-progress button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 8px;
+  border: 1px solid #dce3eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #344054;
+  text-align: left;
+  white-space: normal;
+  line-height: 1.3;
+}
+.guide-progress button.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #173b73;
+}
+.guide-progress-number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 25px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #e8edf3;
+  font-weight: 800;
+}
+.guide-progress button.active .guide-progress-number { background: #2563eb; color: white; }
+.guide-lesson {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(360px, 1.15fr);
+  gap: 22px;
+  align-items: start;
+  padding: 22px;
+  border: 1px solid #e1e7ee;
+  border-radius: 16px;
+  background: #fbfcfe;
+}
+.guide-lesson-copy h3 { margin: 0 0 18px; font-size: 24px; }
+.guide-lesson-copy h4 { margin: 16px 0 5px; color: #344054; font-size: 14px; }
+.guide-lesson-copy p { color: #536176; line-height: 1.6; }
+.guide-lesson-copy > p:not(.eyebrow) { margin: 0; }
+.guide-visual {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #dbe4ed;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 5px 18px rgba(16, 24, 40, .05);
+}
+.guide-visual-heading { margin-bottom: 15px; color: #667085; font-size: 11px; font-weight: 900; letter-spacing: .12em; }
+.guide-example-row, .guide-roster-player, .guide-event {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf0f4;
+}
+.guide-example-row { justify-content: space-between; font-size: 13px; color: #536176; }
+.guide-example-row strong { color: #172033; }
+.guide-roster-player strong { flex: 1; color: #172033; font-size: 13px; }
+.guide-roster-player > span:last-child { color: #1f6f4a; font-size: 11px; font-weight: 800; }
+.guide-player-shirt {
+  display: grid; place-items: center; width: 35px; height: 35px; border-radius: 10px;
+  background: #e7f4ec; color: #1f6f4a; font-size: 11px; font-weight: 900;
+}
+.guide-visual-caption { margin: 14px 0 0; color: #667085; font-size: 12px; line-height: 1.5; }
+.guide-check-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+.guide-check-mark { display: grid; place-items: center; flex: 0 0 30px; height: 30px; border-radius: 50%; background: #e7f4ec; color: #1f6f4a; font-weight: 900; }
+.guide-check-row strong, .guide-event strong { display: block; font-size: 13px; color: #172033; }
+.guide-check-row small, .guide-event small { display: block; margin-top: 4px; color: #667085; font-size: 11px; line-height: 1.4; }
+.guide-quarter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.guide-quarter { padding: 8px; border: 1px solid #dbe4ed; border-radius: 10px; }
+.guide-quarter > strong { display: block; margin-bottom: 6px; font-size: 12px; }
+.guide-quarter > small { display: block; margin-top: 6px; color: #667085; font-size: 10px; }
+.guide-mini-pitch { position: relative; min-height: 100px; border: 1px solid #9bc8a7; border-radius: 6px; background: linear-gradient(180deg, #e5f5e8, #d3ebd8); }
+.guide-mini-pitch:before { content: ""; position: absolute; inset: 50% 0 auto; border-top: 1px solid #9bc8a7; }
+.guide-dot { position: absolute; z-index: 1; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: #246b4a; color: white; font-size: 9px; font-weight: 900; box-shadow: 0 1px 3px #0002; }
+.dot-a { top: 9%; left: 38%; } .dot-b { top: 9%; left: 62%; }
+.dot-c { top: 35%; left: 17%; } .dot-d { top: 35%; left: 39%; } .dot-e { top: 35%; left: 62%; } .dot-f { top: 35%; left: 82%; }
+.dot-g { bottom: 8%; left: 48%; background: #214d8a; }
+.guide-event-icon { display: grid; place-items: center; flex: 0 0 48px; height: 32px; border-radius: 8px; background: #e7f4ec; color: #1f6f4a; font-size: 9px; font-weight: 900; }
+.guide-practice { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding: 16px; border-radius: 12px; background: #f4f7fb; }
+.guide-practice p { margin: 4px 0 0; color: #667085; font-size: 13px; line-height: 1.45; }
+.guide-navigation { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+.guide-navigation > span { color: #667085; font-size: 13px; font-weight: 700; }
+.coach-guide-note p { margin: 5px 0 0; }
+@media (max-width: 760px) {
+  .guide-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .guide-lesson { grid-template-columns: 1fr; padding: 14px; }
+  .guide-practice { align-items: stretch; flex-direction: column; }
+  .guide-practice button { width: 100%; }
+}
+
+
+.guide-roster-player > span:not(.guide-player-shirt) { margin-left: auto; color: #536176; font-size: 12px; font-weight: 700; }
+.guide-rating-card { display: flex; align-items: center; gap: 12px; padding: 12px 0 16px; border-bottom: 1px solid #edf0f4; }
+.guide-rating-avatar { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #e7f4ec; color: #1f6f4a; font-size: 18px; font-weight: 900; }
+.guide-rating-card strong, .guide-rating-card small { display: block; }
+.guide-rating-card small { margin-top: 4px; color: #667085; font-size: 11px; }
+.guide-rating-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #edf0f4; color: #536176; font-size: 12px; }
+.guide-rating-stars { color: #d18a18; letter-spacing: 2px; white-space: nowrap; }
+.guide-analytics-row { display: grid; grid-template-columns: 1fr auto; gap: 7px 12px; padding: 12px 0; border-bottom: 1px solid #edf0f4; color: #536176; font-size: 12px; }
+.guide-analytics-row strong { color: #172033; }
+.guide-analytics-bar { grid-column: 1 / -1; height: 7px; overflow: hidden; border-radius: 8px; background: #edf0f4; }
+.guide-analytics-bar i { display: block; height: 100%; border-radius: inherit; background: #367c58; }
+
+
+/* Numbered, task-focused instructions for every walkthrough lesson */
+.guide-numbered-actions {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 18px;
+  padding: 0;
+  list-style: none;
+}
+.guide-action-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+.guide-action-item > span {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #e7f4ec;
+  color: #1f6f4a;
+  font-size: 12px;
+  font-weight: 900;
+}
+.guide-action-item p {
+  margin: 3px 0 0;
+  color: #344054;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
+/* Guided walkthrough: app-matched workflow previews */
+.guide-app-window {
+  overflow: hidden;
+  border: 1px solid #d7e0ec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(16, 35, 63, .10);
+  color: #17263d;
+}
+.guide-app-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 11px 13px;
+  background: #192b45;
+  color: #fff;
+  font-size: 12px;
+}
+.guide-app-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 26px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: #f5f7fb;
+  color: #192b45;
+  font-size: 10px;
+  font-weight: 800;
+}
+.guide-app-context {
+  margin-left: auto;
+  color: #d6e0ed;
+  font-size: 11px;
+}
+.guide-app-content { padding: 16px; }
+.guide-screen-title { margin-bottom: 5px; color: #17263d; font-size: 17px; font-weight: 750; }
+.guide-screen-subtitle { margin: 0 0 12px; color: #65758b; font-size: 12px; }
+.guide-screen-field, .guide-screen-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9eef4;
+  font-size: 12px;
+}
+.guide-field-value {
+  margin-left: auto;
+  max-width: 54%;
+  padding: 6px 9px;
+  border: 1px solid #dce4ee;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #66768b;
+  text-align: right;
+}
+.guide-screen-action {
+  display: inline-flex;
+  margin: 4px 0 12px;
+  padding: 8px 11px;
+  border-radius: 7px;
+  background: #1c3656;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.guide-screen-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin: 10px 0;
+}
+.guide-screen-tabs span {
+  padding: 8px 3px;
+  border: 1px solid #dbe4ef;
+  border-radius: 6px;
+  background: #f7f9fc;
+  color: #304660;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+.guide-avatar {
+  display: inline-flex;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e8eef7;
+  color: #263f5e;
+  font-weight: 800;
+}
+.guide-row-end { margin-left: auto; color: #74849a; font-size: 11px; }
+.guide-checkbox, .guide-status-dot {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  border: 1px solid #b7c6d8;
+  border-radius: 4px;
+}
+.guide-status-dot { width: 9px; height: 9px; flex-basis: 9px; border: 0; border-radius: 50%; background: #6c9c82; }
+.guide-analytics-tile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid #e0e7f0;
+  border-radius: 7px;
+  color: #40546e;
+  font-size: 12px;
+}
+.guide-analytics-tile i {
+  display: block;
+  width: 32%;
+  height: 6px;
+  border-radius: 99px;
+  background: #dce8f6;
+}
+.guide-callout {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 10px;
+  border: 1px solid #c9d8ec;
+  border-radius: 8px;
+  background: #f2f6fc;
+  color: #284260;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.guide-callout b {
+  display: inline-flex;
+  flex: 0 0 23px;
+  width: 23px;
+  height: 23px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #1d3c60;
+  color: #fff;
+  font-size: 11px;
+}
+.guide-numbered-actions .guide-action-item > span { list-style: none; }
+
+
+/* Real uploaded screenshots used by the guided walkthrough. */
+.guide-real-screenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+  
+  object-fit: contain;
+  object-position: top center;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+  background: #fff;
+
+  max-height: none;
+  image-rendering: auto;
+}
+.guide-app-content:has(.guide-real-screenshot) {
+  padding: 6px;
+}
+.guide-screenshot-link {
+  display: block;
+  cursor: zoom-in;
+}
+.guide-screenshot-link:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+.guide-real-screenshot {
+  max-height: none;
+  image-rendering: auto;
+}
+
+/* Direct analytics links show the analytics view rather than the full dashboard. */
+main.analytics-route > * { display: none !important; }
+main.analytics-route > .home-season-analytics,
+main.analytics-route > .player-analytics-card { display: block !important; }
+main.analytics-route { padding-top: 24px; }
