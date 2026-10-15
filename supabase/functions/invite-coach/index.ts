@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
       error: membershipError,
     } = await supabase
       .from("team_members")
-      .select("role")
+      .select("role, is_head_coach")
       .eq("team_id", teamId)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -138,9 +138,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (membership?.role !== "owner") {
+    if (membership?.role !== "owner" && membership?.is_head_coach !== true) {
       return jsonResponse(
-        { error: "Only the team owner can invite staff" },
+        { error: "Only the team owner or head coach can invite assistant coaches" },
         403
       );
     }
