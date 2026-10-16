@@ -2019,37 +2019,40 @@ function playerAtPosition(position: string) {
 
   function renderHelp() {
     const guideSteps = [
-      { title: 'Set up your team', goal: 'Make sure the app is using the right rules for your team.', detail: 'Your age group and game format determine how many players are on the field. Team Rules lets the owner set playing-time expectations, goalkeeper limits and bench limits.', takeaway: 'Set these once before planning lineups.', action: currentUserRole === 'owner' ? 'Open Team Rules' : 'Open Roster', screen: currentUserRole === 'owner' ? 'team-rules' : 'roster' },
-      { title: 'Add your players', goal: 'Build a roster the lineup planner can actually use.', detail: 'Add every player who may attend, including jersey numbers. Keep names accurate so you can identify players quickly during a match.', takeaway: 'A complete roster makes attendance, rotations and game stats more reliable.', action: 'Open Roster', screen: 'roster' },
-      { title: 'Schedule a game', goal: 'Create the match before planning who plays.', detail: 'Record the opponent, date and game details. Then mark who is available. The lineup should reflect the players who can attend, not the full roster by default.', takeaway: 'Schedule first, then set attendance, then build the lineup.', action: 'Schedule a Game', screen: 'new-game' },
-      { title: 'Build your lineup', goal: 'Plan the whole match—not just the opening whistle.', detail: 'Choose a formation and review each quarter. A player can be in a different position or sit for a quarter, so look across all four quarters before saving.', takeaway: 'Use Rotation Check to catch playing-time or goalkeeper issues before game day.', action: 'Open Games', screen: 'games' },
-      { title: 'Optimize the lineup', goal: 'Use the optimizer as a second set of eyes—not as a replacement for coaching.', detail: 'Optimize All 4 Quarters considers team rules, player availability, position fit, goalkeeper limits and bench rotation. Review the suggested plan and warnings, then adjust for what you know about the players and match.', takeaway: 'Optimization is a recommendation. Check every quarter and make the final coaching decision yourself.', action: 'Open Games', screen: 'games' },
-      { title: 'Use attendance in Build Lineup', goal: 'Make sure the plan only relies on players who can actually play.', detail: 'Set each player’s availability for the game before optimizing. If someone is absent or only available for certain quarters, the lineup should reflect that. Revisit attendance if plans change.', takeaway: 'Update attendance first, then rebuild or re-check the lineup so unavailable players are not accidentally planned in.', action: 'Open Attendance', screen: 'attendance' },
-      { title: 'Set player ratings', goal: 'Give the planner useful coaching context about each player.', detail: 'Use player ratings or profile guidance where available to reflect your assessment of position fit and development needs. Keep ratings honest, consistent and focused on soccer performance—not a player’s worth.', takeaway: 'Ratings are coaching inputs, not labels. Revisit them as players learn and develop.', action: 'Open Roster', screen: 'roster' },
-      { title: 'Review analytics', goal: 'Use the season view to spot patterns over time.', detail: 'Player Analytics can help you review quarters played, goalkeeper and striker usage, bench time, goals, assists, shots and saves. Look for trends across games rather than judging a player from one match.', takeaway: 'Use analytics to ask better coaching questions—especially about balanced playing time and development.', action: 'View Analytics', screen: 'home' },
-      { title: 'Track the match', goal: 'Record events as they happen and correct mistakes when needed.', detail: 'During the game, record goals, assists, shots and saves in Live Game. A goal also records a shot automatically. If you delete a goal, its linked shot should be removed too.', takeaway: 'Use the event log to verify entries instead of relying on memory after the match.', action: 'Open Games', screen: 'games' },
+      { title: 'Set up your team', goal: 'Create the team you will manage in Beautiful Game IQ.', detail: 'Enter your team name, city, coach name, age group, game format, season and year. This creates the team under your current account.', takeaway: 'Create the team first. You can add players and set team rules next.', action: 'Create Your Team', screen: 'home' },
+      { title: 'Add your players', goal: 'Build the roster the lineup planner will use.', detail: 'Open Roster, enter a player’s first name and jersey number, then select Add Player. Repeat for everyone on the team.', takeaway: 'A complete roster makes attendance, rotations and game stats more reliable.', action: 'Open Roster', screen: 'roster' },
+      { title: 'Schedule a game', goal: 'Create the match before planning who plays.', detail: 'Open Games and create a new game with the opponent, date, time and location. Then set attendance for that game.', takeaway: 'Schedule first, set attendance, then build the lineup.', action: 'Schedule a Game', screen: 'new-game' },
+      { title: 'Set game attendance', goal: 'Make sure the plan only relies on players who can actually play.', detail: 'For the selected game, mark each player available for the quarters they can attend, or mark them absent for the whole game. You can change availability if plans change.', takeaway: 'Update attendance before building or optimizing the lineup.', action: 'Open Attendance', screen: 'attendance' },
+      { title: 'Build your lineup', goal: 'Plan all four quarters—not just the opening whistle.', detail: 'Open Build Lineup, choose a formation and assign players to positions in each quarter. Review the rotation and save the lineup when it looks right.', takeaway: 'Review every quarter and Rotation Check before saving.', action: 'Build Lineup', screen: 'lineup' },
+      { title: 'Optimize the lineup', goal: 'Use the optimizer as a second set of eyes—not as a replacement for coaching.', detail: 'Optimize All 4 Quarters can generate a full-game rotation using team rules, attendance, position fit, goalkeeper limits and bench rotation. During a live game, you can also optimize the current quarter or another quarter as the match situation changes.', takeaway: 'Review each suggested quarter and its warnings. Optimization is available before the match and during Live Game.', action: 'Open Games', screen: 'games' },
+      { title: 'Set team rules', goal: 'Set the playing-time and formation rules for your team.', detail: 'Open Team Rules to set maximum goalkeeper quarters, maximum bench quarters, target quarters played, the everyone-must-play rule and the default formation.', takeaway: 'Set these once before planning lineups, then revisit them if your league rules change.', action: 'Open Team Rules', screen: 'team-rules' },
+      { title: 'Set player ratings', goal: 'Give the planner useful coaching context about each player.', detail: 'Open a player from the roster to review their profile, ratings, position strengths and coaching notes. Keep ratings consistent and focused on soccer performance and development.', takeaway: 'Ratings are coaching inputs, not labels. Revisit them as players learn and develop.', action: 'Open Roster', screen: 'roster' },
+      { title: 'Review analytics', goal: 'Use the season view to spot patterns over time.', detail: 'Player Analytics helps you review quarters played, goalkeeper and striker usage, bench time, goals, assists, shots and saves. Look for trends across games rather than judging a player from one match.', takeaway: 'Use analytics to ask better coaching questions about balanced playing time and development.', action: 'View Analytics', screen: 'home' },
+      { title: 'Track the match', goal: 'Record match events as they happen.', detail: 'During the game, use Live Game to record goals, assists, shots and saves. You can also adjust quarter lineups and run optimization as the match develops.', takeaway: 'Check the event log to verify entries and correct mistakes promptly.', action: 'Open Live Game', screen: 'live-game' },
     ] as const
     const guideActions = [
-      ['Open Team Rules from the team dashboard.', 'Confirm the game format matches your league.', 'Set goalkeeper, bench and playing-time limits before planning.'],
-      ['Open the roster and choose Add Player.', 'Enter the player name and jersey number.', 'Save, then repeat for each player on the team.'],
-      ['Create the game with opponent, date and location.', 'Open attendance for that specific game.', 'Mark who is available before planning the lineup.'],
+      ['Choose Create Your Team and fill in the team details.', 'Confirm age group and game format.', 'Create the team, then continue to the roster.'],
+      ['Open Roster and enter the player’s first name and jersey number.', 'Select Add Player.', 'Repeat for each player on the team.'],
+      ['Open Games and select Schedule a Game.', 'Enter the opponent, date, time and location.', 'Create the game, then set attendance for that match.'],
+      ['Open Attendance for the selected game.', 'Mark each player available for the quarters they can play, or choose Absent.', 'Return to the lineup when availability is correct.'],
       ['Open the game and choose Build Lineup.', 'Choose a formation, then assign players in each quarter.', 'Review Rotation Check and save the plan.'],
-      ['Use Optimize All 4 Quarters to generate a starting plan.', 'Review each quarter and every warning.', 'Adjust for player needs and save only after checking the full match.'],
-      ['Open Attendance for the selected game.', 'Mark players absent or choose their available quarters.', 'Return to the lineup and re-check the rotation.'],
-      ['Open a player from the roster to review their profile.', 'Update coaching guidance and position preferences where available.', 'Keep notes specific, constructive and focused on development.'],
-      ['Open the team season/player analytics view.', 'Sort by minutes, goalkeeper time, bench time or match events.', 'Compare multiple games before deciding whether a pattern needs attention.'],
-      ['Open the game and enter Live Game.', 'Record goals, assists, shots and saves as they happen.', 'Check the event log and correct mistaken entries promptly.'],
+      ['Before kickoff, use Optimize All 4 Quarters for a starting plan.', 'Review each quarter and every warning.', 'During Live Game, optimize a quarter again if the match situation changes.'],
+      ['Open Team Rules from the team dashboard.', 'Confirm the game format and default formation.', 'Set goalkeeper, bench and playing-time limits.'],
+      ['Open a player from the roster.', 'Update ratings, position preferences and coaching notes.', 'Keep notes specific, constructive and focused on development.'],
+      ['Open the team season/player analytics view.', 'Review playing time and match events across games.', 'Compare multiple games before deciding whether a pattern needs attention.'],
+      ['Open the game and enter Live Game.', 'Record goals, assists, shots and saves as they happen.', 'Revisit quarter lineups or optimize again if needed.'],
     ] as const
     const guideScreenshots = [
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png', // Team Rules
-      null, // No matching roster/add-player screenshot is available yet.
-      null, // No matching Schedule Game form screenshot is available yet.
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png', // Build Lineup
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_47%20PM.png', // Optimize Lineup
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png', // Attendance
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_50%20PM.png', // Player Profile
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png', // Player Analytics
-      null, // No matching Live Game screenshot is available yet.
+      '/New%20Team.png',
+      null,
+      null,
+      '/attendence.png',
+      '/lineup%20builder.png',
+      '/optimize.png',
+      '/team%20rules.png',
+      '/ratings.png',
+      '/analytics.png',
+      '/live%20game.png',
     ] as const
     const guideScreenshot = guideScreenshots[helpStep]
     const step = guideSteps[helpStep] || guideSteps[0]
@@ -2082,7 +2085,7 @@ function playerAtPosition(position: string) {
           </div>
           <div className="guide-visual" aria-label={`App workflow preview: ${step.title}`}>
             <div className="guide-app-window">
-              <div className="guide-app-toolbar"><span className="guide-app-mark">BGIQ</span><strong>Beautiful Game IQ</strong><span className="guide-app-context">{['Team Rules','Player Roster','Schedule Game','Build Lineup','Optimize Lineup','Attendance','Player Profile','Player Analytics','Live Game'][helpStep]}</span></div>
+              <div className="guide-app-toolbar"><span className="guide-app-mark">BGIQ</span><strong>Beautiful Game IQ</strong><span className="guide-app-context">{['Create Your Team','Add Players','Schedule Game','Attendance','Build Lineup','Optimize Lineup','Team Rules','Player Ratings','Analytics','Live Game'][helpStep]}</span></div>
               <div className="guide-app-content">
                 {guideScreenshot ? (
                   <a
