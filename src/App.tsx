@@ -2042,19 +2042,18 @@ function playerAtPosition(position: string) {
       ['Open the team season/player analytics view.', 'Review playing time and match events across games.', 'Compare multiple games before deciding whether a pattern needs attention.'],
       ['Open the game and enter Live Game.', 'Record goals, assists, shots and saves as they happen.', 'Revisit quarter lineups or optimize again if needed.'],
     ] as const
-    // Keep lessons from displaying unrelated or broken images. The named screenshot
-    // assets must be committed to /public before their paths can be enabled here.
+    // These paths match the newly named screenshots in /public.
     const guideScreenshots = [
-      null, // Set up your team — New Team.png not yet committed
-      null, // Add your players — add player.png / Roster.png not yet committed
-      null, // Schedule a game — new game.png not yet committed
-      null, // Attendance — attendence.png not yet committed
-      null, // Build lineup — lineup builder.png not yet committed
-      null, // Optimize lineup — optimize.png not yet committed
-      null, // Team rules — team rules.png not yet committed
-      null, // Player ratings — ratings.png not yet committed
-      null, // Analytics — analytics.png not yet committed
-      null, // Live game — live game.png not yet committed
+      '/New%20Team.png',
+      '/Roster.png',
+      '/new%20game.png',
+      '/attendence.png',
+      '/lineup%20builder.png',
+      '/optimize.png',
+      '/team%20rules.png',
+      '/ratings.png',
+      '/analytics.png',
+      '/live%20game.png',
     ] as const
     const guideScreenshot = guideScreenshots[helpStep]
     const step = guideSteps[helpStep] || guideSteps[0]
