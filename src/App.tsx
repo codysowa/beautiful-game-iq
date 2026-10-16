@@ -2042,17 +2042,20 @@ function playerAtPosition(position: string) {
       ['Open the team season/player analytics view.', 'Review playing time and match events across games.', 'Compare multiple games before deciding whether a pattern needs attention.'],
       ['Open the game and enter Live Game.', 'Record goals, assists, shots and saves as they happen.', 'Revisit quarter lineups or optimize again if needed.'],
     ] as const
+    // Only show a screenshot when the asset is the correct screen for that lesson.
+    // The newly titled files (add player.png, ratings.png, live game.png, etc.) are not
+    // present in the repository yet. Do not substitute unrelated or old screenshots.
     const guideScreenshots = [
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_12%20PM.png', // Create team
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_04%20PM.png', // Roster / add player
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_08%20PM.png', // New game / schedule
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png', // Attendance
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png', // Lineup builder
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_47%20PM.png', // Optimize
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png', // Team rules
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_40%20PM.png', // Ratings / coach inputs
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png', // Analytics
-      '/2026-10-15%2014_31_48-Clipboard.png', // Live game
+      '/New%20Team.png',
+      '/Roster.png',
+      '/new%20game.png',
+      '/attendence.png',
+      '/lineup%20builder.png',
+      '/optimize.png',
+      '/team%20rules.png',
+      '/ratings.png',
+      '/analytics.png',
+      '/live%20game.png',
     ] as const
     const guideScreenshot = guideScreenshots[helpStep]
     const step = guideSteps[helpStep] || guideSteps[0]
