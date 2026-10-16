@@ -2043,16 +2043,16 @@ function playerAtPosition(position: string) {
       ['Open the game and enter Live Game.', 'Record goals, assists, shots and saves as they happen.', 'Revisit quarter lineups or optimize again if needed.'],
     ] as const
     const guideScreenshots = [
-      '/New%20Team.png',
-      null,
-      null,
-      '/attendence.png',
-      '/lineup%20builder.png',
-      '/optimize.png',
-      '/team%20rules.png',
-      '/ratings.png',
-      '/analytics.png',
-      '/live%20game.png',
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_12%20PM.png', // Create team
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_04%20PM.png', // Roster / add player
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_08%20PM.png', // New game / schedule
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png', // Attendance
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png', // Lineup builder
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_47%20PM.png', // Optimize
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png', // Team rules
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_40%20PM.png', // Ratings / coach inputs
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png', // Analytics
+      '/2026-10-15%2014_31_48-Clipboard.png', // Live game
     ] as const
     const guideScreenshot = guideScreenshots[helpStep]
     const step = guideSteps[helpStep] || guideSteps[0]
