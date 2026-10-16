@@ -1697,6 +1697,20 @@ body,
 .guide-app-content:has(.guide-real-screenshot) {
   padding: 6px;
 }
+.guide-screenshot-missing {
+  display: flex;
+  min-height: 260px;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
 .guide-screenshot-link {
   display: block;
   cursor: zoom-in;
