@@ -2870,6 +2870,33 @@ function playerAtPosition(position: string) {
     return (
       <>
         <section className="welcome">
+          <div className="touchline-hero" aria-label="Beautiful Game IQ coaching dashboard">
+            <div className="touchline-copy">
+              <span className="touchline-kicker"><span className="touchline-live-dot" /> YOUR TOUCHLINE, UPGRADED</span>
+              <h2>See the game.<br /><em>Coach the moment.</em></h2>
+              <p>Everything you need to plan the lineup, manage the match, and help every player grow.</p>
+              <div className="touchline-pills"><span>PLAN</span><b>·</b><span>PLAY</span><b>·</b><span>DEVELOP</span></div>
+            </div>
+            <div className="touchline-pitch" aria-hidden="true">
+              <svg viewBox="0 0 300 190" role="presentation">
+                <defs><linearGradient id="pitchGrass" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#44b878" /><stop offset="100%" stopColor="#167047" /></linearGradient></defs>
+                <rect x="8" y="8" width="284" height="174" rx="9" fill="url(#pitchGrass)" />
+                <path d="M8 52H292 M8 96H292 M8 140H292" stroke="#ffffff" strokeOpacity=".09" strokeWidth="28" />
+                <g fill="none" stroke="#ffffff" strokeOpacity=".62" strokeWidth="1.5">
+                  <rect x="20" y="20" width="260" height="150" rx="2" /><path d="M150 20V170" /><circle cx="150" cy="95" r="25" /><circle cx="150" cy="95" r="2" fill="#fff" />
+                  <path d="M20 60H58V130H20 M280 60H242V130H280 M20 77H38V113H20 M280 77H262V113H280" />
+                </g>
+                <g stroke="#e8fff1" strokeWidth="1.5" fill="#f4fff8">
+                  <circle cx="92" cy="56" r="7"/><circle cx="208" cy="56" r="7"/><circle cx="150" cy="91" r="7"/><circle cx="92" cy="132" r="7"/><circle cx="208" cy="132" r="7"/>
+                </g>
+                <g fill="#143f2e" fontSize="8" fontWeight="700" textAnchor="middle"><text x="92" y="59">9</text><text x="208" y="59">10</text><text x="150" y="94">5</text><text x="92" y="135">2</text><text x="208" y="135">8</text></g>
+                <path d="M92 56Q122 35 150 91T208 56" fill="none" stroke="#fff5a8" strokeWidth="2.5" strokeDasharray="5 4" />
+                <circle cx="150" cy="91" r="14" fill="none" stroke="#fff5a8" strokeWidth="2" />
+              </svg>
+              <span className="pitch-caption"><span /> TACTICAL VIEW <b>01 / 04</b></span>
+            </div>
+            <div className="touchline-watermark">BG<span>IQ</span></div>
+          </div>
           <div className="home-team-identity">
             <p className="eyebrow">TEAM</p>
             <h2 className="home-team-name">{team?.name || 'Team'}</h2>
