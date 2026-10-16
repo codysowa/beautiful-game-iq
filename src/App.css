@@ -1737,3 +1737,115 @@ main.analytics-route > * { display: none !important; }
 main.analytics-route > .home-season-analytics,
 main.analytics-route > .player-analytics-card { display: block !important; }
 main.analytics-route { padding-top: 24px; }
+
+
+/* Staging-only visual refresh: polish surfaces and hierarchy without changing app behavior. */
+:root {
+  color: #172b49;
+  background: #f4f7fb;
+  --bgiq-ink: #172b49;
+  --bgiq-green: #17744e;
+  --bgiq-green-dark: #115b3d;
+  --bgiq-border: #dce5ef;
+  --bgiq-muted: #64748b;
+  --bgiq-shadow: 0 12px 32px rgba(23, 43, 73, 0.075);
+}
+body { background: #f4f7fb; color: var(--bgiq-ink); }
+.app { background: linear-gradient(180deg, #eef4f8 0, #f7f9fc 260px, #f4f7fb 100%); }
+.app-header {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(120deg, #10243e 0%, #1a3d5b 58%, #176b50 100%);
+  padding: 30px 22px;
+  box-shadow: 0 8px 24px rgba(16, 36, 62, .18);
+}
+.app-header::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  right: -100px;
+  top: -190px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 50%;
+  box-shadow: 0 0 0 28px rgba(255,255,255,.035), 0 0 0 58px rgba(255,255,255,.025);
+  pointer-events: none;
+}
+.app-header h1 { letter-spacing: -.035em; font-weight: 800; }
+.app-header p { max-width: 720px; line-height: 1.5; }
+.main-content { margin-top: 28px; }
+.welcome h2 { letter-spacing: -.04em; color: #142a46; }
+.eyebrow { color: #16734e; letter-spacing: .14em; }
+.team-card, .next-game-card, .analytics-card, .section-card {
+  border-color: var(--bgiq-border);
+  border-radius: 20px;
+  box-shadow: var(--bgiq-shadow);
+  transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+}
+.team-card:hover, .next-game-card:hover, .analytics-card:hover, .section-card:hover {
+  border-color: #c7d7e5;
+  box-shadow: 0 16px 36px rgba(23, 43, 73, .095);
+}
+.section-header h2, .next-game-card h3 { color: #172b49; letter-spacing: -.025em; }
+.primary-button, .roster-actions button.primary-button {
+  background: linear-gradient(135deg, #198255, #116744);
+  color: #fff;
+  box-shadow: 0 5px 12px rgba(23, 116, 78, .16);
+}
+.primary-button:hover, .roster-actions button.primary-button:hover {
+  background: linear-gradient(135deg, #16764c, #0d5939);
+  box-shadow: 0 7px 16px rgba(23, 116, 78, .23);
+}
+button { border-radius: 12px; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(32, 133, 95, .25);
+  outline-offset: 2px;
+}
+input, select, textarea {
+  border-color: #d5deea;
+  border-radius: 12px;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #21825b;
+  box-shadow: 0 0 0 3px rgba(33,130,91,.10);
+  outline: none;
+}
+.roster-player {
+  border-color: #e0e7ef;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fff 0%, #fbfdff 100%);
+}
+.roster-player > span {
+  background: linear-gradient(145deg, #1c3e5d, #176e50);
+  box-shadow: 0 4px 10px rgba(23,43,73,.16);
+}
+.home-next-game {
+  border: 1px solid #dbe5ee;
+  border-left: 5px solid #1a8057;
+  border-radius: 20px;
+  box-shadow: var(--bgiq-shadow);
+  background: linear-gradient(120deg, #fff 0%, #f8fcfa 100%);
+}
+.bottom-nav {
+  border-color: rgba(207, 219, 231, .9);
+  border-radius: 18px;
+  box-shadow: 0 12px 36px rgba(16, 36, 62, .19);
+  background: rgba(255,255,255,.96);
+}
+.bottom-nav button { border-radius: 12px; transition: background .15s ease, color .15s ease; }
+.bottom-nav button:hover { background: #edf6f1; color: #116744; }
+.analytics-table th { color: #52657c; }
+.analytics-table td { color: #263d58; }
+@media (max-width: 600px) {
+  .app-header { padding: 24px 16px; }
+  .main-content { margin-top: 18px; }
+  .team-card, .next-game-card, .analytics-card, .section-card {
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(23,43,73,.065);
+  }
+  .bottom-nav { bottom: 10px; padding: 6px; }
+  .bottom-nav button { font-size: 12px; padding: 10px 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
