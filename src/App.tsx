@@ -2041,7 +2041,7 @@ function playerAtPosition(position: string) {
       ['Open the game and enter Live Game.', 'Record goals, assists, shots and saves as they happen.', 'Check the event log and correct mistaken entries promptly.'],
     ] as const
     const guideScreenshots = [
-      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_12%20PM.png', // Create Your Team
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png', // Team Rules
       null, // No matching roster/add-player screenshot is available yet.
       null, // No matching Schedule Game form screenshot is available yet.
       '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png', // Build Lineup
@@ -2082,7 +2082,7 @@ function playerAtPosition(position: string) {
           </div>
           <div className="guide-visual" aria-label={`App workflow preview: ${step.title}`}>
             <div className="guide-app-window">
-              <div className="guide-app-toolbar"><span className="guide-app-mark">BGIQ</span><strong>Beautiful Game IQ</strong><span className="guide-app-context">{['Create Your Team','Player Roster','Schedule Game','Build Lineup','Optimize Lineup','Attendance','Player Profile','Player Analytics','Live Game'][helpStep]}</span></div>
+              <div className="guide-app-toolbar"><span className="guide-app-mark">BGIQ</span><strong>Beautiful Game IQ</strong><span className="guide-app-context">{['Team Rules','Player Roster','Schedule Game','Build Lineup','Optimize Lineup','Attendance','Player Profile','Player Analytics','Live Game'][helpStep]}</span></div>
               <div className="guide-app-content">
                 {guideScreenshot ? (
                   <a
