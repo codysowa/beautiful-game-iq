@@ -2040,6 +2040,18 @@ function playerAtPosition(position: string) {
       ['Open the team season/player analytics view.', 'Sort by minutes, goalkeeper time, bench time or match events.', 'Compare multiple games before deciding whether a pattern needs attention.'],
       ['Open the game and enter Live Game.', 'Record goals, assists, shots and saves as they happen.', 'Check the event log and correct mistaken entries promptly.'],
     ] as const
+    const guideScreenshots = [
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_12%20PM.png', // Create Your Team
+      null, // No matching roster/add-player screenshot is available yet.
+      null, // No matching Schedule Game form screenshot is available yet.
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png', // Build Lineup
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_47%20PM.png', // Optimize Lineup
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png', // Attendance
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_50%20PM.png', // Player Profile
+      '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png', // Player Analytics
+      null, // No matching Live Game screenshot is available yet.
+    ] as const
+    const guideScreenshot = guideScreenshots[helpStep]
     const step = guideSteps[helpStep] || guideSteps[0]
     return (
       <section className="team-card coach-guide">
@@ -2070,41 +2082,31 @@ function playerAtPosition(position: string) {
           </div>
           <div className="guide-visual" aria-label={`App workflow preview: ${step.title}`}>
             <div className="guide-app-window">
-              <div className="guide-app-toolbar"><span className="guide-app-mark">BGIQ</span><strong>Beautiful Game IQ</strong><span className="guide-app-context">{['Team Rules','Roster','New Game','Build Lineup','Optimize Lineup','Attendance','Player Profile','Analytics','Live Game'][helpStep]}</span></div>
+              <div className="guide-app-toolbar"><span className="guide-app-mark">BGIQ</span><strong>Beautiful Game IQ</strong><span className="guide-app-context">{['Create Your Team','Player Roster','Schedule Game','Build Lineup','Optimize Lineup','Attendance','Player Profile','Player Analytics','Live Game'][helpStep]}</span></div>
               <div className="guide-app-content">
-                <a
-                  className="guide-screenshot-link"
-                  href={(['/2026-10-15%2014_31_48-Clipboard.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_40%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_47%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_50%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_54%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png'])[helpStep] || '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_04%20PM.png'}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`Open full-size screenshot for ${step.title}`}
-                  title="Open full-size screenshot"
-                >
-                  <img
-                    className="guide-real-screenshot"
-                    src={(['/2026-10-15%2014_31_48-Clipboard.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_30%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_40%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_43%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_47%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_50%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_54%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_29_57%20PM.png',
-                    '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_01%20PM.png'])[helpStep] || '/ChatGPT%20Image%20Oct%2015%2C%202026%2C%2002_30_04%20PM.png'}
-                    alt={`Beautiful Game IQ screenshot for ${step.title}`}
-                  />
-                </a>
+                {guideScreenshot ? (
+                  <a
+                    className="guide-screenshot-link"
+                    href={guideScreenshot}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Open full-size screenshot for ${step.title}`}
+                    title="Open full-size screenshot"
+                  >
+                    <img
+                      className="guide-real-screenshot"
+                      src={guideScreenshot}
+                      alt={`Beautiful Game IQ screenshot for ${step.title}`}
+                    />
+                  </a>
+                ) : (
+                  <div className="guide-screenshot-missing" role="note">
+                    A matching screenshot for this lesson has not been added yet.
+                  </div>
+                )}
               </div>
             </div>
-            <p className="guide-visual-caption">Workflow preview of the app area for this lesson. Open the actual screen to see your team's live data.</p>
+            <p className="guide-visual-caption">{guideScreenshot ? 'Screenshot of the matching app workflow. Open it to view full size.' : 'This lesson is ready to follow in the app; a matching screenshot is not available yet.'}</p>
           </div>
         </div>
         <div className="guide-practice">
