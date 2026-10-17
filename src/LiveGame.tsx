@@ -1330,7 +1330,7 @@ export default function LiveGame({
           {events.length === 0 ? (
             <p style={{ margin: '0 0 10px' }}>No events yet.</p>
           ) : (
-            events.slice(0, 10).map((event) => (
+            events.slice(0, 30).map((event) => (
               <div key={event.id} style={{ padding: '9px 0', borderTop: '1px solid #eee' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <strong>{
