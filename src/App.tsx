@@ -4832,10 +4832,10 @@ function playerAtPosition(position: string) {
 
                     <div
                       style={{
-                        borderRadius: 8,
+                        borderRadius: 12,
                         padding: 7,
-                        background: '#0b1220',
-                        border: '1px solid #1e293b',
+                        background: 'rgba(2, 6, 23, 0.4)',
+                        border: '1px solid rgba(30, 41, 59, 0.6)',
                         display: 'grid',
                         gap: 5,
                       }}
@@ -4861,7 +4861,7 @@ function playerAtPosition(position: string) {
                                   padding: '4px 2px',
                                   border: '1px solid #334155',
                                   borderRadius: 8,
-                                  background: '#020617',
+                                  background: 'rgba(2, 6, 23, 0.75)',
                                   color: '#fff',
                                   textAlign: 'center',
                                 }}
