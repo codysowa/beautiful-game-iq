@@ -4875,7 +4875,7 @@ er = assignment ? players.find((p) => p.id === assignment.player_id) : null
 
           {renderPlayingTimeTracker()}
 
-      </>
+      </div>
     )
   }
 
