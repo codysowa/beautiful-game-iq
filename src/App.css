@@ -1942,7 +1942,7 @@ input,select,textarea{border-color:#d4e1d9;border-radius:12px;background-color:#
 .lineup-redesign details summary { color:#e2e8f0; }
 .lineup-redesign .lineup-heading { margin:0 0 10px; color:#cbd5e1; font-size:12px; letter-spacing:.12em; text-transform:uppercase; font-weight:900; }
 .lineup-pitch { position:relative; overflow:hidden; isolation:isolate; display:flex; flex-direction:column; justify-content:space-between; aspect-ratio:3/4; width:100%; max-width:560px; margin:0 auto 16px; padding:clamp(14px,3vw,24px); border:4px solid #101827; border-radius:23px; background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0,rgba(255,255,255,.025) 1px,transparent 1px,transparent 42px),linear-gradient(180deg,#11633d 0%,#0d5434 48%,#08452b 100%); box-shadow:0 20px 45px rgba(0,0,0,.24),inset 0 0 0 1px rgba(255,255,255,.04); }
-.lineup-pitch-markings { position:absolute; inset:14px; z-index:-1; pointer-events:none; display:flex; flex-direction:column; justify-content:space-between; border:1px solid rgba(255,255,255,.24); border-radius:4px; }
+.lineup-pitch-markings { position:absolute; inset:14px; z-index:0; pointer-events:none; display:flex; flex-direction:column; justify-content:space-between; border:1px solid rgba(255,255,255,.24); border-radius:4px; }
 .lineup-penalty { width:54%; height:16%; margin:0 auto; border-left:1px solid rgba(255,255,255,.25); border-right:1px solid rgba(255,255,255,.25); }
 .lineup-penalty-top { border-bottom:1px solid rgba(255,255,255,.25); }
 .lineup-penalty-bottom { border-top:1px solid rgba(255,255,255,.25); }
