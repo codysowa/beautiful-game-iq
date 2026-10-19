@@ -1849,3 +1849,155 @@ input:focus, select:focus, textarea:focus {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+
+/* Stitch-inspired coaching workspace: intentional dark canvas, field-green accents,
+   compact cards, and touch-friendly controls. Scoped to the lineup heading. */
+.main-content:has(.lineup-heading) {
+  width: min(1440px, calc(100% - 28px)) !important;
+  max-width: 1440px !important;
+  margin: 18px auto 100px !important;
+  color: #e9f2f7 !important;
+}
+.main-content:has(.lineup-heading) .team-card,
+.main-content:has(.lineup-heading) .section-card {
+  color: #e9f2f7 !important;
+  background: #111f2c !important;
+  border: 1px solid #293d4c !important;
+  border-radius: 18px !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.18) !important;
+}
+.main-content:has(.lineup-heading) h1,
+.main-content:has(.lineup-heading) h2,
+.main-content:has(.lineup-heading) h3,
+.main-content:has(.lineup-heading) strong {
+  color: #f3f8fb;
+}
+.main-content:has(.lineup-heading) p,
+.main-content:has(.lineup-heading) label,
+.main-content:has(.lineup-heading) span {
+  color: inherit;
+}
+.main-content:has(.lineup-heading) .section-header {
+  gap: 14px !important;
+  align-items: center !important;
+  margin-bottom: 14px !important;
+}
+.main-content:has(.lineup-heading) .eyebrow {
+  color: #55d99a !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+}
+.main-content:has(.lineup-heading) details {
+  margin: 10px 0 !important;
+  padding: 12px 14px !important;
+  border: 1px solid #2b414f !important;
+  border-radius: 14px !important;
+  background: #172937 !important;
+}
+.main-content:has(.lineup-heading) details > summary {
+  color: #6ee7a8 !important;
+  font-weight: 800 !important;
+  cursor: pointer;
+  padding: 2px 0 8px !important;
+}
+.main-content:has(.lineup-heading) input,
+.main-content:has(.lineup-heading) select,
+.main-content:has(.lineup-heading) textarea {
+  color: #eaf3f8 !important;
+  background: #0b1721 !important;
+  border: 1px solid #344c5b !important;
+  border-radius: 9px !important;
+}
+.main-content:has(.lineup-heading) button {
+  min-height: 36px;
+  border-radius: 10px !important;
+  font-weight: 750 !important;
+  transition: transform .15s ease, filter .15s ease, border-color .15s ease !important;
+}
+.main-content:has(.lineup-heading) button:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.main-content:has(.lineup-heading) .primary-button {
+  color: #05291b !important;
+  background: linear-gradient(135deg, #72f0b0, #28c77b) !important;
+  border: 1px solid #57e49c !important;
+  box-shadow: 0 4px 14px rgba(40,199,123,.16) !important;
+}
+.main-content:has(.lineup-heading) .secondary-button {
+  color: #d9e8ef !important;
+  background: #203645 !important;
+  border: 1px solid #395466 !important;
+}
+.main-content:has(.lineup-heading) .quarter-tabs,
+.main-content:has(.lineup-heading) .quarter-copy-controls {
+  gap: 8px !important;
+}
+.main-content:has(.lineup-heading) .quarter-tabs button {
+  min-width: 58px;
+  background: #203645 !important;
+  color: #d9e8ef !important;
+  border: 1px solid #3a5667 !important;
+}
+.main-content:has(.lineup-heading) .quarter-tabs button[aria-pressed="true"],
+.main-content:has(.lineup-heading) .quarter-tabs button.active {
+  background: #2bd182 !important;
+  color: #062a1c !important;
+  border-color: #65edac !important;
+}
+.main-content:has(.lineup-heading) .roster-list {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important;
+  gap: 10px !important;
+}
+.main-content:has(.lineup-heading) .roster-player {
+  padding: 12px !important;
+  color: #eaf5f8 !important;
+  background: linear-gradient(145deg, #203b4b, #172b39) !important;
+  border: 1px solid #3c5a68 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 5px 12px rgba(0,0,0,.15) !important;
+}
+.main-content:has(.lineup-heading) .roster-player:active {
+  transform: scale(.98);
+}
+.main-content:has(.lineup-heading) .roster-player button {
+  min-height: 32px !important;
+}
+.main-content:has(.lineup-heading) table {
+  color: #e4eef3 !important;
+  border-color: #304755 !important;
+}
+.main-content:has(.lineup-heading) th {
+  color: #a9c0cc !important;
+  background: #1b3040 !important;
+}
+.main-content:has(.lineup-heading) td {
+  border-color: #293f4d !important;
+}
+.main-content:has(.lineup-heading) tr:nth-child(even) td {
+  background: rgba(255,255,255,.025) !important;
+}
+@media (max-width: 700px) {
+  .main-content:has(.lineup-heading) {
+    width: calc(100% - 16px) !important;
+    margin-top: 10px !important;
+  }
+  .main-content:has(.lineup-heading) .team-card {
+    padding: 12px !important;
+    border-radius: 14px !important;
+  }
+  .main-content:has(.lineup-heading) button {
+    min-height: 42px !important;
+    touch-action: manipulation;
+  }
+  .main-content:has(.lineup-heading) .roster-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+  .main-content:has(.lineup-heading) .roster-player {
+    padding: 9px !important;
+  }
+}
