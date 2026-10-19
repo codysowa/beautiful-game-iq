@@ -4026,7 +4026,7 @@ function playerAtPosition(position: string) {
     const restingPlayers = players.filter((p) => !lineup.some((item) => item.player_id === p.id))
 
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-white pb-24">
+      <div className="min-h-screen w-full bg-[#080d14] text-slate-100 font-sans antialiased pb-24">
         
         {/* MATCH CONFIG HEADER BLOCK */}
         <section className="bg-[#0f1724] border-b border-slate-800 shadow-xl overflow-hidden mb-6">
