@@ -1429,6 +1429,14 @@ function App() {
     assignPlayer(playerId, position)
   }
 
+  function handleBenchDrop(event: React.DragEvent<HTMLElement>) {
+    event.preventDefault()
+    const playerId = event.dataTransfer.getData('text/player-id')
+    if (!playerId || !canManageGame) return
+    setLineup((current) => current.filter((item) => item.player_id !== playerId))
+    setSelectedPreplanPlayerId(null)
+  }
+
   function assignPlayer(playerId: string, position: string) {
     if (!playerAvailableForQuarter(playerId, selectedQuarter)) {
 
@@ -4528,8 +4536,19 @@ function playerAtPosition(position: string) {
             ))}
           </div>
 
-          <div className="tactical-bench" style={{ marginTop: 12, padding: 12, border: '1px solid #d4dce5', borderRadius: 10, background: '#f7f9fb' }}>
+          <div
+            className="tactical-bench"
+            style={{ marginTop: 12, padding: 12, border: '1px solid #d4dce5', borderRadius: 10, background: '#f7f9fb' }}
+            onDragOver={(event) => {
+              if (canManageGame) {
+                event.preventDefault()
+                event.dataTransfer.dropEffect = 'move'
+              }
+            }}
+            onDrop={handleBenchDrop}
+          >
             <strong className="tactical-bench-heading">Bench / Unused Players</strong>
+            <div style={{ fontSize: 12, color: '#5e7467', marginTop: 4 }}>Drag a player here to bench them for this quarter.</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
               {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
                 <button
