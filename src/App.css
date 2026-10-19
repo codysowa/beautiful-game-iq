@@ -1998,3 +1998,208 @@ input:focus, select:focus, textarea:focus {
   .position-history-table { font-size: 11px; }
   .position-history-table th, .position-history-table td { padding: 7px 4px !important; }
 }
+
+
+/* Stitch-inspired match-day workspace. Scoped to the lineup screen so the rest of the app is untouched. */
+.main-content:has(.tactical-pitch) {
+  --coach-bg: #07111f;
+  --coach-panel: #101d2e;
+  --coach-panel-raised: #17273b;
+  --coach-border: #2b4057;
+  --coach-muted: #9aafc4;
+  --coach-text: #edf5ff;
+  --coach-green: #24d18a;
+  width: min(1440px, calc(100% - 28px));
+  max-width: 1440px;
+  margin: 18px auto 110px;
+  padding: 18px;
+  overflow: visible;
+  color: var(--coach-text);
+  border: 1px solid #20384a;
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at 95% 0%, rgba(36, 209, 138, .10), transparent 35%),
+    linear-gradient(160deg, #0b1727 0%, #07111f 68%, #0a1d27 100%);
+  box-shadow: 0 24px 70px rgba(3, 9, 18, .24);
+}
+.main-content:has(.tactical-pitch) .back-button { color: #b8cbe0; }
+.main-content:has(.tactical-pitch) .team-card,
+.main-content:has(.tactical-pitch) .section-card {
+  color: var(--coach-text);
+  background: linear-gradient(145deg, #122136 0%, #0e1a2b 100%) !important;
+  border: 1px solid var(--coach-border) !important;
+  border-radius: 18px !important;
+  padding: 18px !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .18), inset 0 1px rgba(255,255,255,.025);
+}
+.main-content:has(.tactical-pitch) h2,
+.main-content:has(.tactical-pitch) h3,
+.main-content:has(.tactical-pitch) strong { color: #f2f7ff; }
+.main-content:has(.tactical-pitch) p,
+.main-content:has(.tactical-pitch) .section-header span,
+.main-content:has(.tactical-pitch) small { color: var(--coach-muted); }
+.main-content:has(.tactical-pitch) button {
+  border-radius: 10px;
+  font-weight: 700;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+.main-content:has(.tactical-pitch) .primary-button {
+  color: #041a12;
+  background: linear-gradient(135deg, #48edac, #17c982);
+  box-shadow: 0 5px 15px rgba(23, 201, 130, .2);
+}
+.main-content:has(.tactical-pitch) .secondary-button {
+  color: #dce8f7;
+  background: #1a2b40;
+  border: 1px solid #314960;
+}
+.main-content:has(.tactical-pitch) button:focus-visible,
+.main-content:has(.tactical-pitch) select:focus-visible {
+  outline: 2px solid #48edac;
+  outline-offset: 2px;
+}
+.main-content:has(.tactical-pitch) input,
+.main-content:has(.tactical-pitch) select,
+.main-content:has(.tactical-pitch) textarea {
+  color: #edf5ff;
+  background: #0a1626;
+  border: 1px solid #30465f;
+  border-radius: 10px;
+}
+.main-content:has(.tactical-pitch) input::placeholder,
+.main-content:has(.tactical-pitch) textarea::placeholder { color: #8096ad; }
+.main-content:has(.tactical-pitch) .tactical-pitch {
+  min-height: 400px;
+  padding: 22px !important;
+  gap: 18px !important;
+  border: 1px solid #2bbd82 !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,.22) calc(50% - 1px), rgba(255,255,255,.22) calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(0deg, transparent calc(50% - 1px), rgba(255,255,255,.22) calc(50% - 1px), rgba(255,255,255,.22) calc(50% + 1px), transparent calc(50% + 1px)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0, rgba(255,255,255,.035) 1px, transparent 1px, transparent 52px),
+    linear-gradient(135deg, #087747, #075b3c 55%, #06482f) !important;
+  box-shadow: inset 0 0 0 8px rgba(255,255,255,.045), inset 0 0 35px rgba(0,0,0,.18), 0 10px 30px rgba(0,0,0,.15);
+}
+.main-content:has(.tactical-pitch) .tactical-pitch::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 34%;
+  aspect-ratio: 1;
+  left: 33%;
+  top: 33%;
+  border: 1px solid rgba(255,255,255,.23);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.main-content:has(.tactical-pitch) .tactical-position-slot {
+  min-height: 78px !important;
+  color: #f4f8ff !important;
+  border: 1px solid rgba(121, 242, 187, .55) !important;
+  border-radius: 13px !important;
+  background: linear-gradient(155deg, #1b3046, #0d1b2c) !important;
+  box-shadow: 0 7px 18px rgba(0,0,0,.22), inset 0 1px rgba(255,255,255,.08);
+}
+.main-content:has(.tactical-pitch) .tactical-position-slot.is-filled {
+  border-color: rgba(77, 231, 165, .8) !important;
+  background: linear-gradient(155deg, #1b3850 0%, #11253a 100%) !important;
+}
+.main-content:has(.tactical-pitch) .tactical-position-slot.is-empty {
+  color: #a9e9ca !important;
+  border: 1px dashed rgba(117, 235, 183, .7) !important;
+  background: rgba(3, 33, 25, .55) !important;
+}
+.main-content:has(.tactical-pitch) .tactical-position-slot > div:first-child {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 22px;
+  padding: 2px 6px;
+  color: #9bf2ca !important;
+  border-radius: 6px;
+  background: rgba(36, 209, 138, .13);
+  font-size: 10px !important;
+  font-weight: 900;
+}
+.main-content:has(.tactical-pitch) .tactical-position-slot > div:last-child {
+  font-size: 13px !important;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+.main-content:has(.tactical-pitch) .tactical-bench {
+  color: var(--coach-text);
+  border: 1px dashed #46627b !important;
+  border-radius: 15px !important;
+  background: linear-gradient(130deg, #0b1727, #12263a) !important;
+}
+.main-content:has(.tactical-pitch) .tactical-bench-heading { color: #dbe9f8; }
+.main-content:has(.tactical-pitch) .tactical-bench-player {
+  color: #dff9ec !important;
+  border: 1px solid #365a6b !important;
+  border-radius: 999px !important;
+  background: #19384a !important;
+}
+.main-content:has(.tactical-pitch) .tactical-bench-player:hover:not(:disabled) {
+  border-color: #48edac !important;
+  background: #20533f !important;
+}
+.main-content:has(.tactical-pitch) .quarter-tabs button {
+  min-height: 48px;
+  border: 1px solid #2a4057;
+  background: #17273b;
+  color: #afc2d7;
+}
+.main-content:has(.tactical-pitch) .quarter-tabs button.active,
+.main-content:has(.tactical-pitch) .quarter-tabs button[aria-pressed="true"] {
+  color: #041a12;
+  background: linear-gradient(135deg, #48edac, #17c982);
+}
+.main-content:has(.tactical-pitch) .position-history-card {
+  background: linear-gradient(145deg, #122136, #0e1a2b) !important;
+  border-color: #2b4057 !important;
+}
+.main-content:has(.tactical-pitch) .position-history-table { color: #dbe8f7; }
+.main-content:has(.tactical-pitch) .position-history-table th {
+  color: #9decc8;
+  background: #182c40;
+  border-color: #2c4358;
+}
+.main-content:has(.tactical-pitch) .position-history-table td,
+.main-content:has(.tactical-pitch) .position-history-table th {
+  border-color: #24394e;
+}
+.main-content:has(.tactical-pitch) .position-history-table tbody tr:nth-child(even) td,
+.main-content:has(.tactical-pitch) .position-history-table th:first-child,
+.main-content:has(.tactical-pitch) .position-history-table td:first-child {
+  color: #dbe8f7;
+  background: #14253a;
+}
+.main-content:has(.tactical-pitch) .position-history-table tbody tr:hover td { background: #1c3a45; }
+.main-content:has(.tactical-pitch) .tactical-pitch + div { color: #dce8f7; }
+.main-content:has(.tactical-pitch) [style*="background: white"],
+.main-content:has(.tactical-pitch) [style*="background: rgb(255, 255, 255)"] {
+  color: #eaf3ff !important;
+  background: #14263a !important;
+  border-color: #2d465c !important;
+}
+@media (min-width: 900px) {
+  .main-content:has(.tactical-pitch) { padding: 26px; }
+  .main-content:has(.tactical-pitch) .tactical-pitch { min-height: 520px; }
+}
+@media (max-width: 600px) {
+  .main-content:has(.tactical-pitch) {
+    width: calc(100% - 12px);
+    padding: 9px;
+    margin-top: 10px;
+    border-radius: 17px;
+  }
+  .main-content:has(.tactical-pitch) .team-card,
+  .main-content:has(.tactical-pitch) .section-card { padding: 10px !important; border-radius: 13px !important; }
+  .main-content:has(.tactical-pitch) .tactical-pitch { min-height: 340px; padding: 10px !important; gap: 10px !important; }
+  .main-content:has(.tactical-pitch) .tactical-position-slot { min-height: 64px !important; padding: 5px 3px !important; }
+  .main-content:has(.tactical-pitch) .tactical-position-slot > div:last-child { font-size: 11px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-content:has(.tactical-pitch) button { transition: none; }
+}
