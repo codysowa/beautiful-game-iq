@@ -1422,6 +1422,21 @@ function App() {
     return attendance.available_quarters.includes(quarter)
   }
 
+  function handleLineupDrop(event: React.DragEvent<HTMLElement>, position: string) {
+    event.preventDefault()
+    const playerId = event.dataTransfer.getData('text/player-id')
+    if (!playerId) return
+    assignPlayer(playerId, position)
+  }
+
+  function handleBenchDrop(event: React.DragEvent<HTMLElement>) {
+    event.preventDefault()
+    const playerId = event.dataTransfer.getData('text/player-id')
+    if (!playerId) return
+    setLineup((current) => current.filter((item) => item.player_id !== playerId))
+    setSelectedPreplanPlayerId(null)
+  }
+
   function assignPlayer(playerId: string, position: string) {
     if (!playerAvailableForQuarter(playerId, selectedQuarter)) {
 
@@ -3608,12 +3623,12 @@ function playerAtPosition(position: string) {
     if (plannedQuarters.length === 0) return null
 
     return (
-      <section className="team-card">
-        <div className="section-header">
+      <section className="team-card position-history-card">
+        <div className="section-header position-history-header">
           <div>
             <h2>Position History</h2>
             <span>
-              Where everyone has played so far.
+              A quick view of position variety across the planned game. Unsaved changes in the selected quarter are included.
             </span>
           </div>
         </div>
@@ -3624,7 +3639,7 @@ function playerAtPosition(position: string) {
             marginTop: '12px',
           }}
         >
-          <table
+          <table className="position-history-table"
             style={{
               width: '100%',
               borderCollapse: 'collapse',
@@ -4114,12 +4129,12 @@ function playerAtPosition(position: string) {
                   }).map((player) => {
                 const quarters = gameAttendance[player.id]?.available_quarters || [1, 2, 3, 4]
                 return (
-                  <div key={player.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                  <div key={player.id} className="attendance-player-row" style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
                       <strong>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
                       <span style={{ fontSize: '12px', opacity: 0.7 }}>{attendanceSummary(quarters)}</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px', marginTop: '7px' }}>
+                    <div className="attendance-quarter-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px', marginTop: '7px' }}>
                       {[1, 2, 3, 4].map((q) => {
                         const on = quarters.includes(q)
                         return (
@@ -4139,7 +4154,7 @@ function playerAtPosition(position: string) {
                         )
                       })}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '6px' }}>
+                    <div className="attendance-shortcuts" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '6px' }}>
                       <button type="button" className="secondary-button" disabled={!canManageGame} onClick={() => void saveAttendanceAvailability(player.id, [1, 2, 3, 4])} style={{ padding: '8px', fontSize: '12px' }}>All Quarters</button>
                       <button type="button" className="secondary-button" disabled={!canManageGame} onClick={() => void saveAttendanceAvailability(player.id, [])} style={{ padding: '8px', fontSize: '12px' }}>Absent</button>
                     </div>
@@ -4160,7 +4175,7 @@ function playerAtPosition(position: string) {
                   borderRadius: '8px',
                   background: '#f7f7f7',
                 }}
-                open={false}
+                open={true}
               >
                 <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
                   Coach Assist
@@ -4483,7 +4498,7 @@ function playerAtPosition(position: string) {
             Q{selectedQuarter} Positions
           </h3>
 
-          <div style={{ borderRadius: 14, padding: 12, background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)', border: '2px solid #b8cdb8', display: 'grid', gap: 8 }}>
+          <div className="tactical-pitch" style={{ borderRadius: 14, padding: 12, background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)', border: '2px solid #b8cdb8', display: 'grid', gap: 8 }}>
             {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
               <div key={rowIndex} style={{ display: 'grid', gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`, gap: 8 }}>
                 {row.map((position) => {
@@ -4493,6 +4508,21 @@ function playerAtPosition(position: string) {
                     <button
                       key={position}
                       type="button"
+                      className={`tactical-position-slot ${player ? 'is-filled' : 'is-empty'}`}
+                      aria-label={player ? `${positionShort(position)}: ${player.first_name || player.name.split(' ')[0]}, change assignment` : `Assign player to ${positionShort(position)}`}
+                      draggable={Boolean(player) && canManageGame}
+                      onDragStart={(event) => {
+                        if (!player) return
+                        event.dataTransfer.setData('text/player-id', player.id)
+                        event.dataTransfer.effectAllowed = 'move'
+                      }}
+                      onDragOver={(event) => {
+                        if (canManageGame) {
+                          event.preventDefault()
+                          event.dataTransfer.dropEffect = 'move'
+                        }
+                      }}
+                      onDrop={(event) => handleLineupDrop(event, position)}
                       onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
                       disabled={!canManageGame}
                       style={{ minHeight: 64, padding: 6, border: '1px solid #aab8aa', borderRadius: 8, background: 'white', cursor: canManageGame ? 'pointer' : 'default' }}
@@ -4506,11 +4536,33 @@ function playerAtPosition(position: string) {
             ))}
           </div>
 
-          <div style={{ marginTop: 12, padding: 12, border: '1px solid #d4dce5', borderRadius: 10, background: '#f7f9fb' }}>
-            <strong>Bench / Unused Players</strong>
+          <div
+            className="tactical-bench"
+            style={{ marginTop: 12, padding: 12, border: '1px solid #d4dce5', borderRadius: 10, background: '#f7f9fb' }}
+            onDragOver={(event) => {
+              if (canManageGame) {
+                event.preventDefault()
+                event.dataTransfer.dropEffect = 'move'
+              }
+            }}
+            onDrop={handleBenchDrop}
+          >
+            <strong className="tactical-bench-heading">Bench / Unused Players</strong>
+            <div style={{ fontSize: 12, color: '#5e7467', marginTop: 4 }}>Drag a player here to bench them for this quarter.</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
               {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
-                <button key={player.id} type="button" className="secondary-button" onClick={() => setSelectedPreplanPlayerId(player.id)} disabled={!canManageGame}>
+                <button
+                  key={player.id}
+                  type="button"
+                  className="secondary-button tactical-bench-player"
+                  draggable={canManageGame && playerAvailableForQuarter(player.id, selectedQuarter)}
+                  onDragStart={(event) => {
+                    event.dataTransfer.setData('text/player-id', player.id)
+                    event.dataTransfer.effectAllowed = 'move'
+                  }}
+                  onClick={() => setSelectedPreplanPlayerId(player.id)}
+                  disabled={!canManageGame}
+                >
                   #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
                 </button>
               ))}
