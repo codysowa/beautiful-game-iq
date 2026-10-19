@@ -2018,3 +2018,40 @@ input:focus, select:focus, textarea:focus {
 .main-content:has(.lineup-heading) .bgiq-bench-players .secondary-button{min-height:40px;color:#f5fbff;border-color:#355466;background:#1b3544;font-weight:700}
 .main-content:has(.lineup-heading) .lineup-heading{margin:16px 0 10px;color:#e8f3f7;font-size:clamp(18px,2vw,24px);letter-spacing:-.025em}
 @media(max-width:600px){.main-content:has(.lineup-heading) .bgiq-pitch-board{padding:13px;gap:9px}.main-content:has(.lineup-heading) .bgiq-pitch-markings{inset:7px}.main-content:has(.lineup-heading) .bgiq-pitch-row>button{min-height:54px!important;padding:6px 3px!important}.main-content:has(.lineup-heading) .bgiq-player-label{font-size:10px}.main-content:has(.lineup-heading) .bgiq-bench-players{gap:6px}}
+
+
+/* Lineup workspace rebuild: one dark tactical surface, not the previous light-card theme. */
+.main-content:has(.lineup-heading) { color:#e7f0f5; }
+.main-content:has(.lineup-heading) > .back-button { color:#b8cbd5; margin:0 0 10px; background:transparent; border:0; box-shadow:none; padding:4px 0; }
+.main-content:has(.lineup-heading) > .team-card,
+.main-content:has(.lineup-heading) > section.team-card { background:#10202d; color:#eaf2f6; border:1px solid #263c4b; border-radius:12px; box-shadow:0 8px 20px rgba(2,10,16,.18); }
+.main-content:has(.lineup-heading) .section-header h2,
+.main-content:has(.lineup-heading) h2,
+.main-content:has(.lineup-heading) h3 { color:#edf5f8; }
+.main-content:has(.lineup-heading) .section-header span,
+.main-content:has(.lineup-heading) section span { color:#a8bdc9; }
+.main-content:has(.lineup-heading) .primary-button { background:linear-gradient(110deg,#64e6ad,#24c989); color:#06291e; border:0; font-weight:800; box-shadow:0 2px 7px rgba(25,210,137,.16); }
+.main-content:has(.lineup-heading) .secondary-button { background:#203847; color:#eaf4f8; border:1px solid #365363; }
+.main-content:has(.lineup-heading) input,
+.main-content:has(.lineup-heading) select,
+.main-content:has(.lineup-heading) textarea { background:#0a1721; color:#e9f2f6; border:1px solid #365060; }
+.main-content:has(.lineup-heading) details { background:#172b39 !important; border-color:#304858 !important; border-radius:10px !important; }
+.main-content:has(.lineup-heading) details summary { color:#5ce5a7; }
+.main-content:has(.lineup-heading) details > div { color:#a8bdc9; }
+.main-content:has(.lineup-heading) .lineup-heading { padding-top:4px; }
+.main-content:has(.lineup-heading) .bgiq-pitch-board { margin-bottom:0; }
+.main-content:has(.lineup-heading) .bgiq-bench-panel { background:#f3f7f9; }
+.main-content:has(.lineup-heading) .bgiq-bench-panel strong { color:#203746; }
+.main-content:has(.lineup-heading) > section[style*="Full Game Lineup"],
+.main-content:has(.lineup-heading) section[style*="Full Game Lineup"] { background:#10202d !important; border-color:#2b4352 !important; color:#eaf2f6; }
+.main-content:has(.lineup-heading) section[style*="Full Game Lineup"] > div > div > div { border-color:#2b4352 !important; background:#172b39 !important; }
+.main-content:has(.lineup-heading) section[style*="Full Game Lineup"] > div > div > div > div { background:#dff4e6 !important; border-color:#b8d7c3 !important; }
+.main-content:has(.lineup-heading) section[style*="Full Game Lineup"] > div > div > div > div div { color:#173c2b; }
+.main-content:has(.lineup-heading) section[style*="Position History"] { background:#10202d; }
+.main-content:has(.lineup-heading) table th { background:#203847 !important; color:#e6f0f4; }
+.main-content:has(.lineup-heading) table td { color:#d5e3e9; }
+@media(max-width:640px) {
+ .main-content:has(.lineup-heading) > .team-card { padding:10px !important; }
+ .main-content:has(.lineup-heading) .section-header { gap:8px; }
+ .main-content:has(.lineup-heading) .section-header h2 { font-size:17px; }
+}
