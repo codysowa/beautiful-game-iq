@@ -4175,7 +4175,7 @@ function playerAtPosition(position: string) {
                   borderRadius: '8px',
                   background: '#f7f7f7',
                 }}
-                open={false}
+                open={true}
               >
                 <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
                   Coach Assist
