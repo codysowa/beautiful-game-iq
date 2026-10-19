@@ -1422,6 +1422,13 @@ function App() {
     return attendance.available_quarters.includes(quarter)
   }
 
+  function handleLineupDrop(event: React.DragEvent<HTMLElement>, position: string) {
+    event.preventDefault()
+    const playerId = event.dataTransfer.getData('text/player-id')
+    if (!playerId) return
+    assignPlayer(playerId, position)
+  }
+
   function assignPlayer(playerId: string, position: string) {
     if (!playerAvailableForQuarter(playerId, selectedQuarter)) {
 
@@ -3608,12 +3615,12 @@ function playerAtPosition(position: string) {
     if (plannedQuarters.length === 0) return null
 
     return (
-      <section className="team-card">
-        <div className="section-header">
+      <section className="team-card position-history-card">
+        <div className="section-header position-history-header">
           <div>
             <h2>Position History</h2>
             <span>
-              Where everyone has played so far.
+              A quick view of position variety across the planned game. Unsaved changes in the selected quarter are included.
             </span>
           </div>
         </div>
@@ -3624,7 +3631,7 @@ function playerAtPosition(position: string) {
             marginTop: '12px',
           }}
         >
-          <table
+          <table className="position-history-table"
             style={{
               width: '100%',
               borderCollapse: 'collapse',
@@ -4495,6 +4502,19 @@ function playerAtPosition(position: string) {
                       type="button"
                       className={`tactical-position-slot ${player ? 'is-filled' : 'is-empty'}`}
                       aria-label={player ? `${positionShort(position)}: ${player.first_name || player.name.split(' ')[0]}, change assignment` : `Assign player to ${positionShort(position)}`}
+                      draggable={Boolean(player) && canManageGame}
+                      onDragStart={(event) => {
+                        if (!player) return
+                        event.dataTransfer.setData('text/player-id', player.id)
+                        event.dataTransfer.effectAllowed = 'move'
+                      }}
+                      onDragOver={(event) => {
+                        if (canManageGame) {
+                          event.preventDefault()
+                          event.dataTransfer.dropEffect = 'move'
+                        }
+                      }}
+                      onDrop={(event) => handleLineupDrop(event, position)}
                       onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
                       disabled={!canManageGame}
                       style={{ minHeight: 64, padding: 6, border: '1px solid #aab8aa', borderRadius: 8, background: 'white', cursor: canManageGame ? 'pointer' : 'default' }}
@@ -4512,7 +4532,18 @@ function playerAtPosition(position: string) {
             <strong className="tactical-bench-heading">Bench / Unused Players</strong>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
               {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
-                <button key={player.id} type="button" className="secondary-button tactical-bench-player" onClick={() => setSelectedPreplanPlayerId(player.id)} disabled={!canManageGame}>
+                <button
+                  key={player.id}
+                  type="button"
+                  className="secondary-button tactical-bench-player"
+                  draggable={canManageGame && playerAvailableForQuarter(player.id, selectedQuarter)}
+                  onDragStart={(event) => {
+                    event.dataTransfer.setData('text/player-id', player.id)
+                    event.dataTransfer.effectAllowed = 'move'
+                  }}
+                  onClick={() => setSelectedPreplanPlayerId(player.id)}
+                  disabled={!canManageGame}
+                >
                   #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
                 </button>
               ))}
