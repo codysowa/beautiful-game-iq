@@ -1432,7 +1432,7 @@ function App() {
   function handleBenchDrop(event: React.DragEvent<HTMLElement>) {
     event.preventDefault()
     const playerId = event.dataTransfer.getData('text/player-id')
-    if (!playerId || !canManageGame) return
+    if (!playerId) return
     setLineup((current) => current.filter((item) => item.player_id !== playerId))
     setSelectedPreplanPlayerId(null)
   }
