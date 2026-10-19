@@ -4705,7 +4705,7 @@ function playerAtPosition(position: string) {
             </section>
           )}
 
-          <section style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }}>
+          <section className="bgiq-full-game-lineup" style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }}>
             <div style={{ marginBottom: '10px' }}>
               <strong style={{ fontSize: 18 }}>Full Game Lineup</strong>
               <div style={{ fontSize: 12, opacity: 0.7, marginTop: 3 }}>
