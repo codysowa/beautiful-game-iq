@@ -4465,7 +4465,54 @@ function playerAtPosition(position: string) {
                     disabled={savingLineup || !canManageGame}
                   >
                     <option value={0}>Choose quarter</option>
-                    {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter)          <h3 className="lineup-heading">Q{selectedQuarter} Positions</h3>
+                    {[1, 2, 3, 4]
+                      .filter((quarter) => quarter !== selectedQuarter)
+                      .map((quarter) => (
+                        <option key={quarter} value={quarter}>Q{quarter}</option>
+                      ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={!copySourceQuarter || savingLineup || !canManageGame}
+                  onClick={() => void copyQuarterFromCurrentGame(copySourceQuarter)}
+                >
+                  Copy Q{copySourceQuarter || '?'} → Q{selectedQuarter}
+                </button>
+              </div>
+
+              {previousGamesForCopy().length > 0 && (
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #eee' }}>
+                  <h3 style={{ margin: '0 0 8px' }}>Copy From Previous Game</h3>
+                  <div style={{ display: 'grid', gap: '8px' }}>
+                    <select
+                      value={copySourceGameId}
+                      onChange={(e) => setCopySourceGameId(e.target.value)}
+                      disabled={savingLineup || !canManageGame}
+                    >
+                      <option value="">Select a previous game...</option>
+                      {previousGamesForCopy().map((game) => (
+                        <option key={game.id} value={game.id}>
+                          {game.game_date} — {game.opponent}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={copyEntireGameFromGame}
+                      disabled={savingLineup || !canManageGame || !copySourceGameId}
+                    >
+                      Copy Entire Game
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </details>
+
+          <h3 className="lineup-heading">Q{selectedQuarter} Positions</h3>
 
           <div className="lineup-pitch" aria-label="Soccer field lineup">
             <div className="lineup-pitch-markings" aria-hidden="true">
@@ -4493,13 +4540,12 @@ function playerAtPosition(position: string) {
                         className={player ? `lineup-position-slot occupied ${colorClass}` : `lineup-position-slot ${colorClass}`}
                         onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
                         disabled={!canManageGame}
-                        aria-label={`${position}: ${player ? player.name : 'empty, drop a player or click to assign'}`}
+                        aria-label={`${position}: ${player ? player.name : 'empty, click to assign'}`}
                       >
                         <span className="lineup-position-badge">{positionShort(position)}</span>
                         <span className="lineup-position-player">
                           {player ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}` : '+ Assign'}
                         </span>
-                        
                       </button>
                     )
                   })}
@@ -4524,7 +4570,6 @@ function playerAtPosition(position: string) {
                   onClick={() => setSelectedPreplanPlayerId(player.id)}
                   disabled={!canManageGame}
                 >
-                  <span className="lineup-bench-grip" aria-hidden="true">⠿</span>
                   <span className="lineup-bench-number">#{player.jersey_number ?? '-'}</span>
                   <span>{player.first_name || player.name.split(' ')[0]}</span>
                 </button>
@@ -4535,39 +4580,6 @@ function playerAtPosition(position: string) {
             </div>
             <p className="lineup-drag-note">Tap a player or position to use the assignment controls.</p>
           </div>
-
-er = assignment ? players.find((p) => p.id === assignment.player_id) : null
-                  return (
-                    <button
-                      key={position}
-                      type="button"
-                      onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
-                      disabled={!canManageGame}
-                      style={{ minHeight: 64, padding: 6, border: '1px solid #aab8aa', borderRadius: 8, background: 'white', cursor: canManageGame ? 'pointer' : 'default' }}
-                    >
-                      <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.65 }}>{positionShort(position)}</div>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{player ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}` : 'Tap to assign'}</div>
-                    </button>
-                  )
-                })}
-              </div>
-            ))}
-          </div>
-
-          <div style={{ marginTop: 12, padding: 12, border: '1px solid #d4dce5', borderRadius: 10, background: '#f7f9fb' }}>
-            <strong>Bench / Unused Players</strong>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-              {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
-                <button key={player.id} type="button" className="secondary-button" onClick={() => setSelectedPreplanPlayerId(player.id)} disabled={!canManageGame}>
-                  #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
-                </button>
-              ))}
-              {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).length === 0 && (
-                <span style={{ fontSize: 13, opacity: .7 }}>No unused players</span>
-              )}
-            </div>
-          </div>
-
 
           {selectedPreplanPlayerId && (
             <div className="lineup-assignment-overlay">
