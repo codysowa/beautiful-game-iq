@@ -1954,3 +1954,47 @@ input:focus, select:focus, textarea:focus {
 @media (prefers-reduced-motion: reduce) {
   .tactical-position-slot { transition: none; }
 }
+
+
+/* Position history: a readable, compact coaching matrix. */
+.position-history-card {
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid #dbe4df;
+  background: #fff;
+}
+.position-history-header { margin-bottom: 4px; }
+.position-history-table {
+  border-spacing: 0;
+  color: #20372b;
+  font-size: 12px;
+}
+.position-history-table th {
+  background: #f1f6f2;
+  color: #466451;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #dce7df;
+}
+.position-history-table td {
+  border-bottom: 1px solid #edf1ee;
+  vertical-align: middle;
+}
+.position-history-table tbody tr:nth-child(even) td { background-color: #f9fbf9; }
+.position-history-table tbody tr:hover td { background-color: #edf7f0; }
+.position-history-table tbody tr:last-child td { border-bottom: 0; }
+.position-history-table th:first-child,
+.position-history-table td:first-child {
+  background-color: #f7faf8;
+  color: #20372b;
+  box-shadow: 2px 0 5px rgba(20, 45, 30, .05);
+}
+.tactical-position-slot[draggable="true"] { cursor: grab; }
+.tactical-position-slot[draggable="true"]:active { cursor: grabbing; }
+.tactical-position-slot.is-empty:focus-visible { background: #f1faf4 !important; }
+@media (max-width: 520px) {
+  .position-history-table { font-size: 11px; }
+  .position-history-table th, .position-history-table td { padding: 7px 4px !important; }
+}
