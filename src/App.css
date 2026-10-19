@@ -2497,3 +2497,141 @@ input:focus, select:focus, textarea:focus {
 @media (prefers-reduced-motion: reduce) {
   .main-content:has(.tactical-pitch) button { transition: none; }
 }
+
+
+/* Final Stitch direction: bright match-day workspace, not dark-mode inversion.
+   This intentionally overrides legacy inline-style color patches above. */
+.main-content:has(.tactical-pitch) {
+  --coach-ink: #193b55 !important;
+  --coach-muted: #70869a !important;
+  color: #193b55 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.main-content:has(.tactical-pitch) .team-card,
+.main-content:has(.tactical-pitch) .section-card,
+.main-content:has(.tactical-pitch) .position-history-card,
+.main-content:has(.tactical-pitch) details,
+.main-content:has(.tactical-pitch) details[open],
+.main-content:has(.tactical-pitch) details > div,
+.main-content:has(.tactical-pitch) details > section {
+  color: #193b55 !important;
+  background: #fff !important;
+  border-color: #e0eaf0 !important;
+  box-shadow: 0 5px 18px rgba(35, 70, 95, .055) !important;
+}
+.main-content:has(.tactical-pitch) h1,
+.main-content:has(.tactical-pitch) h2,
+.main-content:has(.tactical-pitch) h3,
+.main-content:has(.tactical-pitch) h4,
+.main-content:has(.tactical-pitch) strong,
+.main-content:has(.tactical-pitch) label,
+.main-content:has(.tactical-pitch) summary,
+.main-content:has(.tactical-pitch) .position-history-table,
+.main-content:has(.tactical-pitch) .position-history-table td {
+  color: #23445d !important;
+}
+.main-content:has(.tactical-pitch) p,
+.main-content:has(.tactical-pitch) small,
+.main-content:has(.tactical-pitch) .section-header span {
+  color: #74899b !important;
+}
+.main-content:has(.tactical-pitch) input,
+.main-content:has(.tactical-pitch) select,
+.main-content:has(.tactical-pitch) textarea,
+.main-content:has(.tactical-pitch) [role="combobox"] {
+  color: #27465e !important;
+  background: #f5f9fc !important;
+  border-color: #dce7ee !important;
+}
+.main-content:has(.tactical-pitch) .attendance-player-row {
+  display: grid !important;
+  grid-template-columns: minmax(105px, 1fr) minmax(240px, 2.1fr) minmax(150px, 1fr) !important;
+  gap: 8px !important;
+  align-items: center !important;
+  margin: 5px 0 !important;
+  padding: 7px 9px !important;
+  border: 1px solid #e7eef3 !important;
+  border-radius: 10px !important;
+  background: #fbfdff !important;
+}
+.main-content:has(.tactical-pitch) .attendance-quarter-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+}
+.main-content:has(.tactical-pitch) .attendance-quarter-grid button {
+  min-height: 29px !important;
+  padding: 4px 2px !important;
+  border-radius: 7px !important;
+  font-size: 10px !important;
+}
+.main-content:has(.tactical-pitch) .attendance-shortcuts button {
+  min-height: 29px !important;
+  padding: 4px 6px !important;
+  border-radius: 7px !important;
+  font-size: 10px !important;
+  white-space: nowrap !important;
+}
+.main-content:has(.tactical-pitch) .tactical-pitch {
+  background:
+    linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,255,255,.48) calc(50% - 1px), rgba(255,255,255,.48) calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(0deg, transparent calc(50% - 1px), rgba(255,255,255,.38) calc(50% - 1px), rgba(255,255,255,.38) calc(50% + 1px), transparent calc(50% + 1px)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0, rgba(255,255,255,.025) 34px, transparent 34px, transparent 68px),
+    linear-gradient(135deg, #188254, #239763 52%, #14784d) !important;
+  border: 3px solid #168456 !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 0 5px rgba(255,255,255,.16), 0 7px 18px rgba(22,110,73,.12) !important;
+}
+.main-content:has(.tactical-pitch) .tactical-position-slot,
+.main-content:has(.tactical-pitch) .tactical-position-slot.is-filled {
+  color: #1d4058 !important;
+  background: linear-gradient(145deg, #ffffff, #eaf8f0) !important;
+  border: 2px solid #d2ebdc !important;
+  border-radius: 11px !important;
+  box-shadow: 0 3px 8px rgba(4, 58, 37, .12) !important;
+}
+.main-content:has(.tactical-pitch) .tactical-position-slot.is-empty {
+  color: #e9fff2 !important;
+  background: rgba(5, 79, 49, .24) !important;
+  border: 2px dashed rgba(255,255,255,.8) !important;
+}
+.main-content:has(.tactical-pitch) .tactical-bench {
+  color: #24465d !important;
+  background: linear-gradient(110deg, #f2fbf5, #ffffff) !important;
+  border: 1px dashed #b8d8c7 !important;
+  border-radius: 12px !important;
+}
+.main-content:has(.tactical-pitch) .tactical-bench-player {
+  color: #28526a !important;
+  background: #e8f7ee !important;
+  border: 1px solid #cce7d7 !important;
+  border-radius: 999px !important;
+}
+.main-content:has(.tactical-pitch) .position-history-table th {
+  color: #537086 !important;
+  background: #f0f6f9 !important;
+}
+.main-content:has(.tactical-pitch) .position-history-table tbody tr:nth-child(even) td {
+  background: #f7fafc !important;
+}
+.main-content:has(.tactical-pitch) .primary-button {
+  color: #fff !important;
+  background: linear-gradient(135deg, #1a9865, #11794f) !important;
+  border-color: #168558 !important;
+}
+.main-content:has(.tactical-pitch) .secondary-button {
+  color: #38566e !important;
+  background: #eef4f8 !important;
+  border-color: #dce7ee !important;
+}
+@media (max-width: 760px) {
+  .main-content:has(.tactical-pitch) .attendance-player-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 6px !important;
+  }
+  .main-content:has(.tactical-pitch) .attendance-quarter-grid button,
+  .main-content:has(.tactical-pitch) .attendance-shortcuts button {
+    min-height: 32px !important;
+  }
+}
