@@ -4129,12 +4129,12 @@ function playerAtPosition(position: string) {
                   }).map((player) => {
                 const quarters = gameAttendance[player.id]?.available_quarters || [1, 2, 3, 4]
                 return (
-                  <div key={player.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                  <div key={player.id} className="attendance-player-row" style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
                       <strong>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
                       <span style={{ fontSize: '12px', opacity: 0.7 }}>{attendanceSummary(quarters)}</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px', marginTop: '7px' }}>
+                    <div className="attendance-quarter-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '6px', marginTop: '7px' }}>
                       {[1, 2, 3, 4].map((q) => {
                         const on = quarters.includes(q)
                         return (
@@ -4154,7 +4154,7 @@ function playerAtPosition(position: string) {
                         )
                       })}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '6px' }}>
+                    <div className="attendance-shortcuts" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '6px' }}>
                       <button type="button" className="secondary-button" disabled={!canManageGame} onClick={() => void saveAttendanceAvailability(player.id, [1, 2, 3, 4])} style={{ padding: '8px', fontSize: '12px' }}>All Quarters</button>
                       <button type="button" className="secondary-button" disabled={!canManageGame} onClick={() => void saveAttendanceAvailability(player.id, [])} style={{ padding: '8px', fontSize: '12px' }}>Absent</button>
                     </div>
