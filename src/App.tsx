@@ -4539,6 +4539,12 @@ function playerAtPosition(position: string) {
                         type="button"
                         className={player ? `lineup-position-slot occupied ${colorClass}` : `lineup-position-slot ${colorClass}`}
                         onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const playerId = e.dataTransfer.getData("text/plain");
+                          if (playerId) assignPlayer(playerId, position);
+                        }}
                         disabled={!canManageGame}
                         aria-label={`${position}: ${player ? player.name : 'empty, click to assign'}`}
                       >
@@ -4566,7 +4572,9 @@ function playerAtPosition(position: string) {
                 <button
                   key={player.id}
                   type="button"
-                  className="lineup-bench-player"
+                  draggable={true}
+                  onDragStart={(e) => e.dataTransfer.setData("text/plain", player.id)}
+                  className="lineup-bench-player cursor-grab active:cursor-grabbing"
                   onClick={() => setSelectedPreplanPlayerId(player.id)}
                   disabled={!canManageGame}
                 >
