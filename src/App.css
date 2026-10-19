@@ -1849,3 +1849,108 @@ input:focus, select:focus, textarea:focus {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+
+/* Tactical lineup workspace: make the pitch and player assignments the visual focus. */
+.tactical-pitch {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  gap: 12px !important;
+  border: 1px solid #9fc5a8 !important;
+  background:
+    linear-gradient(90deg, transparent calc(50% - .5px), rgba(255,255,255,.42) calc(50% - .5px), rgba(255,255,255,.42) calc(50% + .5px), transparent calc(50% + .5px)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.10) 0, rgba(255,255,255,.10) 1px, transparent 1px, transparent 44px),
+    linear-gradient(180deg, #d9efdc 0%, #c4e4cb 100%) !important;
+  box-shadow: inset 0 0 0 5px rgba(255,255,255,.23), 0 10px 24px rgba(21, 76, 48, .08);
+}
+.tactical-pitch::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 50% 0 auto;
+  border-top: 1px solid rgba(255,255,255,.55);
+  pointer-events: none;
+}
+.tactical-position-slot {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #183a2a;
+  box-shadow: 0 3px 7px rgba(18, 55, 35, .10);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.tactical-position-slot.is-filled {
+  border-color: #8db8a0 !important;
+  background: linear-gradient(180deg, #fff 0%, #f5fbf7 100%) !important;
+}
+.tactical-position-slot.is-empty {
+  border: 1px dashed #6d9b7b !important;
+  background: rgba(255,255,255,.68) !important;
+  color: #4f775e;
+}
+.tactical-position-slot:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: #19764f !important;
+  box-shadow: 0 7px 14px rgba(18, 55, 35, .15);
+}
+.tactical-position-slot:focus-visible {
+  outline: 3px solid #176b4b;
+  outline-offset: 2px;
+}
+.tactical-position-slot > div:first-child {
+  font-size: 10px !important;
+  letter-spacing: .1em;
+  color: #4c7660;
+}
+.tactical-position-slot > div:last-child {
+  overflow-wrap: anywhere;
+  line-height: 1.25 !important;
+}
+.tactical-bench {
+  border-color: #d5e1da !important;
+  background: linear-gradient(145deg, #fff 0%, #f5f9f7 100%) !important;
+  box-shadow: 0 5px 18px rgba(23, 43, 73, .045);
+}
+.tactical-bench-heading {
+  display: block;
+  margin-bottom: 2px;
+  color: #203b2c;
+  letter-spacing: -.01em;
+}
+.tactical-bench-player {
+  border-color: #d4e2d9 !important;
+  background: #fff !important;
+  color: #294d39 !important;
+  box-shadow: 0 2px 5px rgba(23, 43, 73, .04);
+}
+.tactical-bench-player:hover:not(:disabled) {
+  border-color: #8bbba0 !important;
+  background: #eef8f1 !important;
+}
+.quarter-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+}
+.quarter-tabs button {
+  min-height: 44px;
+  border-radius: 12px;
+  font-weight: 800;
+}
+@media (max-width: 520px) {
+  .tactical-pitch { padding: 8px !important; gap: 8px !important; }
+  .tactical-pitch > div { gap: 6px !important; }
+  .tactical-position-slot { min-height: 58px !important; padding: 4px 2px !important; }
+  .tactical-position-slot > div:last-child { font-size: 12px !important; }
+  .quarter-tabs { gap: 5px; }
+  .quarter-tabs button { padding: 9px 3px; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tactical-position-slot { transition: none; }
+}
