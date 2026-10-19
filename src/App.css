@@ -2203,3 +2203,69 @@ input:focus, select:focus, textarea:focus {
 @media (prefers-reduced-motion: reduce) {
   .main-content:has(.tactical-pitch) button { transition: none; }
 }
+
+
+/* Finish the Stitch treatment on the remaining inline-styled lineup widgets. */
+.main-content:has(.tactical-pitch) details {
+  color: #eaf3ff;
+  background: linear-gradient(145deg, #122136, #0d1a2a) !important;
+  border: 1px solid #2b4057 !important;
+  border-radius: 14px !important;
+}
+.main-content:has(.tactical-pitch) details > summary {
+  color: #eff7ff;
+  padding: 4px 2px;
+}
+.main-content:has(.tactical-pitch) details[open] > summary {
+  margin-bottom: 10px;
+  color: #a6f3ce;
+}
+.main-content:has(.tactical-pitch) details > div,
+.main-content:has(.tactical-pitch) details > section {
+  color: #dce8f7;
+}
+.main-content:has(.tactical-pitch) [style*="background: '#fff'"],
+.main-content:has(.tactical-pitch) [style*="background: '#f7f7f7'"],
+.main-content:has(.tactical-pitch) [style*="background: '#f7f9fb'"],
+.main-content:has(.tactical-pitch) [style*="background: 'white'"],
+.main-content:has(.tactical-pitch) [style*="background: white"],
+.main-content:has(.tactical-pitch) [style*="background: rgb(255, 255, 255)"] {
+  color: #eaf3ff !important;
+  background: linear-gradient(145deg, #172a40, #102035) !important;
+  border-color: #2d465c !important;
+}
+.main-content:has(.tactical-pitch) [style*="border: '1px solid #ddd'"],
+.main-content:has(.tactical-pitch) [style*="border: '1px solid #ccc'"] {
+  border-color: #2b4057 !important;
+}
+.main-content:has(.tactical-pitch) .position-history-card,
+.main-content:has(.tactical-pitch) .position-history-table {
+  max-width: 100%;
+}
+.main-content:has(.tactical-pitch) .position-history-table td {
+  padding: 9px 10px !important;
+}
+.main-content:has(.tactical-pitch) .position-history-table td:first-child {
+  font-weight: 750;
+}
+.main-content:has(.tactical-pitch) .position-history-table tbody tr td:not(:first-child) {
+  text-align: center;
+}
+.main-content:has(.tactical-pitch) .position-history-table tbody tr td:nth-child(2),
+.main-content:has(.tactical-pitch) .position-history-table tbody tr td:nth-child(3),
+.main-content:has(.tactical-pitch) .position-history-table tbody tr td:nth-child(4),
+.main-content:has(.tactical-pitch) .position-history-table tbody tr td:nth-child(5) {
+  min-width: 64px;
+}
+.main-content:has(.tactical-pitch) section[style*="border: '1px solid #ddd'"] {
+  color: #eaf3ff;
+  border-color: #2b4057 !important;
+}
+@media (max-width: 600px) {
+  .main-content:has(.tactical-pitch) .position-history-table td {
+    padding: 7px 5px !important;
+  }
+  .main-content:has(.tactical-pitch) .position-history-table tbody tr td:nth-child(n+2) {
+    min-width: 42px;
+  }
+}
