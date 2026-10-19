@@ -3670,8 +3670,10 @@ function playerAtPosition(position: string) {
                     position: 'sticky',
                     left: 0,
                     zIndex: 2,
-                    background: '#fff',
-                    boxShadow: '2px 0 4px rgba(0,0,0,0.06)',
+                    background: '#0f172a',
+                    color: '#fff',
+                    borderRight: '1px solid #1e293b',
+                    boxShadow: '2px 0 4px rgba(0,0,0,0.25)',
                   }}
                 >
                   Player
@@ -3704,8 +3706,10 @@ function playerAtPosition(position: string) {
                       position: 'sticky',
                       left: 0,
                       zIndex: 1,
-                      background: '#fff',
-                      boxShadow: '2px 0 4px rgba(0,0,0,0.06)',
+                      background: '#0f172a',
+                      color: '#fff',
+                      borderRight: '1px solid #1e293b',
+                      boxShadow: '2px 0 4px rgba(0,0,0,0.25)',
                     }}
                   >
                     {player.jersey_number !== null
@@ -4188,9 +4192,10 @@ function playerAtPosition(position: string) {
                 style={{
                   marginBottom: '12px',
                   padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  background: '#f7f7f7',
+                  border: '1px solid #1e293b',
+                  borderRadius: '16px',
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  color: '#fff',
                 }}
                 open={false}
               >
@@ -4198,14 +4203,14 @@ function playerAtPosition(position: string) {
                   Coach Assist
                 </summary>
                 <div style={{ marginTop: '10px' }}>
-                <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.7 }}>
+                <div style={{ fontSize: '12px', marginTop: '4px', color: '#e2e8f0' }}>
                   {advice.message}
                 </div>
 
                 <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #ddd' }}>
-                  <div style={{ marginTop: '10px', padding: '10px', border: '1px solid #ccc', borderRadius: '8px', background: '#fff' }}>
+                  <div style={{ marginTop: '10px', padding: '10px', border: '1px solid #1e293b', borderRadius: '12px', background: '#0f172a', color: '#fff' }}>
                     <strong>Game Situation</strong>
-                    <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.7 }}>
+                    <div style={{ fontSize: '12px', marginTop: '4px', color: '#e2e8f0' }}>
                       Changes Coach Assist priorities without changing your team rules.
                     </div>
                     <select
@@ -4216,7 +4221,7 @@ function playerAtPosition(position: string) {
                         setQuarterSuggestion(null)
                         setWholeGameSuggestion(null)
                       }}
-                      style={{ marginTop: '8px', width: '100%' }}
+                      style={{ marginTop: '8px', width: '100%', background: '#020617', color: '#fff', border: '1px solid #1e293b', borderRadius: '12px', padding: '10px', fontWeight: 700 }}
                     >
                       <option>Normal</option>
                       <option>Protect Lead</option>
@@ -4226,7 +4231,7 @@ function playerAtPosition(position: string) {
                     </select>
                     <div style={{ marginTop: '10px' }}>
                       <strong>Formation</strong>
-                      <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.7 }}>
+                      <div style={{ fontSize: '12px', marginTop: '4px', color: '#e2e8f0' }}>
                         Choose the shape for the lineup and Coach Assist. Changing the formation updates the position slots below.
                       </div>
                       <select
@@ -4247,7 +4252,7 @@ function playerAtPosition(position: string) {
                             current.filter((item) => nextPositions.includes(item.position))
                           )
                         }}
-                        style={{ marginTop: '8px', width: '100%' }}
+                        style={{ marginTop: '8px', width: '100%', background: '#020617', color: '#fff', border: '1px solid #1e293b', borderRadius: '12px', padding: '10px', fontWeight: 700 }}
                       >
                         {getFormationsForFormat(selectedGame?.format || '7v7').map((formation) => (
                           <option key={formation} value={formation}>{formation}</option>
@@ -4538,6 +4543,10 @@ function playerAtPosition(position: string) {
                         key={position}
                         type="button"
                         className={player ? `lineup-position-slot occupied ${colorClass}` : `lineup-position-slot ${colorClass}`}
+                        draggable={!!player}
+                        onDragStart={(e) => {
+                          if (player) e.dataTransfer.setData("text/plain", player.id);
+                        }}
                         onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={(e) => {
@@ -4772,10 +4781,10 @@ function playerAtPosition(position: string) {
             </section>
           )}
 
-          <section style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }}>
+          <section style={{ marginBottom: '12px', padding: '16px', border: '1px solid #1e293b', borderRadius: '16px', background: 'rgba(15, 23, 42, 0.6)', color: '#fff' }}>
             <div style={{ marginBottom: '10px' }}>
-              <strong style={{ fontSize: 18 }}>Full Game Lineup</strong>
-              <div style={{ fontSize: 12, opacity: 0.7, marginTop: 3 }}>
+              <strong style={{ fontSize: 18, color: '#fff' }}>Full Game Lineup</strong>
+              <div style={{ fontSize: 12, color: '#e2e8f0', marginTop: 3 }}>
                 Q1-Q4 at a glance. The current quarter reflects any unsaved changes.
               </div>
             </div>
@@ -4793,23 +4802,24 @@ function playerAtPosition(position: string) {
                   <div
                     key={quarter}
                     style={{
-                      padding: 10,
-                      border: selectedQuarter === quarter ? '2px solid #888' : '1px solid #cfd8cf',
-                      borderRadius: 10,
-                      background: selectedQuarter === quarter ? '#f7faf7' : '#fafafa',
+                      padding: 16,
+                      border: selectedQuarter === quarter ? '2px solid #22c55e' : '1px solid #1e293b',
+                      borderRadius: 16,
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      color: '#fff',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
                       <strong>Q{quarter} ({quarterLineup.length})</strong>
-                      <span style={{ fontSize: 12, opacity: 0.7 }}>Bench: {benchCount}</span>
+                      <span style={{ fontSize: 12, color: '#e2e8f0' }}>Bench: {benchCount}</span>
                     </div>
 
                     <div
                       style={{
                         borderRadius: 8,
                         padding: 7,
-                        background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)',
-                        border: '1px solid #b8cdb8',
+                        background: '#0b1220',
+                        border: '1px solid #1e293b',
                         display: 'grid',
                         gap: 5,
                       }}
@@ -4833,13 +4843,14 @@ function playerAtPosition(position: string) {
                                 style={{
                                   minHeight: 42,
                                   padding: '4px 2px',
-                                  border: '1px solid #aab8aa',
-                                  borderRadius: 6,
-                                  background: '#fff',
+                                  border: '1px solid #334155',
+                                  borderRadius: 8,
+                                  background: '#020617',
+                                  color: '#fff',
                                   textAlign: 'center',
                                 }}
                               >
-                                <div style={{ fontSize: 9, fontWeight: 800, opacity: 0.6 }}>
+                                <div style={{ fontSize: 9, fontWeight: 800, color: '#e2e8f0' }}>
                                   {positionShort(position)}
                                 </div>
                                 <div style={{ fontWeight: 700, fontSize: 11, lineHeight: 1.15 }}>
