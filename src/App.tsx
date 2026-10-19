@@ -4483,7 +4483,7 @@ function playerAtPosition(position: string) {
             Q{selectedQuarter} Positions
           </h3>
 
-          <div style={{ borderRadius: 14, padding: 12, background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)', border: '2px solid #b8cdb8', display: 'grid', gap: 8 }}>
+          <div className="tactical-pitch" style={{ borderRadius: 14, padding: 12, background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)', border: '2px solid #b8cdb8', display: 'grid', gap: 8 }}>
             {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
               <div key={rowIndex} style={{ display: 'grid', gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`, gap: 8 }}>
                 {row.map((position) => {
@@ -4493,6 +4493,8 @@ function playerAtPosition(position: string) {
                     <button
                       key={position}
                       type="button"
+                      className={`tactical-position-slot ${player ? 'is-filled' : 'is-empty'}`}
+                      aria-label={player ? `${positionShort(position)}: ${player.first_name || player.name.split(' ')[0]}, change assignment` : `Assign player to ${positionShort(position)}`}
                       onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
                       disabled={!canManageGame}
                       style={{ minHeight: 64, padding: 6, border: '1px solid #aab8aa', borderRadius: 8, background: 'white', cursor: canManageGame ? 'pointer' : 'default' }}
@@ -4506,11 +4508,11 @@ function playerAtPosition(position: string) {
             ))}
           </div>
 
-          <div style={{ marginTop: 12, padding: 12, border: '1px solid #d4dce5', borderRadius: 10, background: '#f7f9fb' }}>
-            <strong>Bench / Unused Players</strong>
+          <div className="tactical-bench" style={{ marginTop: 12, padding: 12, border: '1px solid #d4dce5', borderRadius: 10, background: '#f7f9fb' }}>
+            <strong className="tactical-bench-heading">Bench / Unused Players</strong>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
               {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
-                <button key={player.id} type="button" className="secondary-button" onClick={() => setSelectedPreplanPlayerId(player.id)} disabled={!canManageGame}>
+                <button key={player.id} type="button" className="secondary-button tactical-bench-player" onClick={() => setSelectedPreplanPlayerId(player.id)} disabled={!canManageGame}>
                   #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
                 </button>
               ))}
