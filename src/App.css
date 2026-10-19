@@ -2837,3 +2837,89 @@ input:focus, select:focus, textarea:focus {
     min-height: 460px !important;
   }
 }
+
+
+/* Match-day visual correction: give the pitch room and keep attendance genuinely compact. */
+.main-content:has(.tactical-pitch) {
+  width: min(1440px, calc(100% - 32px)) !important;
+  max-width: 1440px !important;
+}
+.main-content:has(.tactical-pitch) > .team-card:first-of-type {
+  padding: clamp(14px, 2vw, 24px) !important;
+}
+.main-content:has(.tactical-pitch) .attendance-player-row {
+  grid-template-columns: minmax(125px, 1fr) minmax(260px, 2.3fr) minmax(150px, .95fr) !important;
+  padding: 5px 8px !important;
+  margin: 3px 0 !important;
+  gap: 8px !important;
+  min-height: 40px;
+}
+.main-content:has(.tactical-pitch) .attendance-player-row > div:first-child strong {
+  font-size: 12px !important;
+  line-height: 1.2;
+}
+.main-content:has(.tactical-pitch) .attendance-quarter-grid button,
+.main-content:has(.tactical-pitch) .attendance-shortcuts button {
+  min-height: 28px !important;
+  padding: 4px 6px !important;
+  font-size: 10px !important;
+}
+.main-content:has(.tactical-pitch) .tactical-pitch {
+  width: min(100%, 760px) !important;
+  max-width: 760px !important;
+  min-height: 0 !important;
+  aspect-ratio: .78 / 1 !important;
+  margin: 14px auto 0 !important;
+  padding: clamp(14px, 2vw, 24px) !important;
+  gap: clamp(8px, 1.4vw, 14px) !important;
+  border-radius: 20px !important;
+}
+.main-content:has(.tactical-pitch) .tactical-pitch > div {
+  min-height: 0;
+}
+.main-content:has(.tactical-pitch) .tactical-position-slot,
+.main-content:has(.tactical-pitch) .tactical-position-slot.is-filled {
+  min-height: clamp(52px, 7vw, 88px) !important;
+  border-radius: 12px !important;
+}
+.main-content:has(.tactical-pitch) .tactical-position-slot > div:last-child {
+  font-size: clamp(11px, 1vw, 14px) !important;
+}
+.main-content:has(.tactical-pitch) .tactical-bench {
+  margin-top: 12px !important;
+}
+.main-content:has(.tactical-pitch) .position-history-card {
+  overflow-x: auto;
+}
+.main-content:has(.tactical-pitch) .position-history-table {
+  width: min(100%, 900px) !important;
+}
+@media (min-width: 1100px) {
+  .main-content:has(.tactical-pitch) .tactical-pitch {
+    width: min(100%, 760px) !important;
+  }
+}
+@media (max-width: 760px) {
+  .main-content:has(.tactical-pitch) {
+    width: calc(100% - 16px) !important;
+  }
+  .main-content:has(.tactical-pitch) .attendance-player-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 8px !important;
+    gap: 6px !important;
+  }
+  .main-content:has(.tactical-pitch) .attendance-quarter-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  .main-content:has(.tactical-pitch) .tactical-pitch {
+    width: min(100%, 520px) !important;
+    min-height: 0 !important;
+    aspect-ratio: .72 / 1 !important;
+    padding: 14px 10px !important;
+  }
+  .main-content:has(.tactical-pitch) .tactical-position-slot,
+  .main-content:has(.tactical-pitch) .tactical-position-slot.is-filled {
+    min-height: 48px !important;
+    padding: 5px 3px !important;
+  }
+}
