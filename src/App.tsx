@@ -4013,27 +4013,6 @@ function playerAtPosition(position: string) {
 
     const canManageGame = currentUserRole === 'owner' || currentUserRole === 'coach'
 
-    const handleLineupDrop = async (playerId: string, position: string) => {
-      if (!canManageGame || savingLineup || !playerAvailableForQuarter(playerId, selectedQuarter)) {
-        if (!playerAvailableForQuarter(playerId, selectedQuarter)) {
-          alert(`${playerName(playerId)} is not marked available for Q${selectedQuarter}.`)
-        }
-        return
-      }
-      if (position === 'Goalkeeper' && goalkeeperQuarterCount(playerId) >= 2) {
-        alert(`${playerName(playerId)} has already played 2 goalkeeper quarters.`)
-        return
-      }
-
-      const nextLineup = [
-        ...lineup.filter((item) => item.player_id !== playerId && item.position !== position),
-        { player_id: playerId, quarter: selectedQuarter, position },
-      ]
-      setLineup(nextLineup)
-      // Persist the exact next state rather than relying on React state timing.
-      await saveLineupData(nextLineup, selectedQuarter, false)
-    }
-
     return (
       <div className="lineup-redesign">
         <section className="team-card lineup-redesign-card">
@@ -4513,12 +4492,6 @@ function playerAtPosition(position: string) {
                         type="button"
                         className={player ? `lineup-position-slot occupied ${colorClass}` : `lineup-position-slot ${colorClass}`}
                         onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
-                        onDragOver={(event) => { if (canManageGame) event.preventDefault() }}
-                        onDrop={(event) => {
-                          event.preventDefault()
-                          const playerId = event.dataTransfer.getData('text/player-id')
-                          if (playerId) void handleLineupDrop(playerId, position)
-                        }}
                         disabled={!canManageGame}
                         aria-label={`${position}: ${player ? player.name : 'empty, drop a player or click to assign'}`}
                       >
@@ -4526,7 +4499,7 @@ function playerAtPosition(position: string) {
                         <span className="lineup-position-player">
                           {player ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}` : '+ Assign'}
                         </span>
-                        {player && <span className="lineup-drag-hint" aria-hidden="true">↕</span>}
+                        
                       </button>
                     )
                   })}
@@ -4548,11 +4521,6 @@ function playerAtPosition(position: string) {
                   key={player.id}
                   type="button"
                   className="lineup-bench-player"
-                  draggable={canManageGame && playerAvailableForQuarter(player.id, selectedQuarter) && !savingLineup}
-                  onDragStart={(event) => {
-                    event.dataTransfer.setData('text/player-id', player.id)
-                    event.dataTransfer.effectAllowed = 'move'
-                  }}
                   onClick={() => setSelectedPreplanPlayerId(player.id)}
                   disabled={!canManageGame}
                 >
@@ -4565,7 +4533,7 @@ function playerAtPosition(position: string) {
                 <span className="lineup-bench-empty">All players deployed onto field.</span>
               )}
             </div>
-            <p className="lineup-drag-note">Drag a player onto a position, or tap a player or slot to use the assignment controls.</p>
+            <p className="lineup-drag-note">Tap a player or position to use the assignment controls.</p>
           </div>
 
 er = assignment ? players.find((p) => p.id === assignment.player_id) : null
