@@ -3608,7 +3608,7 @@ function playerAtPosition(position: string) {
     if (plannedQuarters.length === 0) return null
 
     return (
-      <section className="team-card">
+      <section className="team-card bgiq-position-history">
         <div className="section-header">
           <div>
             <h2>Position History</h2>
