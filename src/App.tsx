@@ -4026,10 +4026,10 @@ function playerAtPosition(position: string) {
     const restingPlayers = players.filter((p) => !lineup.some((item) => item.player_id === p.id))
 
     return (
-      <div className="min-h-screen w-full bg-[#080d14] text-slate-100 font-sans antialiased pb-24">
+      <div className="min-h-screen w-full bg-slate-900 text-white font-sans antialiased pb-24">
         
         {/* MATCH CONFIG HEADER BLOCK */}
-        <section className="bg-[#0f1724] border-b border-slate-800 shadow-xl overflow-hidden mb-6">
+        <section className="bg-slate-800 border-b border-slate-800 shadow-xl overflow-hidden mb-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             
             {/* Title Identity Details */}
@@ -4117,13 +4117,13 @@ function playerAtPosition(position: string) {
           <div className="lg:col-span-4 flex flex-col gap-4">
             
             {/* Captain Configuration Deck */}
-            <div className="bg-[#0f1724] border border-slate-800/90 p-5 rounded-2xl shadow-xl">
+            <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl">
               <h3 className="text-xs font-black tracking-widest text-slate-400 uppercase mb-3 flex items-center gap-2">
                 <span>🛡️</span> Game Captains
               </h3>
               <div className="grid grid-cols-1 gap-3">
                 <select 
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white p-3 focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-white p-3 focus:outline-none"
                   value={captain1Id} 
                   onChange={(e) => setCaptain1Id(e.target.value)}
                 >
@@ -4135,7 +4135,7 @@ function playerAtPosition(position: string) {
                   ))}
                 </select>
                 <select 
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white p-3 focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-white p-3 focus:outline-none"
                   value={captain2Id} 
                   onChange={(e) => setCaptain2Id(e.target.value)}
                 >
@@ -4157,7 +4157,7 @@ function playerAtPosition(position: string) {
             </div>
 
             {/* Native Collapsible Coach Assist Drawer Panel */}
-            <details className="bg-[#0f1724] border border-slate-800/90 rounded-2xl shadow-xl overflow-hidden group">
+            <details className="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl text-white overflow-hidden group">
               <summary className="w-full p-5 flex justify-between items-center bg-slate-900/20 hover:bg-slate-900/40 transition text-left cursor-pointer list-none select-none">
                 <div>
                   <h3 className="text-sm font-black text-white tracking-tight flex items-center gap-2">
@@ -4175,7 +4175,7 @@ function playerAtPosition(position: string) {
                   <label className="block text-xs font-bold text-slate-400">
                     Game Situation Override
                     <select
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl text-xs font-black text-white p-3 mt-1.5 focus:border-emerald-500 focus:outline-none"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-white p-3 focus:outline-none"
                       value={gameSituation}
                       disabled={!canManageGame}
                       onChange={(e) => {
@@ -4195,7 +4195,7 @@ function playerAtPosition(position: string) {
                   <label className="block text-xs font-bold text-slate-400">
                     Formation Map Shape
                     <select
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl text-xs font-black text-white p-3 mt-1.5 focus:border-emerald-500 focus:outline-none"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-white p-3 focus:outline-none"
                       value={optimizationFormation}
                       disabled={!canManageGame}
                       onChange={(e) => {
@@ -4236,7 +4236,7 @@ function playerAtPosition(position: string) {
             </details>
 
             {/* Native Collapsible Copy Lineups Operations Panel */}
-            <details className="bg-[#0f1724] border border-slate-800/90 rounded-2xl shadow-xl overflow-hidden group">
+            <details className="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl text-white overflow-hidden group">
               <summary className="w-full p-5 flex justify-between items-center bg-slate-900/20 hover:bg-slate-900/40 transition text-left cursor-pointer list-none select-none">
                 <div>
                   <h3 className="text-sm font-black text-white tracking-tight flex items-center gap-2">
@@ -4254,7 +4254,7 @@ function playerAtPosition(position: string) {
                   <label className="text-xs font-bold text-slate-400">
                     Copy Target Framework
                     <select
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl text-xs font-black text-white p-3 mt-1.5 focus:border-emerald-500 focus:outline-none"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-white p-3 focus:outline-none"
                       value={copySourceQuarter}
                       onChange={(e) => setCopySourceQuarter(Number(e.target.value))}
                       disabled={savingLineup || !canManageGame}
@@ -4279,7 +4279,7 @@ function playerAtPosition(position: string) {
                   <div className="pt-4 border-t border-slate-800 flex flex-col gap-2">
                     <span className="text-xs font-bold text-slate-400 block mb-1">Import Legacy Game Ledger</span>
                     <select
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl text-xs font-black text-white p-3 focus:border-emerald-500 focus:outline-none"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-white p-3 focus:outline-none"
                       value={copySourceGameId}
                       onChange={(e) => setCopySourceGameId(e.target.value)}
                       disabled={savingLineup || !canManageGame}
@@ -4307,7 +4307,7 @@ function playerAtPosition(position: string) {
           <div className="lg:col-span-8 flex flex-col gap-4">
             
             {/* STITCH HIGH-FIDELITY SOCCER CANVAS PLATFORM */}
-            <div className="bg-[#0f1724] border border-slate-800/90 rounded-3xl p-5 shadow-xl">
+            <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl text-white">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-black tracking-widest text-slate-400 uppercase">
                   Q{selectedQuarter} Tactical Pitch View
@@ -4318,7 +4318,7 @@ function playerAtPosition(position: string) {
               </div>
 
               {/* Soccer field grass canvas background */}
-              <div className="relative overflow-hidden aspect-[4/3] w-full rounded-2xl border-2 border-white/20 shadow-inner soccer-pitch-bg flex flex-col justify-between p-6">
+              <div className="relative overflow-hidden aspect-[4/3] w-full rounded-2xl border-2 border-white/20 shadow-inner bg-green-800 flex flex-col justify-between p-6">
                 
                 {/* Field markings styling vector map layers */}
                 <div className="absolute inset-0 pointer-events-none soccer-pitch-border m-3 rounded-lg border border-white/30 flex flex-col justify-between">
@@ -4378,7 +4378,7 @@ function playerAtPosition(position: string) {
 
             {/* BENCH AND RESERVES CONTAINER DECK */}
             <div 
-              className="bg-[#0f1724] border border-slate-800/90 p-5 rounded-2xl shadow-xl"
+              className="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault()
@@ -4420,7 +4420,7 @@ function playerAtPosition(position: string) {
 
         {/* FULL GAME SUMMARY FOUR-QUARTER ROTATION CARDS */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          <div className="bg-[#0f1724] border border-slate-800/90 p-5 rounded-2xl shadow-xl">
+          <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl">
             <div className="mb-4">
               <p className="text-[10px] tracking-wider uppercase font-black text-emerald-400 mb-0.5">ROTATION MONITOR</p>
               <h3 className="text-lg font-black text-white tracking-tight">Full Match View</h3>
@@ -4479,7 +4479,7 @@ function playerAtPosition(position: string) {
 
         {/* POSITION HISTORY DYNAMIC LEDGER MATRIX TABULAR BLOCK */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          <div className="bg-[#0f1724] border border-slate-800/90 p-5 rounded-2xl shadow-xl overflow-x-auto custom-scroll">
+          <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl text-white overflow-x-auto custom-scroll">
             <div className="mb-4">
               <p className="text-[10px] tracking-wider uppercase font-black text-indigo-400 mb-0.5">SQUAD ARCHIVE DATA</p>
               <h3 className="text-lg font-black text-white tracking-tight">Position History &amp; Playing Time Equity</h3>
@@ -4531,7 +4531,7 @@ function playerAtPosition(position: string) {
         {/* MODAL ASSIGNMENT SHEET DRAWER OVERLAY COMPONENT */}
         {selectedPreplanPlayerId && (
           <div className="fixed inset-0 bg-black/75 z-50 flex items-end justify-center p-0 md:p-4 backdrop-blur-sm">
-            <div className="bg-[#121824] w-full max-w-md rounded-t-3xl md:rounded-2xl border border-slate-800 p-6 shadow-2xl max-h-[75vh] overflow-y-auto">
+            <div className="bg-slate-800 w-full max-w-md rounded-t-3xl md:rounded-2xl border border-slate-700 p-6 shadow-2xl text-white max-h-[75vh] overflow-y-auto">
               {(() => {
                 const isEmptyPosition = selectedPreplanPlayerId.startsWith('__empty__:')
                 const selectedAssignment = lineup.find(item => item.player_id === selectedPreplanPlayerId)
