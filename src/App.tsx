@@ -4455,8 +4455,11 @@ function playerAtPosition(position: string) {
             })}
           </div>
 
-          <details style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px' }} open={false}>
-            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>
+          <details
+            style={{ marginBottom: '16px', padding: '20px', border: '1px solid rgba(30, 41, 59, 0.8)', borderRadius: '16px', background: 'rgba(15, 23, 42, 0.4)', color: '#fff', backdropFilter: 'blur(12px)' }}
+            open={false}
+          >
+            <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#fff' }}>
               Copy Lineups
             </summary>
 
@@ -4465,6 +4468,7 @@ function playerAtPosition(position: string) {
                 <label>
                   <span>Copy lineup from</span>
                   <select
+                    style={{ background: '#020617', color: '#fff', border: '1px solid #1e293b', borderRadius: '12px', padding: '10px', fontWeight: 700, fontSize: '14px' }}
                     value={copySourceQuarter}
                     onChange={(e) => setCopySourceQuarter(Number(e.target.value))}
                     disabled={savingLineup || !canManageGame}
@@ -4488,10 +4492,11 @@ function playerAtPosition(position: string) {
               </div>
 
               {previousGamesForCopy().length > 0 && (
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #eee' }}>
-                  <h3 style={{ margin: '0 0 8px' }}>Copy From Previous Game</h3>
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #1e293b' }}>
+                  <h3 style={{ margin: '0 0 8px', color: '#fff' }}>Copy From Previous Game</h3>
                   <div style={{ display: 'grid', gap: '8px' }}>
                     <select
+                      style={{ background: '#020617', color: '#fff', border: '1px solid #1e293b', borderRadius: '12px', padding: '10px', fontWeight: 700, fontSize: '14px' }}
                       value={copySourceGameId}
                       onChange={(e) => setCopySourceGameId(e.target.value)}
                       disabled={savingLineup || !canManageGame}
@@ -4506,6 +4511,7 @@ function playerAtPosition(position: string) {
                     <button
                       type="button"
                       className="primary-button"
+                      style={{ background: 'linear-gradient(to right, #059669, #0d9488)', color: '#fff', fontWeight: 900, borderRadius: '12px', padding: '12px', border: 'none' }}
                       onClick={copyEntireGameFromGame}
                       disabled={savingLineup || !canManageGame || !copySourceGameId}
                     >
@@ -4569,7 +4575,17 @@ function playerAtPosition(position: string) {
             </div>
           </div>
 
-          <div className="lineup-bench-panel">
+          <div
+            className="lineup-bench-panel"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const playerId = e.dataTransfer.getData("text/plain");
+              if (playerId) {
+                setLineup((current) => current.filter((item) => item.player_id !== playerId));
+              }
+            }}
+          >
             <div className="lineup-bench-heading">
               <span>Bench &amp; Reserves</span>
               <span className="lineup-resting-count">
