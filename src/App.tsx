@@ -4046,6 +4046,19 @@ function renderLineup() {
             </button>
             <button
               type="button"
+              onClick={() => {
+                const result = optimizeWholeGame()
+                if (!result.gamePlan.length) {
+                  alert('Coach Assist could not build a complete whole-game plan. Check availability, team rules, and formation.')
+                }
+              }}
+              disabled={!canManageGame || savingLineup}
+              style={{ background: 'rgba(5, 150, 105, 0.18)', border: '1px solid #059669', color: '#6ee7b7', borderRadius: '10px', padding: '8px 12px', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
+            >
+              Optimize Whole Game
+            </button>
+            <button
+              type="button"
               onClick={() => saveLineup()}
               disabled={savingLineup || !canManageGame}
               style={{ background: '#10b981', color: '#022c22', border: 'none', borderRadius: '10px', padding: '8px 16px', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
@@ -4087,6 +4100,33 @@ function renderLineup() {
                 </div>
               </>
             ) : <p style={{ color: '#fca5a5', fontSize: '12px', margin: 0 }}>No complete suggestion available. Check availability and formation slots.</p>}
+          </section>
+        )}
+
+        {wholeGameSuggestion && (
+          <section style={{ background: '#08251f', border: '1px solid #059669', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <strong style={{ color: '#6ee7b7', fontSize: '13px' }}>Whole-game Coach Assist preview</strong>
+              <button type="button" onClick={() => setWholeGameSuggestion(null)} style={{ background: 'transparent', color: '#9ca3af', border: 'none', fontSize: '18px', cursor: 'pointer' }}>×</button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px' }}>
+              {[1, 2, 3, 4].map((quarter) => {
+                const quarterPlan = wholeGameSuggestion.filter((item) => item.quarter === quarter)
+                return <div key={quarter} style={{ background: '#031b16', border: '1px solid #14532d', borderRadius: '8px', padding: '8px' }}>
+                  <strong style={{ display: 'block', color: '#6ee7b7', fontSize: '12px', marginBottom: '6px' }}>Q{quarter} · {quarterPlan.length} assigned</strong>
+                  {quarterPlan.map((item) => {
+                    const player = players.find((p) => p.id === item.player_id)
+                    return <div key={item.player_id} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', padding: '4px 0', color: '#f3f4f6', fontSize: '11px', borderBottom: '1px solid #12372d' }}>
+                      <span style={{ fontWeight: 800 }}>{player ? getPlayerDisplayName(player) : 'Unknown player'}</span>
+                      <strong style={{ color: item.position === 'Goalkeeper' ? '#fbbf24' : '#34d399' }}>{positionShort(item.position)}</strong>
+                    </div>
+                  })}
+                </div>
+              })}
+            </div>
+            <button type="button" onClick={() => { void applyWholeGamePlan() }} disabled={!canManageGame || savingLineup} style={{ marginTop: '10px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 12px', fontWeight: 800, cursor: 'pointer' }}>
+              Apply all four quarters
+            </button>
           </section>
         )}
 
