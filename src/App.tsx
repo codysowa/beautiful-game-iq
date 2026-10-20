@@ -4397,22 +4397,10 @@ function renderLineup() {
                       key={p.id}
                       type="button"
                       onClick={() => {
-                        const currentQuarter = selectedQuarter || 1
-                        if (selectedPreplanPlayerId.startsWith('__empty__:')) {
-                          const targetPos = selectedPreplanPlayerId.replace('__empty__:', '')
-                          setLineup((prev) => [
-                            ...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id),
-                            { player_id: p.id, position: targetPos, quarter: currentQuarter }
-                          ])
-                        } else {
-                          const targetPos = lineup.find((i) => i.player_id === selectedPreplanPlayerId)?.position
-                          if (targetPos) {
-                            setLineup((prev) => [
-                              ...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id),
-                              { player_id: p.id, position: targetPos, quarter: currentQuarter }
-                            ])
-                          }
-                        }
+                        const targetPos = selectedPreplanPlayerId.startsWith('__empty__:')
+                          ? selectedPreplanPlayerId.replace('__empty__:', '')
+                          : lineup.find((item) => item.player_id === selectedPreplanPlayerId)?.position
+                        if (targetPos) assignPlayer(p.id, targetPos)
                         setSelectedPreplanPlayerId(null)
                       }}
                       style={{
