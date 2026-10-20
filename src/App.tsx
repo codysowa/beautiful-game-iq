@@ -4211,7 +4211,7 @@ function renderLineup() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
             {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => {
-              const isLowMinutes = player.jersey_number === 5 // Highlighting resting needs
+              const isLowMinutes = player.jersey_number === 5
               return (
                 <button
                   key={player.id}
