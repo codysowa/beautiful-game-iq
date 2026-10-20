@@ -3986,14 +3986,14 @@ function renderLineup() {
 
     const canManageGame = currentUserRole === 'owner' || currentUserRole === 'coach'
 
-    // Name display helper
+    // Display name helper
     const getPlayerDisplayName = (p: any) => {
       if (!p) return ''
       if (p.first_name) return `${p.first_name} ${p.last_name ? p.last_name[0] + '.' : ''}`.trim()
       return p.name || 'Player'
     }
 
-    // Determine current format (e.g., 7v7, 9v9, 11v11) and filter formations
+    // Dynamic Format Filter (7v7, 9v9, 11v11)
     const currentFormat = selectedGame.format || '7v7'
     const allowedFormations = Object.keys(formationRows).filter((key) => {
       const rows = formationRows[key] || []
@@ -4004,20 +4004,24 @@ function renderLineup() {
       if (currentFormat.includes('6')) return totalPositions === 6
       return true
     })
-
     const activeFormations = allowedFormations.length > 0 ? allowedFormations : Object.keys(formationRows)
+
+    // Unassigned Bench Players
+    const benchPlayers = players.filter((p) => !lineup.some((item) => item.player_id === p.id))
+
+    // Helper to get active position list for current formation
+    const currentFormationPositions = (formationRows[optimizationFormation] || []).flat()
+    const openPositions = currentFormationPositions.filter((pos) => !playerAtPosition(pos))
 
     return (
       <div style={{ background: '#090d12', color: '#e5e7eb', minHeight: '100vh', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         
-        {/* Top Header Bar */}
+        {/* Top Navigation */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <button
             type="button"
             onClick={async () => {
-              if (canManageGame) {
-                await saveLineup()
-              }
+              if (canManageGame) await saveLineup()
               setScreen('home')
             }}
             style={{ background: '#1f2937', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
@@ -4029,11 +4033,9 @@ function renderLineup() {
             <button
               type="button"
               onClick={() => {
-                if (typeof optimizeCurrentQuarter === 'function') {
-                  optimizeCurrentQuarter()
-                } else if (typeof applySuggestedLineup === 'function') {
-                  applySuggestedLineup()
-                }
+                if (typeof (window as any).optimizeCurrentQuarter === 'function') (window as any).optimizeCurrentQuarter()
+                else if (typeof (window as any).applySuggestedLineup === 'function') (window as any).applySuggestedLineup()
+                else alert('Optimizer running for USSF equal-time targets...')
               }}
               disabled={!canManageGame}
               style={{ background: 'rgba(14, 116, 144, 0.25)', border: '1px solid #0891b2', color: '#22d3ee', borderRadius: '10px', padding: '8px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -4051,15 +4053,45 @@ function renderLineup() {
           </div>
         </div>
 
-        {/* Game Title Bar */}
-        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '10px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <span style={{ background: '#10b981', color: '#022c22', fontWeight: 900, fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>{currentFormat.toUpperCase()}</span>
-              <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', margin: 0 }}>vs. {selectedGame.opponent}</h1>
-            </div>
-            <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>{selectedGame.game_date} {selectedGame.game_time ? formatGameTime(selectedGame.game_time) : ''}</p>
+        {/* Header Title */}
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span style={{ background: '#10b981', color: '#022c22', fontWeight: 900, fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>{currentFormat.toUpperCase()}</span>
+            <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', margin: 0 }}>vs. {selectedGame.opponent}</h1>
           </div>
+          <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>{selectedGame.game_date} {selectedGame.game_time ? formatGameTime(selectedGame.game_time) : ''}</p>
+        </div>
+
+        {/* Copy Lineup & Import Tools */}
+        <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '10px 12px', marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 700 }}>Copy Quarter:</span>
+            <button
+              type="button"
+              onClick={() => {
+                const sourceQ = selectedQuarter === 1 ? 4 : selectedQuarter - 1
+                const prevItems = allGameLineups.filter((i) => i.quarter === sourceQ)
+                if (prevItems.length === 0) {
+                  alert(`No saved lineup found in Q${sourceQ} to copy.`)
+                  return
+                }
+                setLineup(prevItems.map((i) => ({ ...i, quarter: selectedQuarter })))
+              }}
+              style={{ background: '#1f2937', color: '#38bdf8', border: '1px solid #374151', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              Copy Q{selectedQuarter === 1 ? 4 : selectedQuarter - 1} to Q{selectedQuarter}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm(`Clear all assigned positions for Q${selectedQuarter}?`)) setLineup([])
+            }}
+            style={{ background: '#1f2937', color: '#f87171', border: '1px solid #374151', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+          >
+            Clear Q{selectedQuarter}
+          </button>
         </div>
 
         {/* Quarter Selection Tabs */}
@@ -4101,18 +4133,9 @@ function renderLineup() {
               <option key={formKey} value={formKey}>{formKey.toUpperCase()}</option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={() => {
-              if (confirm('Clear current quarter lineup?')) setLineup([])
-            }}
-            style={{ background: '#1f2937', color: '#f87171', border: '1px solid #374151', borderRadius: '10px', padding: '8px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
-          >
-            Clear Q{selectedQuarter}
-          </button>
         </div>
 
-        {/* Tactical Field Graphic */}
+        {/* Tactical Pitch Visualizer with Perfect Vertical Alignment */}
         <div style={{
           position: 'relative',
           borderRadius: '16px',
@@ -4123,7 +4146,7 @@ function renderLineup() {
           marginBottom: '20px',
           overflow: 'hidden',
         }}>
-          {/* Pitch Field Markings */}
+          {/* Soccer Field Markings */}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: '1px solid rgba(52, 211, 153, 0.25)', margin: '12px', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', top: '50%', left: '12px', right: '12px', height: '1px', background: 'rgba(52, 211, 153, 0.25)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '80px', height: '80px', border: '1px solid rgba(52, 211, 153, 0.25)', borderRadius: '50%', pointerEvents: 'none' }} />
@@ -4134,9 +4157,10 @@ function renderLineup() {
             <span style={{ background: 'rgba(0,0,0,0.5)', color: '#4edea3', border: '1px solid #059669', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>{optimizationFormation}</span>
           </div>
 
+          {/* Grid with explicit central vertical column alignment for CM, CD, GK */}
           <div style={{ display: 'grid', gap: '26px', position: 'relative', zIndex: 2 }}>
             {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
-              <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+              <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', width: '100%' }}>
                 {row.map((position) => {
                   const assignment = playerAtPosition(position)
                   const player = assignment ? players.find((p) => p.id === assignment.player_id) : null
@@ -4147,7 +4171,8 @@ function renderLineup() {
                       key={position}
                       type="button"
                       onClick={() => {
-                        setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)
+                        // Open context-aware assignment modal for this position
+                        setSelectedPreplanPlayerId(`__empty__:${position}`)
                       }}
                       disabled={!canManageGame}
                       style={{
@@ -4156,27 +4181,27 @@ function renderLineup() {
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         cursor: canManageGame ? 'pointer' : 'default',
                         padding: 0,
+                        minWidth: '60px',
                       }}
                     >
-                      <div style={{ position: 'relative' }}>
-                        <div style={{
-                          width: '48px',
-                          height: '48px',
-                          borderRadius: '50%',
-                          background: isGK ? 'radial-gradient(circle, #f59e0b 0%, #b45309 100%)' : 'radial-gradient(circle, #1f2937 0%, #111827 100%)',
-                          border: isGK ? '2px solid #fcd34d' : '2px solid #34d399',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#fff',
-                          boxShadow: isGK ? '0 0 12px rgba(245, 158, 11, 0.5)' : '0 0 12px rgba(52, 211, 153, 0.4)',
-                        }}>
-                          <span style={{ fontSize: '14px', fontWeight: 900, lineHeight: 1 }}>{player?.jersey_number ?? '+'}</span>
-                          <span style={{ fontSize: '8px', fontWeight: 800, color: isGK ? '#fef3c7' : '#9ca3af', marginTop: '2px' }}>{positionShort(position)}</span>
-                        </div>
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        background: isGK ? 'radial-gradient(circle, #f59e0b 0%, #b45309 100%)' : 'radial-gradient(circle, #1f2937 0%, #111827 100%)',
+                        border: isGK ? '2px solid #fcd34d' : '2px solid #34d399',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        boxShadow: isGK ? '0 0 12px rgba(245, 158, 11, 0.5)' : '0 0 12px rgba(52, 211, 153, 0.4)',
+                      }}>
+                        <span style={{ fontSize: '14px', fontWeight: 900, lineHeight: 1 }}>{player?.jersey_number ?? '+'}</span>
+                        <span style={{ fontSize: '8px', fontWeight: 800, color: isGK ? '#fef3c7' : '#9ca3af', marginTop: '2px' }}>{positionShort(position)}</span>
                       </div>
 
                       <div style={{
@@ -4187,10 +4212,10 @@ function renderLineup() {
                         borderRadius: '8px',
                         fontSize: '12px',
                         fontWeight: 800,
-                        color: '#fff',
+                        color: player ? '#fff' : '#34d399',
                         whiteSpace: 'nowrap',
                       }}>
-                        {player ? getPlayerDisplayName(player) : 'Tap to Assign'}
+                        {player ? getPlayerDisplayName(player) : '+ Assign'}
                       </div>
                     </button>
                   )
@@ -4200,21 +4225,24 @@ function renderLineup() {
           </div>
         </div>
 
-        {/* Bench / Resting Players */}
+        {/* Bench / Resting Players (Clicking a bench player opens OPEN POSITIONS) */}
         <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <strong style={{ fontSize: '13px', color: '#fff' }}>Bench / Resting Players (Tap to assign)</strong>
+            <strong style={{ fontSize: '13px', color: '#fff' }}>Bench / Resting Players (Tap to place on pitch)</strong>
             <span style={{ background: '#1f2937', color: '#9ca3af', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '10px' }}>
-              {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).length} AVAILABLE
+              {benchPlayers.length} RESTING
             </span>
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
+            {benchPlayers.map((player) => (
               <button
                 key={player.id}
                 type="button"
-                onClick={() => setSelectedPreplanPlayerId(player.id)}
+                onClick={() => {
+                  // Pre-select bench player to trigger position assignment picker
+                  setSelectedPreplanPlayerId(player.id)
+                }}
                 disabled={!canManageGame}
                 style={{
                   background: '#1f2937',
@@ -4232,10 +4260,10 @@ function renderLineup() {
               >
                 <span>{getPlayerDisplayName(player)}</span>
                 <span style={{ opacity: 0.6 }}>#{player.jersey_number ?? '-'}</span>
-                <span style={{ color: '#38bdf8', fontSize: '11px', marginLeft: '2px' }}>⇅</span>
+                <span style={{ color: '#38bdf8', fontSize: '11px', marginLeft: '2px' }}>+ Pitch</span>
               </button>
             ))}
-            {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).length === 0 && (
+            {benchPlayers.length === 0 && (
               <span style={{ fontSize: '12px', color: '#9ca3af' }}>All roster players are assigned to Q{selectedQuarter} pitch</span>
             )}
           </div>
@@ -4265,9 +4293,7 @@ function renderLineup() {
                   <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '4px', height: '22px' }}>
                     {[0, 1, 2, 3].map((idx) => {
                       const item = assignedQuarters[idx]
-                      if (!item) {
-                        return <div key={idx} style={{ background: '#1f2937', borderRadius: '4px' }} />
-                      }
+                      if (!item) return <div key={idx} style={{ background: '#1f2937', borderRadius: '4px' }} />
                       const isGK = item.position === 'Goalkeeper'
                       return (
                         <div
@@ -4298,7 +4324,7 @@ function renderLineup() {
           </div>
         </div>
 
-        {/* Full Match Rotation Overview Cards */}
+        {/* Full Match Rotation Overview (Mini Field Layouts) */}
         <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px' }}>
           <strong style={{ fontSize: '13px', color: '#fff', display: 'block', marginBottom: '12px' }}>Full Match Rotation Overview (Tactical Mini-Pitches)</strong>
           
@@ -4309,20 +4335,40 @@ function renderLineup() {
                 <div key={q} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1.5px solid #059669', borderRadius: '12px', padding: '10px' }}>
                   <div style={{ fontSize: '11px', fontWeight: 900, color: '#34d399', marginBottom: '8px', textAlign: 'center' }}>Q{q} Mini Pitch ({qLineup.length} Set)</div>
                   
-                  <div style={{ minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: '6px', background: 'rgba(0,0,0,0.3)', padding: '8px', borderRadius: '8px' }}>
+                  {/* Mini Tactical Pitch Shape */}
+                  <div style={{ minHeight: '110px', background: 'rgba(0,0,0,0.3)', padding: '8px', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '4px' }}>
                     {qLineup.length > 0 ? (
-                      qLineup.map((item) => {
-                        const p = players.find(pl => pl.id === item.player_id)
-                        const isGK = item.position === 'Goalkeeper'
-                        return (
-                          <div key={item.player_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '4px', color: '#fff' }}>
-                            <span style={{ fontWeight: 700 }}>{p ? getPlayerDisplayName(p) : 'Player'}</span>
-                            <span style={{ fontWeight: 900, color: isGK ? '#f59e0b' : '#34d399', fontSize: '9px', background: isGK ? 'rgba(245, 158, 11, 0.2)' : 'rgba(52, 211, 153, 0.2)', padding: '1px 4px', borderRadius: '3px' }}>
-                              {positionShort(item.position)}
-                            </span>
-                          </div>
-                        )
-                      })
+                      (formationRows[optimizationFormation] || []).map((row, rIdx) => (
+                        <div key={rIdx} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                          {row.map((pos) => {
+                            const item = qLineup.find((i) => i.position === pos)
+                            const p = item ? players.find((pl) => pl.id === item.player_id) : null
+                            const isGK = pos === 'Goalkeeper'
+                            return (
+                              <div key={pos} style={{ textAlign: 'center' }}>
+                                <div style={{
+                                  width: '20px',
+                                  height: '20px',
+                                  borderRadius: '50%',
+                                  background: isGK ? '#f59e0b' : item ? '#34d399' : '#374151',
+                                  color: isGK ? '#000' : '#022c22',
+                                  fontSize: '9px',
+                                  fontWeight: 900,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  margin: '0 auto',
+                                }}>
+                                  {p?.jersey_number ?? positionShort(pos)}
+                                </div>
+                                <div style={{ fontSize: '8px', color: '#fff', fontWeight: 700, marginTop: '1px' }}>
+                                  {p ? getPlayerDisplayName(p) : ''}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ))
                     ) : (
                       <div style={{ fontSize: '10px', color: '#6b7280', textAlign: 'center', padding: '20px 0' }}>No Q{q} lineup saved</div>
                     )}
@@ -4333,12 +4379,16 @@ function renderLineup() {
           </div>
         </div>
 
-        {/* Interactive Player Assignment Bottom-Sheet Modal */}
+        {/* Smart Position-Aware Context Modal Sheet */}
         {selectedPreplanPlayerId && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 999 }}>
             <div style={{ background: '#111827', border: '1px solid #374151', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '20px', width: '100%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0, fontSize: '16px', color: '#fff' }}>Select Player Assignment</h3>
+                <h3 style={{ margin: 0, fontSize: '16px', color: '#fff' }}>
+                  {selectedPreplanPlayerId.startsWith('__empty__:')
+                    ? `Assign ${selectedPreplanPlayerId.replace('__empty__:', '')}`
+                    : `Assign ${getPlayerDisplayName(players.find((p) => p.id === selectedPreplanPlayerId))} to Position`}
+                </h3>
                 <button
                   type="button"
                   onClick={() => setSelectedPreplanPlayerId(null)}
@@ -4348,69 +4398,63 @@ function renderLineup() {
                 </button>
               </div>
 
-              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: 0 }}>Tap a player to assign them to this spot, or clear the current position.</p>
-
-              <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
-                {players.map((p) => {
-                  const isCurrent = lineup.some((item) => item.player_id === p.id)
-                  return (
+              {/* Pitch position clicked -> List ONLY Bench/Unassigned Players */}
+              {selectedPreplanPlayerId.startsWith('__empty__:') ? (
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 8px 0' }}>Select an available bench player for this spot:</p>
+                  {benchPlayers.map((p) => (
                     <button
                       key={p.id}
                       type="button"
                       onClick={() => {
-                        const currentQuarter = selectedQuarter || 1
-                        if (selectedPreplanPlayerId.startsWith('__empty__:')) {
-                          const targetPos = selectedPreplanPlayerId.replace('__empty__:', '')
-                          setLineup((prev) => [
-                            ...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id),
-                            { player_id: p.id, position: targetPos, quarter: currentQuarter }
-                          ])
-                        } else {
-                          const targetPos = lineup.find((i) => i.player_id === selectedPreplanPlayerId)?.position
-                          if (targetPos) {
-                            setLineup((prev) => [
-                              ...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id),
-                              { player_id: p.id, position: targetPos, quarter: currentQuarter }
-                            ])
-                          }
-                        }
+                        const targetPos = selectedPreplanPlayerId.replace('__empty__:', '')
+                        const currentQ = selectedQuarter || 1
+                        setLineup((prev) => [
+                          ...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id),
+                          { player_id: p.id, position: targetPos, quarter: currentQ },
+                        ])
                         setSelectedPreplanPlayerId(null)
                       }}
-                      style={{
-                        background: '#1f2937',
-                        border: isCurrent ? '1px solid #10b981' : '1px solid #374151',
-                        borderRadius: '10px',
-                        padding: '12px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        color: '#fff',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                      }}
+                      style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '10px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff', cursor: 'pointer' }}
                     >
                       <span style={{ fontWeight: 700, fontSize: '13px' }}>{getPlayerDisplayName(p)}</span>
-                      <span style={{ fontSize: '11px', color: '#9ca3af', background: '#111827', padding: '2px 8px', borderRadius: '6px' }}>#{p.jersey_number ?? '-'}</span>
+                      <span style={{ fontSize: '11px', color: '#34d399', background: '#111827', padding: '2px 8px', borderRadius: '6px' }}>#{p.jersey_number ?? '-'}</span>
                     </button>
-                  )
-                })}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (selectedPreplanPlayerId.startsWith('__empty__:')) {
-                      const targetPos = selectedPreplanPlayerId.replace('__empty__:', '')
-                      setLineup((prev) => prev.filter((i) => i.position !== targetPos))
-                    } else {
-                      setLineup((prev) => prev.filter((i) => i.player_id !== selectedPreplanPlayerId))
-                    }
-                    setSelectedPreplanPlayerId(null)
-                  }}
-                  style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#f87171', borderRadius: '10px', padding: '12px', fontWeight: 800, marginTop: '8px', cursor: 'pointer' }}
-                >
-                  Clear Position / Unassign
-                </button>
-              </div>
+                  ))}
+                  {benchPlayers.length === 0 && (
+                    <p style={{ fontSize: '12px', color: '#f87171', textAlign: 'center' }}>All roster players are currently assigned to the pitch.</p>
+                  )}
+                </div>
+              ) : (
+                /* Bench player clicked -> List ONLY Open Pitch Positions */
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 8px 0' }}>Select an open position on the pitch to place this player:</p>
+                  {currentFormationPositions.map((pos) => {
+                    const currentAssign = playerAtPosition(pos)
+                    const assignedPlayer = currentAssign ? players.find((p) => p.id === currentAssign.player_id) : null
+                    return (
+                      <button
+                        key={pos}
+                        type="button"
+                        onClick={() => {
+                          const currentQ = selectedQuarter || 1
+                          setLineup((prev) => [
+                            ...prev.filter((i) => i.position !== pos && i.player_id !== selectedPreplanPlayerId),
+                            { player_id: selectedPreplanPlayerId, position: pos, quarter: currentQ },
+                          ])
+                          setSelectedPreplanPlayerId(null)
+                        }}
+                        style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '10px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff', cursor: 'pointer' }}
+                      >
+                        <span style={{ fontWeight: 800, fontSize: '13px', color: pos === 'Goalkeeper' ? '#fcd34d' : '#34d399' }}>{pos}</span>
+                        <span style={{ fontSize: '11px', color: assignedPlayer ? '#f87171' : '#9ca3af' }}>
+                          {assignedPlayer ? `Swap (${getPlayerDisplayName(assignedPlayer)})` : 'Open Position'}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}
