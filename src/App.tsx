@@ -3986,6 +3986,13 @@ function renderLineup() {
 
     const canManageGame = currentUserRole === 'owner' || currentUserRole === 'coach'
 
+    // Internal fallback helper for player display names
+    const getPlayerName = (p: any) => {
+      if (!p) return ''
+      if (p.first_name) return `${p.first_name} ${p.last_name ? p.last_name[0] + '.' : ''}`.trim()
+      return p.name || 'Player'
+    }
+
     return (
       <>
         <button
@@ -4103,7 +4110,7 @@ function renderLineup() {
                         {positionShort(position)}
                       </div>
                       <div style={{ fontWeight: 700, fontSize: '13px', marginTop: '2px', color: '#fff' }}>
-                        {player ? `${getPlayerDisplayName(player)}` : 'Tap to assign'}
+                        {player ? getPlayerName(player) : 'Tap to assign'}
                       </div>
                       {player && (
                         <div style={{ fontSize: '10px', color: '#9ca3af' }}>
@@ -4130,7 +4137,7 @@ function renderLineup() {
                   disabled={!canManageGame}
                   style={{ background: '#1f2937', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '6px 10px', fontSize: '12px' }}
                 >
-                  {getPlayerDisplayName(player)} <span style={{ opacity: 0.6 }}>#{player.jersey_number ?? '-'}</span>
+                  {getPlayerName(player)} <span style={{ opacity: 0.6 }}>#{player.jersey_number ?? '-'}</span>
                 </button>
               ))}
               {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).length === 0 && (
@@ -4160,7 +4167,7 @@ function renderLineup() {
                 return (
                   <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px' }}>
                     <div style={{ width: '100px', fontWeight: 600, color: '#f3f4f6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {getPlayerDisplayName(player)} <span style={{ color: '#9ca3af', fontWeight: 400 }}>#{player.jersey_number ?? '-'}</span>
+                      {getPlayerName(player)} <span style={{ color: '#9ca3af', fontWeight: 400 }}>#{player.jersey_number ?? '-'}</span>
                     </div>
 
                     <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '4px', height: '20px', background: '#1f2937', padding: '2px', borderRadius: '6px' }}>
