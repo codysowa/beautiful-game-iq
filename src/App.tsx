@@ -4435,7 +4435,8 @@ function renderLineup() {
           </div>
         </div>
 
-        {/* Playing Time Distribution Breakdown */}
+        <div className="rotation-export-window">
+          {/* Playing Time Distribution Breakdown */}
         <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <strong style={{ fontSize: '13px', color: '#fff' }}>Playing Time & Position Breakdown (Max 2 GK Quarters)</strong>
@@ -4531,6 +4532,14 @@ function renderLineup() {
                 </div>
               )
             })}
+          </div>
+        </div>
+
+          <div className="rotation-export-actions">
+            <button type="button" onClick={() => window.print()} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900 }}>
+              Save & Share Match Sheet · PDF
+            </button>
+            <p style={{ color: '#9ca3af', fontSize: '11px', textAlign: 'center', margin: '7px 0 0' }}>Opens your device’s print options so you can save or share this exact rotation summary.</p>
           </div>
         </div>
 
