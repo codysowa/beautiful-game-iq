@@ -4290,7 +4290,7 @@ function renderLineup() {
                   return [...(goalkeeper && nextPositions.includes('Goalkeeper') ? [{ ...goalkeeper, position: 'Goalkeeper' }] : []), ...fieldPlayers.slice(0, slots.length).map((item, index) => ({ ...item, position: slots[index] }))]
                 })
               }}
-              style={{ background: 'rgba(0,0,0,0.72)', color: '#4edea3', border: '1px solid #059669', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 800, maxWidth: '100%' }}
+              style={{ background: 'rgba(0,0,0,0.72)', color: '#4edea3', border: '1px solid #059669', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 800, width: 'auto', minWidth: '64px', maxWidth: '150px', flex: '0 1 120px' }}
             >
               {activeFormations.map((formKey) => (
                 <option key={formKey} value={formKey}>{formKey.toUpperCase()}</option>
