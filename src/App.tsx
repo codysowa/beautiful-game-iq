@@ -4396,27 +4396,28 @@ function renderLineup() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
             {[1, 2, 3, 4].map((q) => {
               const qLineup = allGameLineups.filter((item) => item.quarter === q)
+              const rows = formationRows[optimizationFormation] || []
               return (
-                <div key={q} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1.5px solid #059669', borderRadius: '12px', padding: '10px' }}>
+                <div key={q} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1.5px solid #059669', borderRadius: '12px', padding: '10px', minWidth: 0 }}>
                   <div style={{ fontSize: '11px', fontWeight: 900, color: '#34d399', marginBottom: '8px', textAlign: 'center' }}>Q{q} Mini Pitch ({qLineup.length} Set)</div>
-                  
-                  <div style={{ minHeight: '190px', display: 'flex', flexDirection: 'column-reverse', justifyContent: 'space-around', gap: '5px', background: 'linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), rgba(0,0,0,0.3)', backgroundSize: '33.33% 100%, 100% 25%, auto', border: '1px solid rgba(110,231,183,.3)', padding: '8px', borderRadius: '8px' }}>
-                    {qLineup.length > 0 ? (
-                      qLineup.map((item) => {
-                        const p = players.find(pl => pl.id === item.player_id)
-                        const isGK = item.position === 'Goalkeeper'
-                        return (
-                          <div key={item.player_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px', fontSize: '10px', background: 'rgba(0,0,0,0.6)', padding: '4px 6px', border: '1px solid rgba(110,231,183,.35)', borderRadius: '8px', color: '#fff' }}>
-                            <span style={{ fontWeight: 700 }}>{p ? getPlayerDisplayName(p) : 'Player'}</span>
-                            <span style={{ fontWeight: 900, color: isGK ? '#f59e0b' : '#34d399', fontSize: '9px', background: isGK ? 'rgba(245, 158, 11, 0.2)' : 'rgba(52, 211, 153, 0.2)', padding: '1px 4px', borderRadius: '3px' }}>
-                              {positionShort(item.position)}
-                            </span>
-                          </div>
-                        )
-                      })
-                    ) : (
-                      <div style={{ fontSize: '10px', color: '#6b7280', textAlign: 'center', padding: '20px 0' }}>No Q{q} lineup saved</div>
-                    )}
+                  <div style={{ minHeight: '156px', display: 'grid', gridTemplateRows: rows.map(() => 'minmax(30px, 1fr)').join(' '), gap: '4px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(110,231,183,.25)', padding: '7px', borderRadius: '8px' }}>
+                    {rows.length ? rows.map((row, rowIndex) => (
+                      <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '4px', minWidth: 0 }}>
+                        {row.map((position) => {
+                          const item = qLineup.find((assignment) => assignment.position === position)
+                          const player = item ? players.find((p) => p.id === item.player_id) : null
+                          const isGK = position === 'Goalkeeper'
+                          return (
+                            <div key={position} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 0', minWidth: 0, gap: '2px' }}>
+                              <div style={{ width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isGK ? '#f59e0b' : '#34d399', color: '#06251b', fontSize: '10px', fontWeight: 900, border: isGK ? '1px solid #fcd34d' : '1px solid #6ee7b7' }}>
+                                {player?.jersey_number ?? (isGK ? 'GK' : positionShort(position))}
+                              </div>
+                              <span style={{ color: '#fff', fontSize: '8px', fontWeight: 800, textAlign: 'center', lineHeight: 1.1, overflowWrap: 'anywhere', maxWidth: '100%' }}>{player ? getPlayerDisplayName(player) : '—'}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )) : <div style={{ color: '#9ca3af', fontSize: '10px', textAlign: 'center' }}>Formation unavailable</div>}
                   </div>
                 </div>
               )
