@@ -3865,19 +3865,21 @@ function playerAtPosition(position: string) {
   async function saveCaptains() {
     if (!selectedGame) return
 
-    if (!captain1Id || !captain2Id) {
+    const nextCaptain1Id = captain1Id || selectedGame.captain_1_id || ''
+    const nextCaptain2Id = captain2Id || selectedGame.captain_2_id || ''
+    if (!nextCaptain1Id || !nextCaptain2Id) {
       alert('Select two captains.')
       return
     }
 
-    if (captain1Id === captain2Id) {
+    if (nextCaptain1Id === nextCaptain2Id) {
       alert('Choose two different captains.')
       return
     }
 
     const { error } = await supabase
       .from('games')
-      .update({ captain_1_id: captain1Id, captain_2_id: captain2Id })
+      .update({ captain_1_id: nextCaptain1Id, captain_2_id: nextCaptain2Id })
       .eq('id', selectedGame.id)
 
     if (error) {
@@ -3887,13 +3889,13 @@ function playerAtPosition(position: string) {
     }
 
     setSelectedGame((current) =>
-      current ? { ...current, captain_1_id: captain1Id, captain_2_id: captain2Id } : current
+      current ? { ...current, captain_1_id: nextCaptain1Id, captain_2_id: nextCaptain2Id } : current
     )
 
     setGames((current) =>
       current.map((game) =>
         game.id === selectedGame.id
-          ? { ...game, captain_1_id: captain1Id, captain_2_id: captain2Id }
+          ? { ...game, captain_1_id: nextCaptain1Id, captain_2_id: nextCaptain2Id }
           : game
       )
     )
@@ -4289,7 +4291,7 @@ function renderLineup() {
                           color: '#fff',
                           boxShadow: isGK ? '0 0 12px rgba(245, 158, 11, 0.5)' : '0 0 12px rgba(52, 211, 153, 0.4)',
                         }}>
-                          <span style={{ fontSize: '14px', fontWeight: 900, lineHeight: 1 }}>{player?.jersey_number ?? '+'}</span>
+                          <span style={{ fontSize: '10px', fontWeight: 800, lineHeight: 1 }}>{player?.jersey_number != null ? '#' + player.jersey_number : '+'}</span>
                           <span style={{ fontSize: '8px', fontWeight: 800, color: isGK ? '#fef3c7' : '#9ca3af', marginTop: '2px' }}>{positionShort(position)}</span>
                         </div>
                       </div>
@@ -4300,10 +4302,13 @@ function renderLineup() {
                         border: '1px solid rgba(255, 255, 255, 0.2)',
                         padding: '4px 10px',
                         borderRadius: '8px',
-                        fontSize: '12px',
-                        fontWeight: 800,
+                        fontSize: '14px',
+                        fontWeight: 900,
                         color: '#fff',
-                        whiteSpace: 'nowrap',
+                        whiteSpace: 'normal',
+                        maxWidth: 'min(150px, 32vw)',
+                        overflowWrap: 'anywhere',
+                        lineHeight: 1.1,
                       }}>
                         {player ? getPlayerDisplayName(player) : 'Tap to Assign'}
                       </div>
