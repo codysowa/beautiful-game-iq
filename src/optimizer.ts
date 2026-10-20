@@ -453,6 +453,8 @@ export function optimizeWholeGame(input: OptimizerInput): WholeGamePlan {
       const consecutiveBenchProtection = streak > 0 ? 250 : 0
       const doubleBenchProtection = streak >= 2 ? 12000 : 0
       const maxBenchProtection = stats.bench >= maxBench ? 8000 : 0
+      // Hard team-rule constraint: prioritize players who have reached the bench limit.
+      const benchLimitPriority = stats.bench >= maxBench ? 1000000 : 0
       const need = Math.max(0, (input.teamRules?.target_quarters_played ?? 3) - stats.played) * 22
       const roleDiversity = strongRoles.length > 1 && !roleAlreadyUsed ? 95 : 0
       const repeatedRolePenalty = strongRoles.length > 1 && roleAlreadyUsed && unusedStrongRoles.length > 0 ? -120 : 0
@@ -481,7 +483,7 @@ export function optimizeWholeGame(input: OptimizerInput): WholeGamePlan {
           if (role === 'MID') special -= 70
         }
       }
-      return situationFit(player, role) + special + playerSituationBonus(player) + priorityBonus[player.usage_priority || 'Regular'] + toleranceBonus[player.bench_tolerance || 'Normal'] + need + roleDiversity + repeatedRolePenalty + lastPositionBonus + lastRoleBonus + benchFairness + consecutiveBenchProtection + doubleBenchProtection + maxBenchProtection - stats.played * 18 - stats.bench * 3
+      return situationFit(player, role) + special + playerSituationBonus(player) + priorityBonus[player.usage_priority || 'Regular'] + toleranceBonus[player.bench_tolerance || 'Normal'] + need + roleDiversity + repeatedRolePenalty + lastPositionBonus + lastRoleBonus + benchFairness + consecutiveBenchProtection + doubleBenchProtection + maxBenchProtection + benchLimitPriority - stats.played * 18 - stats.bench * 3
     }
     while (remainingPositions.length > 0) {
       let best: { player: Player; position: string; score: number } | null = null
