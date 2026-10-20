@@ -4042,7 +4042,7 @@ function renderLineup() {
               disabled={!canManageGame}
               style={{ background: 'rgba(14, 116, 144, 0.25)', border: '1px solid #0891b2', color: '#22d3ee', borderRadius: '10px', padding: '8px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              ⚡ Coach Assist & Optimize
+              Suggest Quarter Lineup
             </button>
             <button
               type="button"
@@ -4055,7 +4055,7 @@ function renderLineup() {
               disabled={!canManageGame || savingLineup}
               style={{ background: 'rgba(5, 150, 105, 0.18)', border: '1px solid #059669', color: '#6ee7b7', borderRadius: '10px', padding: '8px 12px', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
             >
-              Optimize Whole Game
+              Optimize Full Game
             </button>
             <button
               type="button"
