@@ -4205,14 +4205,16 @@ function renderLineup() {
           </button>
         </div>
 
-        <section style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
-          <div style={{ fontSize: '13px', color: '#f9fafb', fontWeight: 900, marginBottom: '8px' }}>Captains</div>
+        <details style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '10px 12px', marginBottom: '12px' }}>
+          <summary style={{ fontSize: '13px', color: '#f9fafb', fontWeight: 900, cursor: 'pointer' }}>
+            Captains {((captain1Id || selectedGame?.captain_1_id) || (captain2Id || selectedGame?.captain_2_id)) ? '· ' + [captain1Id || selectedGame?.captain_1_id, captain2Id || selectedGame?.captain_2_id].filter(Boolean).map((id) => getPlayerDisplayName(players.find((p) => p.id === id) || { id, name: 'Player' } as Player)).join(' / ') : ''}
+          </summary>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px' }}>
             <label style={{ color: '#9ca3af', fontSize: '11px', fontWeight: 800 }}>Captain 1<select value={captain1Id || selectedGame?.captain_1_id || ''} disabled={!canManageGame} onChange={(e) => setCaptain1Id(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '4px', background: '#030712', color: '#f9fafb', border: '1px solid #374151', borderRadius: '8px', padding: '8px' }}><option value=''>Choose captain</option>{players.map((p) => <option key={p.id} value={p.id}>{getPlayerDisplayName(p)}</option>)}</select></label>
             <label style={{ color: '#9ca3af', fontSize: '11px', fontWeight: 800 }}>Captain 2<select value={captain2Id || selectedGame?.captain_2_id || ''} disabled={!canManageGame} onChange={(e) => setCaptain2Id(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '4px', background: '#030712', color: '#f9fafb', border: '1px solid #374151', borderRadius: '8px', padding: '8px' }}><option value=''>Choose captain</option>{players.map((p) => <option key={p.id} value={p.id}>{getPlayerDisplayName(p)}</option>)}</select></label>
           </div>
           <button type='button' disabled={!canManageGame} onClick={() => { void saveCaptains() }} style={{ marginTop: '8px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', fontWeight: 800 }}>Save captains</button>
-        </section>
+        </details>
         <details style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
           <summary style={{ color: '#f9fafb', fontSize: '13px', fontWeight: 900, cursor: 'pointer' }}>Availability — {players.filter((p) => (gameAttendance[p.id]?.available_quarters ?? [1, 2, 3, 4]).length > 0).length} available</summary>
           <p style={{ color: '#9ca3af', fontSize: '11px', margin: '8px 0' }}>Tap Q1–Q4 to mark availability. Use All or None for quick changes.</p>
@@ -4313,7 +4315,8 @@ function renderLineup() {
                         overflowWrap: 'anywhere',
                         lineHeight: 1.1,
                       }}>
-                        {player ? getPlayerDisplayName(player) : 'Tap to Assign'}
+                        <span>{player ? getPlayerDisplayName(player) : 'Tap to Assign'}</span>
+                        {player && [captain1Id || selectedGame?.captain_1_id, captain2Id || selectedGame?.captain_2_id].includes(player.id) && <span title="Team captain" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginLeft: '5px', width: '16px', height: '16px', borderRadius: '50%', background: '#fbbf24', color: '#111827', fontSize: '10px', fontWeight: 1000, verticalAlign: 'middle' }}>C</span>}
                       </div>
                     </button>
                   )
