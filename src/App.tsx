@@ -4113,7 +4113,7 @@ function renderLineup() {
               {[1, 2, 3, 4].map((quarter) => {
                 const quarterPlan = wholeGameSuggestion.filter((item) => item.quarter === quarter)
                 const rows = formationRows[optimizationFormation] || []
-                return <div key={quarter} style={{ background: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.055) 0px, rgba(255,255,255,0.055) 22px, rgba(0,0,0,0.045) 22px, rgba(0,0,0,0.045) 44px), linear-gradient(135deg, #65a52f 0%, #4d8b24 48%, #38751d 100%)', border: '1px solid #059669', borderRadius: '10px', padding: '8px', minWidth: 0 }}>
+                return <div key={quarter} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1px solid #059669', borderRadius: '10px', padding: '8px', minWidth: 0 }}>
                   <strong style={{ display: 'block', color: '#6ee7b7', fontSize: '12px', textAlign: 'center', marginBottom: '7px' }}>Q{quarter} · {quarterPlan.length} assigned</strong>
                   <div style={{ position: 'relative', overflow: 'hidden', minHeight: '150px', display: 'grid', gridTemplateRows: rows.map(() => 'minmax(30px, 1fr)').join(' '), gap: '3px', background: 'rgba(0,0,0,.28)', border: '1px solid rgba(110,231,183,.3)', borderRadius: '7px', padding: '8px 5px' }}>
                     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: .55 }}>
@@ -4282,7 +4282,7 @@ function renderLineup() {
           position: 'relative',
           borderRadius: '16px',
           padding: '28px 12px',
-          background: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.055) 0px, rgba(255,255,255,0.055) 22px, rgba(0,0,0,0.045) 22px, rgba(0,0,0,0.045) 44px), linear-gradient(135deg, #65a52f 0%, #4d8b24 48%, #38751d 100%)',
+          background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)',
           border: '2px solid #059669',
           boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
           marginBottom: '20px',
@@ -4502,7 +4502,7 @@ function renderLineup() {
               const qLineup = allGameLineups.filter((item) => item.quarter === q)
               const rows = formationRows[optimizationFormation] || []
               return (
-                <div key={q} style={{ background: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.055) 0px, rgba(255,255,255,0.055) 22px, rgba(0,0,0,0.045) 22px, rgba(0,0,0,0.045) 44px), linear-gradient(135deg, #65a52f 0%, #4d8b24 48%, #38751d 100%)', border: '1.5px solid #059669', borderRadius: '12px', padding: '10px', minWidth: 0 }}>
+                <div key={q} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1.5px solid #059669', borderRadius: '12px', padding: '10px', minWidth: 0 }}>
                   <div style={{ fontSize: '11px', fontWeight: 900, color: '#34d399', marginBottom: '8px', textAlign: 'center' }}>Q{q} Mini Pitch ({qLineup.length} Set)</div>
                   <div style={{ position: 'relative', overflow: 'hidden', minHeight: '156px', display: 'grid', gridTemplateRows: rows.map(() => 'minmax(30px, 1fr)').join(' '), gap: '4px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(110,231,183,.25)', padding: '7px', borderRadius: '8px' }}>
                     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: .6 }}>
