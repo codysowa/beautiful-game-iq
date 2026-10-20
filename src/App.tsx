@@ -4184,7 +4184,7 @@ function renderLineup() {
                 const slots = nextPositions.filter((position) => position !== 'Goalkeeper')
                 return [...(goalkeeper && nextPositions.includes('Goalkeeper') ? [{ ...goalkeeper, position: 'Goalkeeper' }] : []), ...fieldPlayers.slice(0, slots.length).map((item, index) => ({ ...item, position: slots[index] }))]
               })
-            }}
+            }}}
             style={{ background: '#111827', border: '1px solid #1f2937', color: '#f3f4f6', padding: '8px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: 700, flex: 1 }}
           >
             {activeFormations.map((formKey) => (
