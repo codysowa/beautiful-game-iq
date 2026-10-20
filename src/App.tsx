@@ -241,6 +241,7 @@ function App() {
   const [captain1Id, setCaptain1Id] = useState('')
   const [captain2Id, setCaptain2Id] = useState('')
   const [selectedPreplanPlayerId, setSelectedPreplanPlayerId] = useState<string | null>(null)
+  const [selectedMovePlayerId, setSelectedMovePlayerId] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(true)
 
@@ -4323,7 +4324,16 @@ function renderLineup() {
                         const draggedPlayerId = event.dataTransfer.getData('text/plain')
                         if (draggedPlayerId && canManageGame) assignPlayer(draggedPlayerId, position)
                       }}
-                      onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
+                      onClick={() => {
+                        if (!canManageGame) return
+                        if (selectedMovePlayerId) {
+                          if (selectedMovePlayerId !== assignment?.player_id) assignPlayer(selectedMovePlayerId, position)
+                          setSelectedMovePlayerId(null)
+                          return
+                        }
+                        if (assignment) setSelectedMovePlayerId(assignment.player_id)
+                        else setSelectedPreplanPlayerId(`__empty__:${position}`)
+                      }}
                       disabled={!canManageGame}
                       style={{
                         background: 'transparent',
@@ -4398,6 +4408,11 @@ function renderLineup() {
             </span>
           </div>
 
+          {selectedMovePlayerId && (
+            <div style={{ marginBottom: '10px', padding: '9px 11px', border: '1px solid #06b6d4', borderRadius: '9px', background: '#082f3a', color: '#a5f3fc', fontSize: '12px', fontWeight: 800 }}>
+              Player selected — tap a pitch position to move {getPlayerDisplayName(players.find((p) => p.id === selectedMovePlayerId) || players[0])}. <button type="button" onClick={() => setSelectedMovePlayerId(null)} style={{ marginLeft: '8px', background: 'transparent', color: '#a5f3fc', border: 'none', fontWeight: 900 }}>Cancel</button>
+            </div>
+          )}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
               <button
@@ -4408,7 +4423,10 @@ function renderLineup() {
                   event.dataTransfer.setData('text/plain', player.id)
                   event.dataTransfer.effectAllowed = 'move'
                 }}
-                onClick={() => setSelectedPreplanPlayerId(player.id)}
+                onClick={() => {
+                  if (selectedMovePlayerId === player.id) setSelectedMovePlayerId(null)
+                  else setSelectedMovePlayerId(player.id)
+                }}
                 disabled={!canManageGame}
                 style={{
                   background: '#1f2937',
