@@ -2054,3 +2054,134 @@ input:focus, select:focus, textarea:focus {
  .main-content:has(.lineup-heading) .section-header { gap:8px; }
  .main-content:has(.lineup-heading) .section-header h2 { font-size:17px; }
 }
+
+
+/* Lineup Builder — responsive first-pass from the Visio workspace.
+   Keep the existing React state/actions; this layer only changes presentation. */
+.main-content:has(.lineup-heading) .quarter-tabs {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin:12px 0;
+}
+.main-content:has(.lineup-heading) .quarter-tabs button {
+  min-height:42px;
+  border-radius:9px;
+}
+.main-content:has(.lineup-heading) .bgiq-pitch-board {
+  width:100%;
+  max-width:680px;
+  min-height:560px;
+  margin:0 auto 14px;
+  padding:18px 14px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-around;
+  gap:12px;
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(117,235,171,.65);
+  border-radius:14px;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 8%,rgba(0,0,0,.025) 8% 16%),
+    linear-gradient(180deg,#16733f 0%,#198a45 48%,#126b39 100%);
+  box-shadow:0 10px 30px rgba(0,0,0,.22);
+}
+.main-content:has(.lineup-heading) .bgiq-pitch-markings {
+  inset:10px;
+  border:1.5px solid rgba(236,255,241,.88);
+  border-radius:2px;
+  pointer-events:none;
+}
+.main-content:has(.lineup-heading) .bgiq-pitch-markings:before {
+  content:"";
+  position:absolute;
+  left:0;right:0;top:50%;
+  border-top:1.5px solid rgba(236,255,241,.85);
+}
+.main-content:has(.lineup-heading) .bgiq-pitch-markings:after {
+  content:"";
+  position:absolute;
+  width:19%;aspect-ratio:1;
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  border:1.5px solid rgba(236,255,241,.85);
+  border-radius:50%;
+}
+.main-content:has(.lineup-heading) .bgiq-pitch-row {
+  position:relative;
+  z-index:1;
+  align-items:center;
+  gap:clamp(5px,1.4vw,12px);
+}
+.main-content:has(.lineup-heading) .bgiq-pitch-row>button {
+  min-width:0;
+  min-height:62px!important;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:4px;
+  border:1px solid rgba(221,255,233,.82)!important;
+  border-radius:10px!important;
+  background:rgba(9,43,30,.88)!important;
+  color:#f5fff8!important;
+  box-shadow:0 3px 0 rgba(0,0,0,.16);
+  backdrop-filter:blur(3px);
+}
+.main-content:has(.lineup-heading) .bgiq-pitch-row>button:has(.bgiq-player-label) { cursor:pointer; }
+.main-content:has(.lineup-heading) .bgiq-position-label {
+  color:#8bf0b9!important;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.06em;
+}
+.main-content:has(.lineup-heading) .bgiq-player-label {
+  color:#fff!important;
+  font-size:clamp(10px,1vw,13px);
+  font-weight:800;
+  line-height:1.15;
+  overflow-wrap:anywhere;
+}
+.main-content:has(.lineup-heading) .bgiq-bench-panel {
+  background:#102231!important;
+  color:#eaf4f8!important;
+  border:1px solid #2b4b5b;
+  border-radius:12px;
+  padding:12px;
+}
+.main-content:has(.lineup-heading) .bgiq-bench-panel strong { color:#eaf4f8!important; }
+.main-content:has(.lineup-heading) .bgiq-bench-players {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+.main-content:has(.lineup-heading) .bgiq-bench-players button {
+  min-height:42px;
+  flex:1 1 112px;
+  text-align:left;
+  border-radius:9px;
+}
+.main-content:has(.lineup-heading) .bgiq-full-game-lineup {
+  margin-top:16px;
+}
+@media(max-width:640px) {
+  .main-content:has(.lineup-heading) .bgiq-pitch-board {
+    min-height:500px;
+    padding:15px 9px;
+    gap:8px;
+    border-radius:10px;
+  }
+  .main-content:has(.lineup-heading) .bgiq-pitch-markings { inset:7px; }
+  .main-content:has(.lineup-heading) .bgiq-pitch-row>button {
+    min-height:50px!important;
+    padding:5px 2px!important;
+    border-radius:8px!important;
+  }
+  .main-content:has(.lineup-heading) .bgiq-position-label { font-size:9px; }
+  .main-content:has(.lineup-heading) .bgiq-player-label { font-size:10px; }
+  .main-content:has(.lineup-heading) .bgiq-bench-players button { flex-basis:calc(50% - 8px); }
+  .main-content:has(.lineup-heading) .bgiq-full-game-lineup > div:last-child {
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
