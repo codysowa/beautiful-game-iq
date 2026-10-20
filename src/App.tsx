@@ -4029,11 +4029,18 @@ function renderLineup() {
             <button
               type="button"
               onClick={() => {
-                if (typeof optimizeCurrentQuarter === 'function') {
-                  optimizeCurrentQuarter()
-                } else if (typeof applySuggestedLineup === 'function') {
-                  applySuggestedLineup()
+                const advice = rotationAdvice()
+                setQuarterSuggestion(advice)
+                if (!advice.suggestedLineup.length) {
+                  alert('Coach Assist could not build a lineup. Check player availability, roster size, and the selected formation.')
+                  return
                 }
+                if (lineup.length && !window.confirm(`Replace the current Q${selectedQuarter} lineup with the Coach Assist suggestion?`)) return
+                setLineup(advice.suggestedLineup.map(({ position, player }) => ({
+                  player_id: player.id,
+                  quarter: selectedQuarter,
+                  position,
+                })))
               }}
               disabled={!canManageGame}
               style={{ background: 'rgba(14, 116, 144, 0.25)', border: '1px solid #0891b2', color: '#22d3ee', borderRadius: '10px', padding: '8px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
