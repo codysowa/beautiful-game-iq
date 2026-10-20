@@ -4609,8 +4609,8 @@ function renderLineup() {
   }
   return (
     <>
-      <div className="app">
-      <header className="app-header">
+      <div className={screen === 'lineup' ? 'app lineup-page' : 'app'}>
+      {screen !== 'lineup' ? <header className="app-header">
         <div className="header-content">
           <h1>Beautiful Game IQ</h1>
           <p>Know the game. Coach the moment.</p>
@@ -4640,7 +4640,9 @@ function renderLineup() {
             <Monetization userId={currentUserId} />
           </div>
         </div>
-      </header>
+      </header> : (
+        <button type="button" className="lineup-help-button" onClick={() => { setHelpReturnScreen('lineup'); setScreen('help'); setHelpStep(0) }}>Help</button>
+      )}
 
       {showNewTeamForm && (
         <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="new-team-title">
