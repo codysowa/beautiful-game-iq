@@ -4173,7 +4173,7 @@ function renderLineup() {
             <span style={{ background: 'rgba(0,0,0,0.5)', color: '#4edea3', border: '1px solid #059669', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>{optimizationFormation}</span>
           </div>
 
-          <div style={{ display: 'grid', gap: '26px', position: 'relative', zIndex: 2 }}>
+          <div style={{ display: 'grid', gap: '18px', position: 'relative', zIndex: 2, gridTemplateRows: (formationRows[optimizationFormation] || []).map(() => 'minmax(76px, auto)').join(' ') }}>
             {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
               <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
                 {row.map((position) => {
@@ -4185,9 +4185,20 @@ function renderLineup() {
                     <button
                       key={position}
                       type="button"
-                      onClick={() => {
-                        setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)
+                      draggable={Boolean(assignment) && canManageGame}
+                      onDragStart={(event) => {
+                        if (assignment) event.dataTransfer.setData('text/plain', assignment.player_id)
+                        event.dataTransfer.effectAllowed = 'move'
                       }}
+                      onDragOver={(event) => {
+                        if (canManageGame) { event.preventDefault(); event.dataTransfer.dropEffect = 'move' }
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault()
+                        const draggedPlayerId = event.dataTransfer.getData('text/plain')
+                        if (draggedPlayerId && canManageGame) assignPlayer(draggedPlayerId, position)
+                      }}
+                      onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
                       disabled={!canManageGame}
                       style={{
                         background: 'transparent',
@@ -4195,7 +4206,10 @@ function renderLineup() {
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        cursor: canManageGame ? 'pointer' : 'default',
+                        justifySelf: 'center',
+                        width: '100%',
+                        minWidth: 0,
+                        cursor: canManageGame ? 'grab' : 'default',
                         padding: 0,
                       }}
                     >
@@ -4253,6 +4267,11 @@ function renderLineup() {
               <button
                 key={player.id}
                 type="button"
+                draggable={canManageGame}
+                onDragStart={(event) => {
+                  event.dataTransfer.setData('text/plain', player.id)
+                  event.dataTransfer.effectAllowed = 'move'
+                }}
                 onClick={() => setSelectedPreplanPlayerId(player.id)}
                 disabled={!canManageGame}
                 style={{
@@ -4348,13 +4367,13 @@ function renderLineup() {
                 <div key={q} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1.5px solid #059669', borderRadius: '12px', padding: '10px' }}>
                   <div style={{ fontSize: '11px', fontWeight: 900, color: '#34d399', marginBottom: '8px', textAlign: 'center' }}>Q{q} Mini Pitch ({qLineup.length} Set)</div>
                   
-                  <div style={{ minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: '6px', background: 'rgba(0,0,0,0.3)', padding: '8px', borderRadius: '8px' }}>
+                  <div style={{ minHeight: '190px', display: 'flex', flexDirection: 'column-reverse', justifyContent: 'space-around', gap: '5px', background: 'linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), rgba(0,0,0,0.3)', backgroundSize: '33.33% 100%, 100% 25%, auto', border: '1px solid rgba(110,231,183,.3)', padding: '8px', borderRadius: '8px' }}>
                     {qLineup.length > 0 ? (
                       qLineup.map((item) => {
                         const p = players.find(pl => pl.id === item.player_id)
                         const isGK = item.position === 'Goalkeeper'
                         return (
-                          <div key={item.player_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '4px', color: '#fff' }}>
+                          <div key={item.player_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px', fontSize: '10px', background: 'rgba(0,0,0,0.6)', padding: '4px 6px', border: '1px solid rgba(110,231,183,.35)', borderRadius: '8px', color: '#fff' }}>
                             <span style={{ fontWeight: 700 }}>{p ? getPlayerDisplayName(p) : 'Player'}</span>
                             <span style={{ fontWeight: 900, color: isGK ? '#f59e0b' : '#34d399', fontSize: '9px', background: isGK ? 'rgba(245, 158, 11, 0.2)' : 'rgba(52, 211, 153, 0.2)', padding: '1px 4px', borderRadius: '3px' }}>
                               {positionShort(item.position)}
@@ -4387,7 +4406,7 @@ function renderLineup() {
                 </button>
               </div>
 
-              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: 0 }}>Tap a player to assign them to this spot, or clear the current position.</p>
+              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: 0 }}>Drag players from the bench onto a pitch position, or drag a player directly between positions. You can also tap here as a fallback.</p>
 
               <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
                 {players.map((p) => {
