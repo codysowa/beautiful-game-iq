@@ -4062,6 +4062,31 @@ function renderLineup() {
           </div>
         </div>
 
+        {/* Restore a previous game plan without losing the current visual layout */}
+        <section style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', padding: '10px 12px', marginBottom: '12px', background: '#111827', border: '1px solid #1f2937', borderRadius: '12px' }}>
+          <span style={{ color: '#d1d5db', fontSize: '11px', fontWeight: 800, whiteSpace: 'nowrap' }}>Reuse a previous lineup</span>
+          <select
+            aria-label="Previous game lineup"
+            value={copySourceGameId}
+            onChange={(event) => setCopySourceGameId(event.target.value)}
+            style={{ minWidth: '160px', flex: '1 1 180px', background: '#030712', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '8px', fontSize: '11px' }}
+          >
+            <option value="">Choose a previous game…</option>
+            {previousGamesForCopy().map((game) => (
+              <option key={game.id} value={game.id}>{game.game_date} · {game.opponent}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => void copyEntireGameFromGame()}
+            disabled={!canManageGame || savingLineup || previousGamesForCopy().length === 0}
+            style={{ background: '#10b981', color: '#022c22', border: 'none', borderRadius: '8px', padding: '8px 12px', fontSize: '11px', fontWeight: 900, cursor: canManageGame ? 'pointer' : 'default' }}
+          >
+            Copy all 4 quarters
+          </button>
+          <span style={{ color: '#9ca3af', fontSize: '10px', flexBasis: '100%' }}>Copies saved player positions from an earlier game. You’ll confirm before replacing this game’s lineups.</span>
+        </section>
+
         {/* Quarter Selection Tabs */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px', marginBottom: '16px' }}>
           {[1, 2, 3, 4].map((q) => {
