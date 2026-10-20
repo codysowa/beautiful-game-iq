@@ -4035,12 +4035,7 @@ function renderLineup() {
                   alert('Coach Assist could not build a lineup. Check player availability, roster size, and the selected formation.')
                   return
                 }
-                if (lineup.length && !window.confirm(`Replace the current Q${selectedQuarter} lineup with the Coach Assist suggestion?`)) return
-                setLineup(advice.suggestedLineup.map(({ position, player }) => ({
-                  player_id: player.id,
-                  quarter: selectedQuarter,
-                  position,
-                })))
+
               }}
               disabled={!canManageGame}
               style={{ background: 'rgba(14, 116, 144, 0.25)', border: '1px solid #0891b2', color: '#22d3ee', borderRadius: '10px', padding: '8px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -4068,6 +4063,30 @@ function renderLineup() {
             <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>{selectedGame.game_date} {selectedGame.game_time ? formatGameTime(selectedGame.game_time) : ''}</p>
           </div>
         </div>
+
+        {quarterSuggestion && (
+          <section style={{ background: '#0b1f26', border: '1px solid #0891b2', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <strong style={{ color: '#67e8f9', fontSize: '13px' }}>Coach Assist suggestion — Q{selectedQuarter}</strong>
+              <button type="button" onClick={() => setQuarterSuggestion(null)} style={{ background: 'transparent', color: '#9ca3af', border: 'none', fontSize: '18px', cursor: 'pointer' }}>×</button>
+            </div>
+            {quarterSuggestion.suggestedLineup.length ? (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(125px, 1fr))', gap: '6px', marginBottom: '10px' }}>
+                  {quarterSuggestion.suggestedLineup.map(({ position, player }) => (
+                    <div key={position} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', padding: '7px 9px', borderRadius: '7px', background: '#071319', border: '1px solid #164e63', color: '#e5e7eb', fontSize: '12px' }}>
+                      <span>{player.name}</span><strong style={{ color: position === 'Goalkeeper' ? '#fbbf24' : '#34d399' }}>{positionShort(position)}</strong>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button type="button" onClick={applySuggestedLineup} disabled={!canManageGame} style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', fontWeight: 800, cursor: 'pointer' }}>Apply suggestion</button>
+                  <button type="button" onClick={() => setQuarterSuggestion(null)} style={{ background: '#1f2937', color: '#d1d5db', border: '1px solid #374151', borderRadius: '8px', padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }}>Keep current lineup</button>
+                </div>
+              </>
+            ) : <p style={{ color: '#fca5a5', fontSize: '12px', margin: 0 }}>No complete suggestion available. Check availability and formation slots.</p>}
+          </section>
+        )}
 
         {/* Restore a previous game plan without losing the current visual layout */}
         <section style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', padding: '10px 12px', marginBottom: '12px', background: '#111827', border: '1px solid #1f2937', borderRadius: '12px' }}>
@@ -4176,7 +4195,7 @@ function renderLineup() {
           <div style={{ position: 'absolute', bottom: '12px', left: '25%', right: '25%', height: '40px', border: '1px solid rgba(52, 211, 153, 0.25)', borderBottom: 'none', pointerEvents: 'none' }} />
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', position: 'relative', zIndex: 2 }}>
-            <span style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>✈ ATTACKING DIRECTION • Q{selectedQuarter}</span>
+            <span style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Q{selectedQuarter}</span>
             <span style={{ background: 'rgba(0,0,0,0.5)', color: '#4edea3', border: '1px solid #059669', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>{optimizationFormation}</span>
           </div>
 
@@ -4260,8 +4279,15 @@ function renderLineup() {
           </div>
         </div>
 
-        {/* Bench / Resting Players */}
-        <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px', marginBottom: '20px' }}>
+        {/* Bench / Resting Players — dropping here removes a player from the current quarter */}
+        <div
+          onDragOver={(event) => { if (canManageGame) { event.preventDefault(); event.dataTransfer.dropEffect = 'move' } }}
+          onDrop={(event) => {
+            event.preventDefault()
+            const draggedPlayerId = event.dataTransfer.getData('text/plain')
+            if (draggedPlayerId && canManageGame) setLineup((current) => current.filter((item) => item.player_id !== draggedPlayerId))
+          }}
+          style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <strong style={{ fontSize: '13px', color: '#fff' }}>Bench / Resting Players (Tap to assign)</strong>
             <span style={{ background: '#1f2937', color: '#9ca3af', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '10px' }}>
@@ -4310,7 +4336,7 @@ function renderLineup() {
         <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <strong style={{ fontSize: '13px', color: '#fff' }}>Playing Time & Position Breakdown (Max 2 GK Quarters)</strong>
-            <span style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#fcd34d', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>USSF 50% RULE</span>
+            
           </div>
 
           <div style={{ display: 'grid', gap: '10px' }}>
