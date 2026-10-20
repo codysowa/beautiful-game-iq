@@ -4013,7 +4013,7 @@ function renderLineup() {
       <div style={{ background: '#090d12', color: '#e5e7eb', minHeight: '100vh', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         
         {/* Top Header Bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '14px', width: '100%', boxSizing: 'border-box' }}>
           <button
             type="button"
             onClick={async () => {
@@ -4024,10 +4024,10 @@ function renderLineup() {
             }}
             style={{ background: '#1f2937', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
           >
-            ← Back to Games
+            ← Home
           </button>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '100%' }}>
             <button
               type="button"
               onClick={() => {
