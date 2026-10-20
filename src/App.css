@@ -1949,3 +1949,17 @@ div[style*="radial-gradient(circle at center"] > div[style*="position: relative"
     right: 8px;
   }
 }
+
+
+/* Export only the playing-time breakdown and four mini-pitches to PDF. */
+@media print {
+  @page { size: auto; margin: 10mm; }
+  html, body { background: #071014 !important; color: #fff !important; width: 100% !important; min-width: 0 !important; overflow: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body * { visibility: hidden !important; }
+  .rotation-export-window, .rotation-export-window * { visibility: visible !important; }
+  .rotation-export-window { position: absolute !important; inset: 0 auto auto 0 !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; background: #071014 !important; color: #fff !important; }
+  .rotation-export-window > div { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .rotation-export-window .rotation-export-actions { display: none !important; }
+  .rotation-export-window [style*="grid-template-columns: repeat(2"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .rotation-export-window [style*="minHeight: '156px'"] { min-height: 156px !important; }
+}
