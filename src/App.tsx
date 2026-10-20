@@ -4109,18 +4109,35 @@ function renderLineup() {
               <strong style={{ color: '#6ee7b7', fontSize: '13px' }}>Whole-game Coach Assist preview</strong>
               <button type="button" onClick={() => setWholeGameSuggestion(null)} style={{ background: 'transparent', color: '#9ca3af', border: 'none', fontSize: '18px', cursor: 'pointer' }}>×</button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
               {[1, 2, 3, 4].map((quarter) => {
                 const quarterPlan = wholeGameSuggestion.filter((item) => item.quarter === quarter)
-                return <div key={quarter} style={{ background: '#031b16', border: '1px solid #14532d', borderRadius: '8px', padding: '8px' }}>
-                  <strong style={{ display: 'block', color: '#6ee7b7', fontSize: '12px', marginBottom: '6px' }}>Q{quarter} · {quarterPlan.length} assigned</strong>
-                  {quarterPlan.map((item) => {
-                    const player = players.find((p) => p.id === item.player_id)
-                    return <div key={item.player_id} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', padding: '4px 0', color: '#f3f4f6', fontSize: '11px', borderBottom: '1px solid #12372d' }}>
-                      <span style={{ fontWeight: 800 }}>{player ? getPlayerDisplayName(player) : 'Unknown player'}</span>
-                      <strong style={{ color: item.position === 'Goalkeeper' ? '#fbbf24' : '#34d399' }}>{positionShort(item.position)}</strong>
+                const rows = formationRows[optimizationFormation] || []
+                return <div key={quarter} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1px solid #059669', borderRadius: '10px', padding: '8px', minWidth: 0 }}>
+                  <strong style={{ display: 'block', color: '#6ee7b7', fontSize: '12px', textAlign: 'center', marginBottom: '7px' }}>Q{quarter} · {quarterPlan.length} assigned</strong>
+                  <div style={{ position: 'relative', overflow: 'hidden', minHeight: '150px', display: 'grid', gridTemplateRows: rows.map(() => 'minmax(30px, 1fr)').join(' '), gap: '3px', background: 'rgba(0,0,0,.28)', border: '1px solid rgba(110,231,183,.3)', borderRadius: '7px', padding: '8px 5px' }}>
+                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: .55 }}>
+                      <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', borderTop: '1px solid rgba(110,231,183,.35)' }} />
+                      <div style={{ position: 'absolute', width: '44px', height: '44px', border: '1px solid rgba(110,231,183,.35)', borderRadius: '50%', left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }} />
+                      <div style={{ position: 'absolute', width: '24%', height: '12px', border: '1px solid rgba(110,231,183,.3)', borderTop: 0, left: '38%', bottom: 0 }} />
                     </div>
-                  })}
+                    {rows.length ? rows.map((row, rowIndex) => (
+                      <div key={rowIndex} style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '3px', minWidth: 0 }}>
+                        {row.map((position) => {
+                          const item = quarterPlan.find((assignment) => assignment.position === position)
+                          const player = item ? players.find((p) => p.id === item.player_id) : null
+                          const isGK = position === 'Goalkeeper'
+                          return <div key={position} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 0', minWidth: 0, gap: '2px' }}>
+                            <div style={{ width: '25px', height: '25px', flexShrink: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isGK ? '#f59e0b' : player ? '#34d399' : '#7f1d1d', color: isGK ? '#451a03' : '#022c22', fontSize: '8px', fontWeight: 900, border: isGK ? '1px solid #fcd34d' : player ? '1px solid #6ee7b7' : '1px dashed #f87171', boxShadow: player ? '0 0 8px rgba(52,211,153,.2)' : 'none' }}>
+                              {player?.jersey_number != null ? '#'+player.jersey_number : player ? positionShort(position) : '+'}
+                            </div>
+                            <span style={{ color: player ? '#fff' : '#fca5a5', fontSize: '9px', fontWeight: 900, textAlign: 'center', lineHeight: 1.1, overflowWrap: 'anywhere', maxWidth: '100%', textShadow: '0 1px 2px #000' }}>{player ? getPlayerDisplayName(player) : 'Unassigned'}</span>
+                            <span style={{ color: isGK ? '#fbbf24' : '#6ee7b7', fontSize: '8px', fontWeight: 800 }}>{positionShort(position)}</span>
+                          </div>
+                        })}
+                      </div>
+                    )) : <div style={{ color: '#9ca3af', fontSize: '10px', textAlign: 'center' }}>Formation unavailable</div>}
+                  </div>
                 </div>
               })}
             </div>
@@ -4487,7 +4504,12 @@ function renderLineup() {
               return (
                 <div key={q} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1.5px solid #059669', borderRadius: '12px', padding: '10px', minWidth: 0 }}>
                   <div style={{ fontSize: '11px', fontWeight: 900, color: '#34d399', marginBottom: '8px', textAlign: 'center' }}>Q{q} Mini Pitch ({qLineup.length} Set)</div>
-                  <div style={{ minHeight: '156px', display: 'grid', gridTemplateRows: rows.map(() => 'minmax(30px, 1fr)').join(' '), gap: '4px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(110,231,183,.25)', padding: '7px', borderRadius: '8px' }}>
+                  <div style={{ position: 'relative', overflow: 'hidden', minHeight: '156px', display: 'grid', gridTemplateRows: rows.map(() => 'minmax(30px, 1fr)').join(' '), gap: '4px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(110,231,183,.25)', padding: '7px', borderRadius: '8px' }}>
+                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: .6 }}>
+                      <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', borderTop: '1px solid rgba(110,231,183,.3)' }} />
+                      <div style={{ position: 'absolute', width: '48px', height: '48px', border: '1px solid rgba(110,231,183,.3)', borderRadius: '50%', left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }} />
+                      <div style={{ position: 'absolute', width: '24%', height: '13px', border: '1px solid rgba(110,231,183,.25)', borderTop: 0, left: '38%', bottom: 0 }} />
+                    </div>
                     {rows.length ? rows.map((row, rowIndex) => (
                       <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '4px', minWidth: 0 }}>
                         {row.map((position) => {
