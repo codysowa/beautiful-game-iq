@@ -4069,13 +4069,13 @@ function renderLineup() {
         </div>
 
         {/* Game Title Bar */}
-        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <span style={{ background: '#10b981', color: '#022c22', fontWeight: 900, fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>{currentFormat.toUpperCase()}</span>
               <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', margin: 0 }}>vs. {selectedGame.opponent}</h1>
             </div>
-            <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>{selectedGame.game_date} {selectedGame.game_time ? formatGameTime(selectedGame.game_time) : ''}</p>
+            <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0, display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}><span>{selectedGame.game_date} {selectedGame.game_time ? formatGameTime(selectedGame.game_time) : ''}</span>{selectedGame.location?.trim() ? <span>Field: {selectedGame.location}</span> : null}</p>
           </div>
         </div>
 
