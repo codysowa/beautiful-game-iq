@@ -4029,11 +4029,18 @@ function renderLineup() {
             <button
               type="button"
               onClick={() => {
-                if (typeof optimizeCurrentQuarter === 'function') {
-                  optimizeCurrentQuarter()
-                } else if (typeof applySuggestedLineup === 'function') {
-                  applySuggestedLineup()
+                const advice = rotationAdvice()
+                setQuarterSuggestion(advice)
+                if (!advice.suggestedLineup.length) {
+                  alert('Coach Assist could not build a lineup. Check player availability, roster size, and the selected formation.')
+                  return
                 }
+                if (lineup.length && !window.confirm(`Replace the current Q${selectedQuarter} lineup with the Coach Assist suggestion?`)) return
+                setLineup(advice.suggestedLineup.map(({ position, player }) => ({
+                  player_id: player.id,
+                  quarter: selectedQuarter,
+                  position,
+                })))
               }}
               disabled={!canManageGame}
               style={{ background: 'rgba(14, 116, 144, 0.25)', border: '1px solid #0891b2', color: '#22d3ee', borderRadius: '10px', padding: '8px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -4061,6 +4068,45 @@ function renderLineup() {
             <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>{selectedGame.game_date} {selectedGame.game_time ? formatGameTime(selectedGame.game_time) : ''}</p>
           </div>
         </div>
+
+        {/* Restore a previous game plan without losing the current visual layout */}
+        <section style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', padding: '10px 12px', marginBottom: '12px', background: '#111827', border: '1px solid #1f2937', borderRadius: '12px' }}>
+          <span style={{ color: '#d1d5db', fontSize: '11px', fontWeight: 800, whiteSpace: 'nowrap' }}>Reuse a previous lineup</span>
+          <select
+            aria-label="Previous game lineup"
+            value={copySourceGameId}
+            onChange={(event) => setCopySourceGameId(event.target.value)}
+            style={{ minWidth: '160px', flex: '1 1 180px', background: '#030712', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '8px', fontSize: '11px' }}
+          >
+            <option value="">Choose a previous game…</option>
+            {previousGamesForCopy().map((game) => (
+              <option key={game.id} value={game.id}>{game.game_date} · {game.opponent}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => void copyEntireGameFromGame()}
+            disabled={!canManageGame || savingLineup || previousGamesForCopy().length === 0}
+            style={{ background: '#10b981', color: '#022c22', border: 'none', borderRadius: '8px', padding: '8px 12px', fontSize: '11px', fontWeight: 900, cursor: canManageGame ? 'pointer' : 'default' }}
+          >
+            Copy all 4 quarters
+          </button>
+          <span style={{ color: '#9ca3af', fontSize: '10px', flexBasis: '100%' }}>Copies saved player positions from an earlier game. You’ll confirm before replacing this game’s lineups.</span>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', flexBasis: '100%', paddingTop: '4px', borderTop: '1px solid #1f2937' }}>
+            <span style={{ color: '#9ca3af', fontSize: '10px', fontWeight: 700 }}>Or copy a quarter:</span>
+            {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
+              <button
+                key={quarter}
+                type="button"
+                onClick={() => void copyQuarterFromCurrentGame(quarter)}
+                disabled={!canManageGame || savingLineup || !allGameLineups.some((item) => item.quarter === quarter)}
+                style={{ background: '#030712', color: '#d1d5db', border: '1px solid #374151', borderRadius: '7px', padding: '5px 8px', fontSize: '10px', fontWeight: 800, cursor: canManageGame ? 'pointer' : 'default' }}
+              >
+                Q{quarter} → Q{selectedQuarter}
+              </button>
+            ))}
+          </div>
+        </section>
 
         {/* Quarter Selection Tabs */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px', marginBottom: '16px' }}>
@@ -4134,7 +4180,7 @@ function renderLineup() {
             <span style={{ background: 'rgba(0,0,0,0.5)', color: '#4edea3', border: '1px solid #059669', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>{optimizationFormation}</span>
           </div>
 
-          <div style={{ display: 'grid', gap: '26px', position: 'relative', zIndex: 2 }}>
+          <div style={{ display: 'grid', gap: '18px', position: 'relative', zIndex: 2, gridTemplateRows: (formationRows[optimizationFormation] || []).map(() => 'minmax(76px, auto)').join(' ') }}>
             {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
               <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
                 {row.map((position) => {
@@ -4146,9 +4192,20 @@ function renderLineup() {
                     <button
                       key={position}
                       type="button"
-                      onClick={() => {
-                        setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)
+                      draggable={Boolean(assignment) && canManageGame}
+                      onDragStart={(event) => {
+                        if (assignment) event.dataTransfer.setData('text/plain', assignment.player_id)
+                        event.dataTransfer.effectAllowed = 'move'
                       }}
+                      onDragOver={(event) => {
+                        if (canManageGame) { event.preventDefault(); event.dataTransfer.dropEffect = 'move' }
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault()
+                        const draggedPlayerId = event.dataTransfer.getData('text/plain')
+                        if (draggedPlayerId && canManageGame) assignPlayer(draggedPlayerId, position)
+                      }}
+                      onClick={() => setSelectedPreplanPlayerId(assignment?.player_id || `__empty__:${position}`)}
                       disabled={!canManageGame}
                       style={{
                         background: 'transparent',
@@ -4156,7 +4213,10 @@ function renderLineup() {
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        cursor: canManageGame ? 'pointer' : 'default',
+                        justifySelf: 'center',
+                        width: '100%',
+                        minWidth: 0,
+                        cursor: canManageGame ? 'grab' : 'default',
                         padding: 0,
                       }}
                     >
@@ -4214,6 +4274,11 @@ function renderLineup() {
               <button
                 key={player.id}
                 type="button"
+                draggable={canManageGame}
+                onDragStart={(event) => {
+                  event.dataTransfer.setData('text/plain', player.id)
+                  event.dataTransfer.effectAllowed = 'move'
+                }}
                 onClick={() => setSelectedPreplanPlayerId(player.id)}
                 disabled={!canManageGame}
                 style={{
@@ -4309,13 +4374,13 @@ function renderLineup() {
                 <div key={q} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1.5px solid #059669', borderRadius: '12px', padding: '10px' }}>
                   <div style={{ fontSize: '11px', fontWeight: 900, color: '#34d399', marginBottom: '8px', textAlign: 'center' }}>Q{q} Mini Pitch ({qLineup.length} Set)</div>
                   
-                  <div style={{ minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: '6px', background: 'rgba(0,0,0,0.3)', padding: '8px', borderRadius: '8px' }}>
+                  <div style={{ minHeight: '190px', display: 'flex', flexDirection: 'column-reverse', justifyContent: 'space-around', gap: '5px', background: 'linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), rgba(0,0,0,0.3)', backgroundSize: '33.33% 100%, 100% 25%, auto', border: '1px solid rgba(110,231,183,.3)', padding: '8px', borderRadius: '8px' }}>
                     {qLineup.length > 0 ? (
                       qLineup.map((item) => {
                         const p = players.find(pl => pl.id === item.player_id)
                         const isGK = item.position === 'Goalkeeper'
                         return (
-                          <div key={item.player_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '4px', color: '#fff' }}>
+                          <div key={item.player_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px', fontSize: '10px', background: 'rgba(0,0,0,0.6)', padding: '4px 6px', border: '1px solid rgba(110,231,183,.35)', borderRadius: '8px', color: '#fff' }}>
                             <span style={{ fontWeight: 700 }}>{p ? getPlayerDisplayName(p) : 'Player'}</span>
                             <span style={{ fontWeight: 900, color: isGK ? '#f59e0b' : '#34d399', fontSize: '9px', background: isGK ? 'rgba(245, 158, 11, 0.2)' : 'rgba(52, 211, 153, 0.2)', padding: '1px 4px', borderRadius: '3px' }}>
                               {positionShort(item.position)}
@@ -4348,7 +4413,7 @@ function renderLineup() {
                 </button>
               </div>
 
-              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: 0 }}>Tap a player to assign them to this spot, or clear the current position.</p>
+              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: 0 }}>Drag players from the bench onto a pitch position, or drag a player directly between positions. You can also tap here as a fallback.</p>
 
               <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
                 {players.map((p) => {
@@ -4358,22 +4423,10 @@ function renderLineup() {
                       key={p.id}
                       type="button"
                       onClick={() => {
-                        const currentQuarter = selectedQuarter || 1
-                        if (selectedPreplanPlayerId.startsWith('__empty__:')) {
-                          const targetPos = selectedPreplanPlayerId.replace('__empty__:', '')
-                          setLineup((prev) => [
-                            ...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id),
-                            { player_id: p.id, position: targetPos, quarter: currentQuarter }
-                          ])
-                        } else {
-                          const targetPos = lineup.find((i) => i.player_id === selectedPreplanPlayerId)?.position
-                          if (targetPos) {
-                            setLineup((prev) => [
-                              ...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id),
-                              { player_id: p.id, position: targetPos, quarter: currentQuarter }
-                            ])
-                          }
-                        }
+                        const targetPos = selectedPreplanPlayerId.startsWith('__empty__:')
+                          ? selectedPreplanPlayerId.replace('__empty__:', '')
+                          : lineup.find((item) => item.player_id === selectedPreplanPlayerId)?.position
+                        if (targetPos) assignPlayer(p.id, targetPos)
                         setSelectedPreplanPlayerId(null)
                       }}
                       style={{
