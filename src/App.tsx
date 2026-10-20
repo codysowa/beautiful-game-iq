@@ -4454,7 +4454,7 @@ function renderLineup() {
                                 {isGK ? 'GK' : positionShort(position)}
                               </div>
                               <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900, textAlign: 'center', lineHeight: 1.15, overflowWrap: 'anywhere', maxWidth: '100%', textShadow: '0 1px 2px #000' }}>{player ? getPlayerDisplayName(player) : '—'}</span>
-                              {player?.jersey_number != null && <span style={{ color: '#a7f3d0', fontSize: '8px', fontWeight: 700 }}>#{player.jersey_number}</span>
+                              {player?.jersey_number != null && <span style={{ color: '#a7f3d0', fontSize: '8px', fontWeight: 700 }}>#{player.jersey_number}</span>}
                             </div>
                           )
                         })}
