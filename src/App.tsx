@@ -4201,12 +4201,7 @@ function renderLineup() {
       </>
     )
   }
-          {renderPlayingTimeTracker()}
-
-      </>
-    )
-  }
-
+      
   return (
     <>
       <div className="app">
