@@ -4225,32 +4225,8 @@ function renderLineup() {
           })}
         </div>
 
-        {/* Formation Selection Bar */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#9ca3af' }}>Formation ({currentFormat}):</span>
-          <select
-            value={optimizationFormation}
-            onChange={(e) => {
-              const nextFormation = e.target.value
-              const nextPositions = (formationRows[nextFormation] || []).flat()
-              const currentPositions = (formationRows[optimizationFormation] || []).flat()
-              setOptimizationFormation(nextFormation)
-              setQuarterSuggestion(null)
-              setWholeGameSuggestion(null)
-              setLineup((current) => {
-                const ordered = [...current].sort((a, b) => currentPositions.indexOf(a.position) - currentPositions.indexOf(b.position))
-                const goalkeeper = ordered.find((item) => item.position === 'Goalkeeper')
-                const fieldPlayers = ordered.filter((item) => item.position !== 'Goalkeeper')
-                const slots = nextPositions.filter((position) => position !== 'Goalkeeper')
-                return [...(goalkeeper && nextPositions.includes('Goalkeeper') ? [{ ...goalkeeper, position: 'Goalkeeper' }] : []), ...fieldPlayers.slice(0, slots.length).map((item, index) => ({ ...item, position: slots[index] }))]
-              })
-            }}
-            style={{ background: '#111827', border: '1px solid #1f2937', color: '#f3f4f6', padding: '8px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: 700, flex: 1 }}
-          >
-            {activeFormations.map((formKey) => (
-              <option key={formKey} value={formKey}>{formKey.toUpperCase()}</option>
-            ))}
-          </select>
+        {/* Formation is selected directly from the pitch badge */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
           <button
             type="button"
             onClick={() => {
@@ -4296,7 +4272,30 @@ function renderLineup() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', position: 'relative', zIndex: 2 }}>
             <span style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Q{selectedQuarter}</span>
-            <span style={{ background: 'rgba(0,0,0,0.5)', color: '#4edea3', border: '1px solid #059669', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>{optimizationFormation}</span>
+            <select
+              aria-label="Select formation"
+              value={optimizationFormation}
+              onChange={(e) => {
+                const nextFormation = e.target.value
+                const nextPositions = (formationRows[nextFormation] || []).flat()
+                const currentPositions = (formationRows[optimizationFormation] || []).flat()
+                setOptimizationFormation(nextFormation)
+                setQuarterSuggestion(null)
+                setWholeGameSuggestion(null)
+                setLineup((current) => {
+                  const ordered = [...current].sort((a, b) => currentPositions.indexOf(a.position) - currentPositions.indexOf(b.position))
+                  const goalkeeper = ordered.find((item) => item.position === 'Goalkeeper')
+                  const fieldPlayers = ordered.filter((item) => item.position !== 'Goalkeeper')
+                  const slots = nextPositions.filter((position) => position !== 'Goalkeeper')
+                  return [...(goalkeeper && nextPositions.includes('Goalkeeper') ? [{ ...goalkeeper, position: 'Goalkeeper' }] : []), ...fieldPlayers.slice(0, slots.length).map((item, index) => ({ ...item, position: slots[index] }))]
+                })
+              }}
+              style={{ background: 'rgba(0,0,0,0.72)', color: '#4edea3', border: '1px solid #059669', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 800, maxWidth: '100%' }}
+            >
+              {activeFormations.map((formKey) => (
+                <option key={formKey} value={formKey}>{formKey.toUpperCase()}</option>
+              ))}
+            </select>
           </div>
 
           <div style={{ display: 'grid', gap: '18px', position: 'relative', zIndex: 2, gridTemplateRows: (formationRows[optimizationFormation] || []).map(() => 'minmax(76px, auto)').join(' ') }}>
