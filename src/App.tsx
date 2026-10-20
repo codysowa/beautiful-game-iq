@@ -1424,42 +1424,45 @@ function App() {
   }
 
   function assignPlayer(playerId: string, position: string) {
+    const sourceAssignment = lineup.find((item) => item.player_id === playerId)
+    const targetAssignment = lineup.find((item) => item.position === position)
     if (!playerAvailableForQuarter(playerId, selectedQuarter)) {
-
       alert(`${playerName(playerId)} is not marked available for Q${selectedQuarter}.`)
-
       return
     }
-    if (
-      position === 'Goalkeeper' &&
-      goalkeeperQuarterCount(playerId) >= 2
-    ) {
-      alert(
-        `${playerName(playerId)} has already played 2 goalkeeper quarters.`
-      )
+    if (position === 'Goalkeeper' && goalkeeperQuarterCount(playerId) >= 2) {
+      alert(`${playerName(playerId)} has already played 2 goalkeeper quarters.`)
       return
     }
-
+    // Moving onto an occupied slot swaps both players instead of sending the
+    // displaced player to the bench. Keep the existing assignment intact if
+    // either side fails a rule check.
+    if (targetAssignment && sourceAssignment && targetAssignment.player_id !== playerId) {
+      if (!playerAvailableForQuarter(targetAssignment.player_id, selectedQuarter)) {
+        alert(`${playerName(targetAssignment.player_id)} is not marked available for Q${selectedQuarter}.`)
+        return
+      }
+      if (sourceAssignment.position === 'Goalkeeper' && goalkeeperQuarterCount(targetAssignment.player_id) >= 2) {
+        alert(`${playerName(targetAssignment.player_id)} has already played 2 goalkeeper quarters.`)
+        return
+      }
+      if (position === 'Goalkeeper' && goalkeeperQuarterCount(playerId) >= 2) {
+        alert(`${playerName(playerId)} has already played 2 goalkeeper quarters.`)
+        return
+      }
+      setLineup((current) => current.map((item) => {
+        if (item.player_id === playerId) return { ...item, position }
+        if (item.player_id === targetAssignment.player_id) return { ...item, position: sourceAssignment.position }
+        return item
+      }))
+      return
+    }
     setLineup((current) => {
-      const withoutPlayer = current.filter(
-        (item) => item.player_id !== playerId
-      )
-
-      const withoutPosition = withoutPlayer.filter(
-        (item) => item.position !== position
-      )
-
-      return [
-        ...withoutPosition,
-        {
-          player_id: playerId,
-          quarter: selectedQuarter,
-          position,
-        },
-      ]
+      const withoutPlayer = current.filter((item) => item.player_id !== playerId)
+      const withoutPosition = withoutPlayer.filter((item) => item.position !== position)
+      return [...withoutPosition, { player_id: playerId, quarter: selectedQuarter, position }]
     })
   }
-
   function removePlayerFromPosition(position: string) {
     setLineup((current) =>
       current.filter((item) => item.position !== position)
