@@ -3608,7 +3608,7 @@ function playerAtPosition(position: string) {
     if (plannedQuarters.length === 0) return null
 
     return (
-      <section className="team-card">
+      <section className="team-card bgiq-position-history">
         <div className="section-header">
           <div>
             <h2>Position History</h2>
@@ -4483,9 +4483,10 @@ function playerAtPosition(position: string) {
             Q{selectedQuarter} Positions
           </h3>
 
-          <div style={{ borderRadius: 14, padding: 12, background: 'linear-gradient(180deg, #dff2df 0%, #cfe8cf 100%)', border: '2px solid #b8cdb8', display: 'grid', gap: 8 }}>
+          <div className="bgiq-pitch-board" aria-label={`Soccer pitch, ${optimizationFormation} formation`}>
+            <div className="bgiq-pitch-markings" aria-hidden="true" />
             {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
-              <div key={rowIndex} style={{ display: 'grid', gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`, gap: 8 }}>
+              <div className="bgiq-pitch-row" key={rowIndex} style={{ gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))` }}>
                 {row.map((position) => {
                   const assignment = playerAtPosition(position)
                   const player = assignment ? players.find((p) => p.id === assignment.player_id) : null
@@ -4497,8 +4498,8 @@ function playerAtPosition(position: string) {
                       disabled={!canManageGame}
                       style={{ minHeight: 64, padding: 6, border: '1px solid #aab8aa', borderRadius: 8, background: 'white', cursor: canManageGame ? 'pointer' : 'default' }}
                     >
-                      <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.65 }}>{positionShort(position)}</div>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{player ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}` : 'Tap to assign'}</div>
+                      <span className="bgiq-position-label">{positionShort(position)}</span>
+                      <span className="bgiq-player-label">{player ? `#${player.jersey_number ?? '-'} ${player.first_name || player.name.split(' ')[0]}` : 'Tap to assign'}</span>
                     </button>
                   )
                 })}
@@ -4506,9 +4507,9 @@ function playerAtPosition(position: string) {
             ))}
           </div>
 
-          <div style={{ marginTop: 12, padding: 12, border: '1px solid #d4dce5', borderRadius: 10, background: '#f7f9fb' }}>
+          <div className="bgiq-bench-panel">
             <strong>Bench / Unused Players</strong>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+            <div className="bgiq-bench-players">
               {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
                 <button key={player.id} type="button" className="secondary-button" onClick={() => setSelectedPreplanPlayerId(player.id)} disabled={!canManageGame}>
                   #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
@@ -4704,7 +4705,7 @@ function playerAtPosition(position: string) {
             </section>
           )}
 
-          <section style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }}>
+          <section className="bgiq-full-game-lineup" style={{ marginBottom: '12px', padding: '12px', border: '1px solid #ddd', borderRadius: '10px' }}>
             <div style={{ marginBottom: '10px' }}>
               <strong style={{ fontSize: 18 }}>Full Game Lineup</strong>
               <div style={{ fontSize: 12, opacity: 0.7, marginTop: 3 }}>
