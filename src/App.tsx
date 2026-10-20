@@ -4100,7 +4100,9 @@ function renderLineup() {
         </section>
 
         {/* Restore a previous game plan without losing the current visual layout */}
-        <section style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', padding: '10px 12px', marginBottom: '12px', background: '#111827', border: '1px solid #1f2937', borderRadius: '12px' }}>
+        <details style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '10px 12px', marginBottom: '12px' }}>
+          <summary style={{ color: '#d1d5db', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Copy / reuse lineups</summary>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', paddingTop: '10px' }}>
           <span style={{ color: '#d1d5db', fontSize: '11px', fontWeight: 800, whiteSpace: 'nowrap' }}>Reuse a previous lineup</span>
           <select
             aria-label="Previous game lineup"
@@ -4136,7 +4138,8 @@ function renderLineup() {
               </button>
             ))}
           </div>
-        </section>
+          </div>
+        </details>
 
         {/* Quarter Selection Tabs */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px', marginBottom: '16px' }}>
