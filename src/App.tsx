@@ -4085,6 +4085,20 @@ function renderLineup() {
             Copy all 4 quarters
           </button>
           <span style={{ color: '#9ca3af', fontSize: '10px', flexBasis: '100%' }}>Copies saved player positions from an earlier game. You’ll confirm before replacing this game’s lineups.</span>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', flexBasis: '100%', paddingTop: '4px', borderTop: '1px solid #1f2937' }}>
+            <span style={{ color: '#9ca3af', fontSize: '10px', fontWeight: 700 }}>Or copy a quarter:</span>
+            {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
+              <button
+                key={quarter}
+                type="button"
+                onClick={() => void copyQuarterFromCurrentGame(quarter)}
+                disabled={!canManageGame || savingLineup || !allGameLineups.some((item) => item.quarter === quarter)}
+                style={{ background: '#030712', color: '#d1d5db', border: '1px solid #374151', borderRadius: '7px', padding: '5px 8px', fontSize: '10px', fontWeight: 800, cursor: canManageGame ? 'pointer' : 'default' }}
+              >
+                Q{quarter} → Q{selectedQuarter}
+              </button>
+            ))}
+          </div>
         </section>
 
         {/* Quarter Selection Tabs */}
