@@ -4282,14 +4282,14 @@ function renderLineup() {
                           width: '48px',
                           height: '48px',
                           borderRadius: '50%',
-                          background: isGK ? 'radial-gradient(circle, #f59e0b 0%, #b45309 100%)' : 'radial-gradient(circle, #1f2937 0%, #111827 100%)',
-                          border: isGK ? '2px solid #fcd34d' : '2px solid #34d399',
+                          background: !player ? 'radial-gradient(circle, #78350f 0%, #451a03 100%)' : isGK ? 'radial-gradient(circle, #f59e0b 0%, #b45309 100%)' : 'radial-gradient(circle, #1f2937 0%, #111827 100%)',
+                          border: !player ? '2px dashed #fbbf24' : isGK ? '2px solid #fcd34d' : '2px solid #34d399',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
                           color: '#fff',
-                          boxShadow: isGK ? '0 0 12px rgba(245, 158, 11, 0.5)' : '0 0 12px rgba(52, 211, 153, 0.4)',
+                          boxShadow: !player ? '0 0 14px rgba(251, 191, 36, 0.55)' : isGK ? '0 0 12px rgba(245, 158, 11, 0.5)' : '0 0 12px rgba(52, 211, 153, 0.4)',
                         }}>
                           <span style={{ fontSize: '10px', fontWeight: 800, lineHeight: 1 }}>{player?.jersey_number != null ? '#' + player.jersey_number : '+'}</span>
                           <span style={{ fontSize: '8px', fontWeight: 800, color: isGK ? '#fef3c7' : '#9ca3af', marginTop: '2px' }}>{positionShort(position)}</span>
