@@ -4051,7 +4051,7 @@ function renderLineup() {
           </div>
         </div>
 
-        {/* Game Title & Captain Controls */}
+        {/* Game Title Bar */}
         <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -4059,37 +4059,6 @@ function renderLineup() {
               <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', margin: 0 }}>vs. {selectedGame.opponent}</h1>
             </div>
             <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>{selectedGame.game_date} {selectedGame.game_time ? formatGameTime(selectedGame.game_time) : ''}</p>
-          </div>
-
-          {/* Captain Dropdowns */}
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 800 }}>© Captains:</span>
-            <select
-              value={selectedCaptains?.[0] || ''}
-              onChange={(e) => {
-                const updated = [e.target.value, selectedCaptains?.[1] || ''].filter(Boolean)
-                if (typeof saveCaptains === 'function') saveCaptains(updated)
-              }}
-              style={{ background: '#111827', border: '1px solid #374151', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700 }}
-            >
-              <option value="">Captain 1</option>
-              {players.map((p) => (
-                <option key={p.id} value={p.id}>{getPlayerDisplayName(p)} (#{p.jersey_number ?? '-'})</option>
-              ))}
-            </select>
-            <select
-              value={selectedCaptains?.[1] || ''}
-              onChange={(e) => {
-                const updated = [selectedCaptains?.[0] || '', e.target.value].filter(Boolean)
-                if (typeof saveCaptains === 'function') saveCaptains(updated)
-              }}
-              style={{ background: '#111827', border: '1px solid #374151', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700 }}
-            >
-              <option value="">Captain 2</option>
-              {players.map((p) => (
-                <option key={p.id} value={p.id}>{getPlayerDisplayName(p)} (#{p.jersey_number ?? '-'})</option>
-              ))}
-            </select>
           </div>
         </div>
 
@@ -4172,7 +4141,6 @@ function renderLineup() {
                   const assignment = playerAtPosition(position)
                   const player = assignment ? players.find((p) => p.id === assignment.player_id) : null
                   const isGK = position === 'Goalkeeper'
-                  const isCaptain = player && selectedCaptains?.includes(player.id)
 
                   return (
                     <button
@@ -4193,9 +4161,6 @@ function renderLineup() {
                       }}
                     >
                       <div style={{ position: 'relative' }}>
-                        {isCaptain && (
-                          <div style={{ position: 'absolute', top: '-4px', right: '-4px', background: '#f59e0b', color: '#000', fontSize: '8px', fontWeight: 900, width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3 }}>C</div>
-                        )}
                         <div style={{
                           width: '48px',
                           height: '48px',
@@ -4393,13 +4358,20 @@ function renderLineup() {
                       key={p.id}
                       type="button"
                       onClick={() => {
+                        const currentQuarter = selectedQuarter || 1
                         if (selectedPreplanPlayerId.startsWith('__empty__:')) {
                           const targetPos = selectedPreplanPlayerId.replace('__empty__:', '')
-                          setLineup((prev) => [...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id), { player_id: p.id, position: targetPos }])
+                          setLineup((prev) => [
+                            ...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id),
+                            { player_id: p.id, position: targetPos, quarter: currentQuarter }
+                          ])
                         } else {
                           const targetPos = lineup.find((i) => i.player_id === selectedPreplanPlayerId)?.position
                           if (targetPos) {
-                            setLineup((prev) => [...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id), { player_id: p.id, position: targetPos }])
+                            setLineup((prev) => [
+                              ...prev.filter((i) => i.position !== targetPos && i.player_id !== p.id),
+                              { player_id: p.id, position: targetPos, quarter: currentQuarter }
+                            ])
                           }
                         }
                         setSelectedPreplanPlayerId(null)
@@ -4410,7 +4382,7 @@ function renderLineup() {
                         borderRadius: '10px',
                         padding: '12px',
                         display: 'flex',
-                        justify: 'space-between',
+                        justifyContent: 'space-between',
                         alignItems: 'center',
                         color: '#fff',
                         cursor: 'pointer',
