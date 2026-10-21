@@ -1849,3 +1849,36 @@ input:focus, select:focus, textarea:focus {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+/* Live Game: compact dark match-day styling aligned with Lineup Builder. */
+.live-game-page {
+  --lg-panel: #101d29; --lg-raised: #152735; --lg-border: #263d4c;
+  --lg-text: #eaf2f8; --lg-muted: #91a6b6; --lg-green: #27d7a0;
+  max-width: 760px !important; color: var(--lg-text);
+  padding: 14px 12px 120px !important; font-size: 14px;
+}
+.live-game-page > button:first-child { color: var(--lg-muted) !important; background: transparent !important; border: 1px solid var(--lg-border) !important; border-radius: 10px !important; margin-bottom: 10px !important; }
+.live-game-scoreboard { margin: 0 0 12px; padding: 16px 14px 18px !important; border: 1px solid var(--lg-border); border-radius: 18px; background: linear-gradient(145deg,#13283a,#0c1823 70%); }
+.live-game-scoreboard > div:first-child { color: var(--lg-green) !important; font-size: 10px !important; font-weight: 850; letter-spacing: .15em; }
+.live-game-scoreboard h1 { color: var(--lg-text); font-size: clamp(20px,5vw,28px) !important; font-weight: 850; letter-spacing: -.035em; }
+.live-game-scoreboard > div:nth-child(3) { color: #f5fbff; font-size: 48px !important; font-variant-numeric: tabular-nums; letter-spacing: -.06em; }
+.live-game-page > button, .live-game-page .live-game-quarter-tabs button, .live-game-page .live-game-event-actions button { border-radius: 11px !important; font-weight: 800; }
+.live-game-page > button:not(:first-child) { border: 1px solid var(--lg-border) !important; color: var(--lg-text) !important; background: var(--lg-raised) !important; }
+.live-game-page .live-game-quarter-tabs button { color: var(--lg-muted) !important; background: var(--lg-panel) !important; border: 1px solid var(--lg-border) !important; min-height: 42px !important; padding: 8px 4px !important; }
+.live-game-page .live-game-event-actions button { min-height: 62px !important; border: 1px solid var(--lg-border) !important; background: var(--lg-panel) !important; color: var(--lg-text) !important; text-align: left; padding: 12px !important; }
+.live-game-page .live-game-event-actions button:first-child { border-color: rgba(39,215,160,.55) !important; background: linear-gradient(145deg,rgba(39,215,160,.16),#10232b) !important; }
+.live-game-page .live-game-lineup-card, .live-game-page .live-game-stats-card, .live-game-page .live-game-events-card { background: var(--lg-panel) !important; border: 1px solid var(--lg-border) !important; border-radius: 16px !important; padding: 13px !important; color: var(--lg-text); box-shadow: 0 8px 22px rgba(0,0,0,.12); }
+.live-game-page h2 { color: var(--lg-text); letter-spacing: -.025em; font-weight: 850; }
+.live-game-page select { background: #0b1721 !important; color: var(--lg-text) !important; border: 1px solid var(--lg-border) !important; border-radius: 9px !important; }
+.live-game-page .live-game-pitch { position: relative; overflow: hidden; background: repeating-linear-gradient(to bottom,#0d4a34 0 32px,#0b402f 32px 64px) !important; border: 2px solid #2acb98 !important; border-radius: 13px !important; padding: 14px 8px !important; min-height: 300px; }
+.live-game-page .live-game-pitch::before { content: ""; position: absolute; pointer-events: none; inset: 8px; border: 1px solid rgba(210,244,231,.35); border-radius: 5px; }
+.live-game-page .live-game-pitch > div { position: relative; z-index: 1; }
+.live-game-page .live-game-pitch button { color: #eaf7f3 !important; background: linear-gradient(145deg,#087d5c,#07543f) !important; border: 1px solid #32e1ad !important; border-radius: 10px !important; box-shadow: 0 4px 12px rgba(0,0,0,.22); }
+.live-game-page .live-game-pitch button div:first-child { color: #8af4d2 !important; }
+.live-game-page .live-game-lineup-card > div:last-child button, .live-game-page .live-game-stats-card > div div, .live-game-page .live-game-events-card > div > div { background: #132431 !important; border-color: var(--lg-border) !important; color: var(--lg-text) !important; }
+.live-game-page .live-game-lineup-card > div:last-child button { border-style: dashed !important; }
+.live-game-page details summary { color: var(--lg-text); }
+.live-game-page details button { background: var(--lg-raised) !important; color: var(--lg-text) !important; border: 1px solid var(--lg-border) !important; }
+.live-game-page span[style*="#eee"] { color: var(--lg-text) !important; background: #1a3040 !important; }
+.live-game-page input, .live-game-page label, .live-game-page option { color: var(--lg-text); }
+@media (max-width: 600px) { .live-game-page { padding: 8px 8px 124px !important; } .live-game-scoreboard { border-radius: 15px; padding: 14px 10px 16px !important; } .live-game-page .live-game-event-actions button { min-height: 60px !important; padding: 10px !important; font-size: 14px !important; } }
