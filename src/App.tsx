@@ -4383,7 +4383,7 @@ function playerAtPosition(position: string) {
                               ? '0 6px 16px rgba(245, 158, 11, 0.45)'
                               : '0 6px 16px rgba(16, 185, 129, 0.45)',
                           }}>
-                            {player && [captain1Id || selectedGame?.captain_1_id, captain2Id || selectedGame?.captain_2_id].some((id) => id && String(id).trim().toLowerCase() === String(player.id).trim().toLowerCase()) && (
+                            {player && [selectedGame?.captain_1_id, selectedGame?.captain_2_id, captain1Id, captain2Id].some((id) => id && String(id).trim().toLowerCase() === String(player.id).trim().toLowerCase()) && (
                               <span aria-label="Captain" title="Captain" style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fbbf24', border: '2px solid #0f172a', color: '#422006', fontSize: 11, fontWeight: 950, lineHeight: 1, zIndex: 3 }}>C</span>
                             )}
                             <span style={{ fontSize: '12px', fontWeight: 900, lineHeight: 1, color: !player ? '#34d399' : isGK ? '#451a03' : '#022c22' }}>
