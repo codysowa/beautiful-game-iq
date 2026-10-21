@@ -4295,7 +4295,6 @@ function renderLineup() {
               </span>
               <select
                 aria-label="Select formation"
-                style={{ width: 'auto', minWidth: '112px', maxWidth: '220px', flex: '0 1 220px' }}
                 value={optimizationFormation}
                 onChange={(e) => {
                   const nextFormation = e.target.value
@@ -4374,8 +4373,8 @@ function renderLineup() {
                       >
                         <div style={{ position: 'relative' }}>
                           <div style={{
-                            width: '50px',
-                            height: '50px',
+                            width: '42px',
+                            height: '42px',
                             borderRadius: '50%',
                             background: !player
                               ? 'rgba(15, 23, 42, 0.65)'
@@ -4412,13 +4411,13 @@ function renderLineup() {
                         </div>
   
                         <div style={{
-                          marginTop: '6px',
-                          background: player ? 'rgba(15, 23, 42, 0.92)' : 'rgba(0, 0, 0, 0.6)',
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          marginTop: '4px',
+                          background: player ? '#0b1726' : 'rgba(3, 15, 22, 0.9)',
+                          border: '1px solid rgba(52, 211, 153, 0.35)',
                           backdropFilter: 'blur(4px)',
-                          padding: '4px 10px',
-                          borderRadius: '8px',
-                          fontSize: '12px',
+                          padding: '3px 7px',
+                          borderRadius: '7px',
+                          fontSize: '11px',
                           fontWeight: 900,
                           color: player ? '#f9fafb' : '#34d399',
                           whiteSpace: 'nowrap',
