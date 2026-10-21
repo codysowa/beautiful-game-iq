@@ -1019,9 +1019,9 @@ export default function LiveGame({
 
   function fieldRows() {
     const rows = formationRows[liveFormation] || formationRows[getDefaultFormationForFormat(gameFormat)]
-    return rows.filter((row) =>
-      row.some((position) => activeLineup.some((item) => item.position === position))
-    )
+    // Keep every formation slot visible, including unoccupied positions, so a player
+    // can be moved from the bench directly into an empty slot.
+    return rows
   }
 
   function handleFieldPlayerTap(position: string) {
@@ -1149,11 +1149,12 @@ export default function LiveGame({
             #{player.jersey_number ?? '-'}
             {isCaptain && (
               <span aria-label="Captain" title="Captain" style={{
+                position: 'absolute', top: -7, right: -8, zIndex: 4,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: 15, height: 15, marginLeft: 4, borderRadius: 5,
-                background: '#fbbf24', color: '#422006', border: '1px solid #fef3c7',
-                fontSize: 10, lineHeight: 1, fontWeight: 900, verticalAlign: 'middle',
-                boxShadow: '0 0 0 2px rgba(251,191,36,.2)',
+                width: 19, height: 19, borderRadius: '50%',
+                background: '#fbbf24', color: '#422006', border: '2px solid #fef3c7',
+                fontSize: 11, lineHeight: 1, fontWeight: 900,
+                boxShadow: '0 2px 7px rgba(0,0,0,.45)',
               }}>C</span>
             )}
           </span>
@@ -1414,7 +1415,47 @@ export default function LiveGame({
                       }}
                       style={{ flex: row.length === 1 ? '0 1 auto' : '1 1 0', display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0, minHeight: 74, borderRadius: 8 }}
                     >
-                      {fieldPlayer(position)}
+                      {activeLineup.some((item) => item.position === position)
+                        ? fieldPlayer(position)
+                        : (
+                          <button
+                            type="button"
+                            onClick={() => handleFieldPlayerTap(position)}
+                            onDragOver={(event) => {
+                              if (canManageGame && gameStatus === 'Live') {
+                                event.preventDefault()
+                                event.dataTransfer.dropEffect = 'move'
+                              }
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              const draggedPlayerId = event.dataTransfer.getData('text/plain')
+                              if (draggedPlayerId && canManageGame && gameStatus === 'Live') {
+                                assignPlayerToPosition(draggedPlayerId, position)
+                              }
+                              setSelectedMovePosition('')
+                              setSelectedBenchPlayerId('')
+                            }}
+                            disabled={!canManageGame || gameStatus !== 'Live'}
+                            aria-label={`Empty ${positionShort[position] || position} position. Drop or tap a player here.`}
+                            style={{
+                              width: '100%',
+                              maxWidth: 150,
+                              minHeight: 58,
+                              border: selectedBenchPlayerId || selectedMovePosition ? '1px dashed #34d399' : '1px dashed rgba(167,243,208,.35)',
+                              borderRadius: 10,
+                              background: selectedBenchPlayerId || selectedMovePosition ? 'rgba(16,185,129,.12)' : 'rgba(15,23,42,.18)',
+                              color: '#a7f3d0',
+                              fontSize: 10,
+                              fontWeight: 800,
+                              cursor: canManageGame && gameStatus === 'Live' ? 'pointer' : 'default',
+                            }}
+                          >
+                            + {positionShort[position] || position}
+                            <div style={{ fontSize: 9, fontWeight: 500, marginTop: 3, color: '#94a3b8' }}>Open position</div>
+                          </button>
+                        )}
                     </div>
                   ))}
                 </div>
