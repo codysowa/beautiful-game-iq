@@ -574,6 +574,42 @@ export default function LiveGame({
     // active lineup. Dropping a bench player on the field inserts them into the slot.
     if (position === 'Bench') {
       if (!source) return
+
+      // Manual substitutions must obey the same maximum-bench rule as the optimizer.
+      // Count prior quarters where this player was available but not on the field,
+      // preferring actual live lineups and falling back to the planned lineup only
+      // when no actual lineup was saved for that quarter.
+      if (optimizerLoading) {
+        alert('Rotation rules are still loading. Please try the substitution again in a moment.')
+        return
+      }
+
+      const maxBenchQuarters = teamRules?.max_bench_quarters ?? 2
+      const playerAttendance = attendance[playerId]
+      const wasAvailable = (targetQuarter: number) => {
+        if (!playerAttendance) return true
+        if (Array.isArray(playerAttendance.available_quarters)) return playerAttendance.available_quarters.includes(targetQuarter)
+        if (playerAttendance.status === 'Absent') return false
+        if (playerAttendance.status === 'Present') return true
+        if (targetQuarter < (playerAttendance.arrival_quarter || 2)) return false
+        if (playerAttendance.departure_quarter !== null && targetQuarter > playerAttendance.departure_quarter) return false
+        return true
+      }
+      let priorBenchQuarters = 0
+      for (let priorQuarter = 1; priorQuarter < quarter; priorQuarter += 1) {
+        if (!wasAvailable(priorQuarter)) continue
+        const actualQuarterLineup = actualLiveLineups.filter((item) => item.quarter === priorQuarter)
+        const quarterLineup = actualQuarterLineup.length > 0
+          ? actualQuarterLineup
+          : lineups.filter((item) => item.quarter === priorQuarter)
+        if (!quarterLineup.some((item) => item.player_id === playerId)) priorBenchQuarters += 1
+      }
+
+      if (priorBenchQuarters >= maxBenchQuarters) {
+        alert(`${playerName(playerId)} has already sat ${priorBenchQuarters} quarter(s). The team limit is ${maxBenchQuarters}; this move would exceed the playing-time rule, so the player will stay on the field.`)
+        return
+      }
+
       const nextLineup = activeLineup.filter((item) => item.player_id !== playerId)
       setLiveLineup(nextLineup)
       void persistLiveLineup(nextLineup)

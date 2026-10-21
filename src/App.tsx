@@ -3992,6 +3992,113 @@ function playerAtPosition(position: string) {
       })
   
       const activeFormations = allowedFormations.length > 0 ? allowedFormations : Object.keys(formationRows)
+
+      async function saveAndShareMatchSheet() {
+        const game = selectedGame
+        if (!game) return
+        // Desktop browsers can print the full designed match sheet. The native iOS
+        // WebView does not reliably implement window.print(), so create a real PDF
+        // file there and pass it to the system share sheet when supported.
+        const nativeCapacitor = Boolean(
+          (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } })
+            .Capacitor?.isNativePlatform?.()
+        )
+        if (!nativeCapacitor && typeof window.print === 'function') {
+          window.print()
+          return
+        }
+
+        const clean = (value: unknown) =>
+          String(value ?? '').normalize('NFKD').replace(/[^\x20-\x7E]/g, '')
+        const escapePdf = (value: unknown) => clean(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
+
+        const pdfLines: string[] = [
+          'BEAUTIFUL GAME IQ - MATCH SHEET',
+          `Opponent: ${clean(opponent || game.opponent || 'TBD')}`,
+          `Date: ${clean(game.game_date || 'Not set')}    Format: ${clean(game.format || currentFormat)}`,
+          '',
+        ]
+        const formationSlots = optimizationFormations[optimizationFormation] || []
+        for (const q of [1, 2, 3, 4]) {
+          const quarterLineup = q === selectedQuarter
+            ? lineup
+            : allGameLineups.filter((item) => item.quarter === q)
+          pdfLines.push(`QUARTER ${q}`)
+          const rendered = new Set<string>()
+          for (const position of formationSlots) {
+            const assignment = quarterLineup.find((item) => item.position === position)
+            const player = assignment ? players.find((p) => p.id === assignment.player_id) : null
+            pdfLines.push(`  ${positionShort(position)}: ${player ? `#${player.jersey_number ?? '-'} ${getPlayerDisplayName(player)}` : 'Open slot'}`)
+            rendered.add(position)
+          }
+          for (const assignment of quarterLineup.filter((item) => !rendered.has(item.position))) {
+            const player = players.find((p) => p.id === assignment.player_id)
+            pdfLines.push(`  ${positionShort(assignment.position)}: ${player ? `#${player.jersey_number ?? '-'} ${getPlayerDisplayName(player)}` : 'Unknown player'}`)
+          }
+          pdfLines.push('')
+        }
+        pdfLines.push('PLAYING TIME')
+        for (const player of players) {
+          const playedQuarters = [1, 2, 3, 4].filter((q) => {
+            const quarterLineup = q === selectedQuarter ? lineup : allGameLineups.filter((item) => item.quarter === q)
+            return quarterLineup.some((item) => item.player_id === player.id)
+          })
+          pdfLines.push(`#${player.jersey_number ?? '-'} ${getPlayerDisplayName(player)}: ${playedQuarters.length}/4 quarters${playedQuarters.length ? ` (Q${playedQuarters.join(', Q')})` : ''}`)
+        }
+
+        const pages: string[][] = []
+        for (let index = 0; index < pdfLines.length; index += 48) pages.push(pdfLines.slice(index, index + 48))
+        const pageIds = pages.map((_, index) => 3 + index * 2)
+        const fontId = 3 + pages.length * 2
+        const objects: string[] = []
+        objects[1] = '<< /Type /Catalog /Pages 2 0 R >>'
+        objects[2] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(' ')}] /Count ${pages.length} >>`
+        pages.forEach((pageLines, index) => {
+          const pageId = pageIds[index]
+          const streamId = pageId + 1
+          let stream = 'BT\n/F1 15 Tf\n50 750 Td\n(' + escapePdf(pageLines[0] || 'MATCH SHEET') + ') Tj\n/F1 9 Tf\n0 -24 Td\n'
+          pageLines.slice(1).forEach((line) => {
+            if (line) stream += '(' + escapePdf(line) + ') Tj\n'
+            stream += `0 -${line ? 13 : 8} Td\n`
+          })
+          stream += 'ET'
+          objects[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontId} 0 R >> >> /Contents ${streamId} 0 R >>`
+          objects[streamId] = `<< /Length ${new TextEncoder().encode(stream).length} >>\nstream\n${stream}\nendstream`
+        })
+        objects[fontId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
+        let pdf = '%PDF-1.4\n'
+        const offsets = [0]
+        for (let id = 1; id < objects.length; id += 1) {
+          offsets[id] = pdf.length
+          pdf += `${id} 0 obj\n${objects[id]}\nendobj\n`
+        }
+        const xrefOffset = pdf.length
+        pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`
+        for (let id = 1; id < objects.length; id += 1) pdf += `${String(offsets[id]).padStart(10, '0')} 00000 n \n`
+        pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`
+
+        const fileName = `BGIQ-Match-Sheet-${clean(game.game_date || 'match').replace(/\s+/g, '-')}.pdf`
+        const file = new File([new Blob([pdf], { type: 'application/pdf' })], fileName, { type: 'application/pdf' })
+        try {
+          if (typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'Beautiful Game IQ Match Sheet' })
+          } else {
+            const url = URL.createObjectURL(file)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = fileName
+            link.style.display = 'none'
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.setTimeout(() => URL.revokeObjectURL(url), 30000)
+          }
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') return
+          console.error('Could not share match sheet PDF', error)
+          alert('Could not share the match sheet. Please try again.')
+        }
+      }
   
       return (
         <div style={{ background: '#090d12', color: '#e5e7eb', minHeight: '100vh', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -4606,7 +4713,7 @@ function playerAtPosition(position: string) {
             </div>
   
             <div className="rotation-export-actions">
-              <button type="button" onClick={() => window.print()} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
+              <button type="button" onClick={() => { void saveAndShareMatchSheet() }} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
                 Save & Share Match Sheet · PDF
               </button>
             </div>
