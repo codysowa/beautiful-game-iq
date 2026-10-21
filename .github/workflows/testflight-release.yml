@@ -55,7 +55,18 @@ jobs:
               exit 1
             fi
           done
-
+          case "$APPLE_TEAM_ID" in
+            *[!A-Z0-9]*|"")
+              echo "::error::APPLE_TEAM_ID must be the alphanumeric Apple Developer Team ID."
+              exit 1
+              ;;
+          esac
+          if [ "${#APPLE_TEAM_ID}" -ne 10 ]; then
+            echo "::error::APPLE_TEAM_ID should be 10 characters; verify it in your Apple Developer account."
+            exit 1
+          fi
+          echo "Required Apple signing and App Store Connect secrets are present."
+          
       - name: Install Apple signing certificate and provisioning profile
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
