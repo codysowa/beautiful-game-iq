@@ -514,8 +514,14 @@ export default function LiveGame({
     })
     .filter(Boolean) as (Player & { position: string })[]
 
+  // Only count players assigned to positions that actually exist in the
+  // selected formation as being on the field. Older saved lineups can contain
+  // extra or incompatible positions; those players must remain visible on the bench.
+  const visibleFormationPositions = new Set(fieldRows().flat())
   const benchPlayers = players.filter(
-    (player) => !activeLineup.some((item) => item.player_id === player.id)
+    (player) => !activeLineup.some(
+      (item) => item.player_id === player.id && visibleFormationPositions.has(item.position)
+    )
   )
 
   const selectedPlayer = currentPlayers.find((player) => player.id === selectedPlayerId)
@@ -1063,7 +1069,10 @@ export default function LiveGame({
     const displayName = lastName && lastName.toLowerCase() !== firstName.toLowerCase()
       ? `${firstName} ${lastName.charAt(0).toUpperCase()}.`
       : firstName
-    const isCaptain = captainIds.some((captainId) => String(captainId) === String(player.id))
+    const normalizedPlayerId = String(player.id).trim().toLowerCase()
+    const isCaptain = captainIds.some(
+      (captainId) => String(captainId).trim().toLowerCase() === normalizedPlayerId
+    )
 
     return (
       <button
@@ -1143,11 +1152,12 @@ export default function LiveGame({
               : isGk
                 ? '0 5px 12px rgba(245,158,11,.35)'
                 : '0 5px 12px rgba(16,185,129,.32)',
+            position: 'relative',
           }}
         >
-          <span style={{ fontSize: 12, fontWeight: 900, lineHeight: 1, position: 'relative', display: 'flex', alignItems: 'center', gap: 3 }}>
+          {isCaptain && <span aria-label="Captain" title="Captain" style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fbbf24', border: '2px solid #0f172a', color: '#422006', fontSize: 11, fontWeight: 950, lineHeight: 1, zIndex: 3 }}>C</span>}
+          <span style={{ fontSize: 12, fontWeight: 900, lineHeight: 1 }}>
             #{player.jersey_number ?? '-'}
-            {isCaptain && <span aria-label="Captain" title="Captain" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 13, height: 13, borderRadius: '50%', background: '#fbbf24', color: '#422006', fontSize: 9, fontWeight: 950, lineHeight: 1 }}>C</span>}
           </span>
           <span style={{ fontSize: 8, fontWeight: 800, marginTop: 2, textTransform: 'uppercase' }}>
             {positionShort[position] || position}
