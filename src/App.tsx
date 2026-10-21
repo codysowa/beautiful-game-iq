@@ -3230,7 +3230,7 @@ function playerAtPosition(position: string) {
            Back
         </button>
 
-        <section className="team-card">
+        <section className="team-card roster-workspace">
           <div className="section-header">
             <div>
               <h2>Roster</h2>
@@ -3301,7 +3301,7 @@ function playerAtPosition(position: string) {
             ))}
           </div>
 
-          <section style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #ddd' }}>
+          <section className="coach-knowledge-section" style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #ddd' }}>
             <div className="section-header">
               <div>
                 <h2>Coach Knowledge</h2>
@@ -3335,7 +3335,7 @@ function playerAtPosition(position: string) {
                 }
 
                 return (
-                  <div key={player.id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '10px' }}>
+                  <div key={player.id} className="coach-profile-row" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '10px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                       <strong>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</strong>
                       <button onClick={open ? cancelEdit : startEdit}>
@@ -3472,7 +3472,7 @@ function playerAtPosition(position: string) {
            Back
         </button>
 
-        <section className="team-card">
+        <section className="team-card new-game-workspace">
           <div className="section-header">
             <div>
               <h2>{editingGameId ? 'Edit Game' : 'New Game'}</h2>
@@ -3725,6 +3725,7 @@ function playerAtPosition(position: string) {
     const renderGame = (game: Game) => (
       <div
         key={game.id}
+        className={`game-row ${game.status === 'Completed' ? 'is-completed' : 'is-upcoming'}`}
         style={{
           padding: '14px 0',
           borderBottom: '1px solid #eee',
@@ -3732,16 +3733,17 @@ function playerAtPosition(position: string) {
       >
         <strong>{game.home_away === 'Away' ? 'at' : 'vs.'} {game.opponent}</strong>
 
-        <div style={{ marginTop: 4, fontSize: 13 }}>
+        <div className="game-row-date" style={{ marginTop: 4, fontSize: 13 }}>
           {game.game_date}
           {game.game_time ? `  ${formatGameTime(game.game_time)}` : ''}
         </div>
 
-        <div style={{ marginTop: 4, fontSize: 13 }}>
-          {game.status}
+        <div className="game-row-status" style={{ marginTop: 4, fontSize: 13 }}>
+          <span className={`game-status ${game.status === 'Completed' ? 'is-completed' : 'is-upcoming'}`}>{game.status}</span>
         </div>
 
         <div
+          className="game-row-actions"
           style={{
             display: 'flex',
             gap: '8px',
@@ -3792,7 +3794,7 @@ function playerAtPosition(position: string) {
           Back
         </button>
 
-        <section className="team-card">
+        <section className="team-card games-workspace">
           <div className="section-header">
             <div>
               <h2>Games</h2>
