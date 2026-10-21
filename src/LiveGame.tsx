@@ -1291,7 +1291,6 @@ export default function LiveGame({
                   key={`row-${rowIndex}`}
                   style={{
                     display: 'grid',
-                    display: 'grid',
                     gridTemplateColumns: row.length === 1 && row[0] === 'Center Mid'
                       ? 'repeat(3, minmax(0, 1fr))'
                       : row.length === 1 && row[0] === 'Goalkeeper'
