@@ -2569,3 +2569,674 @@ body {
   .lineup-builder-pitch { min-height: 330px; padding: 12px 6px !important; }
   .lineup-builder-pitch .lineup-pitch-grid { min-height: 300px !important; gap: 4px !important; }
 }
+
+
+/* Beautiful Game IQ v2.0 — back-office workspace system.
+   Scoped to non-home/non-lineup screens so the approved Home, Lineup Builder,
+   Live Game and sign-in designs remain untouched. */
+.app.dark-app-shell {
+  --bo-bg: #080f15;
+  --bo-panel: #101d29;
+  --bo-panel-raised: #142635;
+  --bo-panel-soft: #0c1822;
+  --bo-border: #263d4c;
+  --bo-border-strong: #345163;
+  --bo-text: #eaf2f8;
+  --bo-muted: #91a6b6;
+  --bo-green: #27d7a0;
+  --bo-green-deep: #0b7558;
+  min-height: 100vh;
+  color: var(--bo-text);
+  background:
+    radial-gradient(ellipse at 85% 0%, rgba(17, 125, 93, .13), transparent 32%),
+    var(--bo-bg) !important;
+}
+.app.dark-app-shell .main-content {
+  width: min(1120px, calc(100% - 36px));
+  max-width: 1120px;
+  margin: 22px auto 0;
+  padding: 0 0 116px;
+  overflow: visible;
+  color: var(--bo-text);
+  background: transparent !important;
+}
+.app.dark-app-shell .team-card,
+.app.dark-app-shell .section-card,
+.app.dark-app-shell .next-game-card,
+.app.dark-app-shell .analytics-card {
+  padding: clamp(18px, 2.5vw, 28px);
+  margin-bottom: 18px;
+  color: var(--bo-text) !important;
+  background: linear-gradient(145deg, #111f2c 0%, #0e1a25 100%) !important;
+  border: 1px solid var(--bo-border) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .18) !important;
+}
+.app.dark-app-shell .team-card h1,
+.app.dark-app-shell .team-card h2,
+.app.dark-app-shell .team-card h3,
+.app.dark-app-shell .team-card h4,
+.app.dark-app-shell .section-card h1,
+.app.dark-app-shell .section-card h2,
+.app.dark-app-shell .section-card h3 {
+  color: #f4f8fb !important;
+  letter-spacing: -.025em;
+}
+.app.dark-app-shell .team-card p,
+.app.dark-app-shell .team-card label,
+.app.dark-app-shell .team-card strong,
+.app.dark-app-shell .team-card span,
+.app.dark-app-shell .section-card p,
+.app.dark-app-shell .section-card label,
+.app.dark-app-shell .section-card strong,
+.app.dark-app-shell .section-card span {
+  color: inherit;
+}
+.app.dark-app-shell .team-card .eyebrow,
+.app.dark-app-shell .section-card .eyebrow,
+.app.dark-app-shell .section-header > div > span {
+  color: var(--bo-muted) !important;
+}
+.app.dark-app-shell .section-header {
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.app.dark-app-shell .section-header h2 {
+  margin: 0 0 4px;
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 850;
+}
+.app.dark-app-shell .section-header > div > span {
+  display: inline-block;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.app.dark-app-shell .back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  color: var(--bo-muted) !important;
+  background: var(--bo-panel) !important;
+  border: 1px solid var(--bo-border) !important;
+  border-radius: 10px;
+}
+.app.dark-app-shell .back-button:hover {
+  color: var(--bo-text) !important;
+  background: var(--bo-panel-raised) !important;
+  box-shadow: none;
+}
+.app.dark-app-shell button {
+  min-height: 38px;
+  border: 1px solid var(--bo-border) !important;
+  border-radius: 10px;
+  color: var(--bo-text);
+  background: var(--bo-panel-raised);
+  font-weight: 750;
+  box-shadow: none;
+}
+.app.dark-app-shell button:hover {
+  border-color: var(--bo-border-strong) !important;
+  background: #1a3141;
+  box-shadow: none;
+}
+.app.dark-app-shell button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+.app.dark-app-shell .primary-button,
+.app.dark-app-shell .roster-actions button.primary-button {
+  color: #041a14 !important;
+  background: linear-gradient(135deg, #32e0aa, #17b981) !important;
+  border-color: #27d7a0 !important;
+  font-weight: 900;
+}
+.app.dark-app-shell .primary-button:hover,
+.app.dark-app-shell .roster-actions button.primary-button:hover {
+  color: #031711 !important;
+  background: #42e8b4 !important;
+}
+.app.dark-app-shell .secondary-button,
+.app.dark-app-shell .roster-actions button.secondary-button {
+  color: #dbe8f1 !important;
+  background: #152635 !important;
+  border-color: #2a4152 !important;
+}
+.app.dark-app-shell input:not([type="checkbox"]):not([type="radio"]),
+.app.dark-app-shell select,
+.app.dark-app-shell textarea {
+  min-width: 0;
+  width: 100%;
+  color: #edf5fa !important;
+  background: #0a151e !important;
+  border: 1px solid #30485a !important;
+  border-radius: 11px !important;
+  padding: 12px 13px;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+.app.dark-app-shell input::placeholder,
+.app.dark-app-shell textarea::placeholder {
+  color: #71899b !important;
+  opacity: 1;
+}
+.app.dark-app-shell input:focus,
+.app.dark-app-shell select:focus,
+.app.dark-app-shell textarea:focus {
+  border-color: #27d7a0 !important;
+  box-shadow: 0 0 0 3px rgba(39, 215, 160, .12) !important;
+}
+.app.dark-app-shell option {
+  color: #edf5fa;
+  background: #0a151e;
+}
+.app.dark-app-shell input[type="checkbox"],
+.app.dark-app-shell input[type="radio"] {
+  width: auto !important;
+  accent-color: #27d7a0;
+}
+.app.dark-app-shell .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.app.dark-app-shell .form-grid label,
+.app.dark-app-shell .team-card label {
+  display: grid;
+  gap: 7px;
+  color: #c5d4df;
+  font-size: 13px;
+  font-weight: 750;
+}
+.app.dark-app-shell .form-grid input,
+.app.dark-app-shell .form-grid select {
+  margin-top: 1px;
+}
+.app.dark-app-shell .form-buttons {
+  gap: 9px;
+  align-items: center;
+}
+.app.dark-app-shell .bottom-nav {
+  width: min(760px, calc(100% - 24px));
+  left: 50%;
+  bottom: 12px;
+  display: flex;
+  justify-content: stretch;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid #2b4352 !important;
+  border-radius: 17px;
+  background: rgba(12, 24, 34, .94) !important;
+  box-shadow: 0 14px 40px rgba(0,0,0,.42) !important;
+  backdrop-filter: blur(18px);
+}
+.app.dark-app-shell .bottom-nav button {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 8px;
+  color: #a9bdcb !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  border-radius: 11px;
+  font-size: 13px;
+}
+.app.dark-app-shell .bottom-nav button:hover,
+.app.dark-app-shell .bottom-nav button[aria-current="page"] {
+  color: #54e7b8 !important;
+  background: rgba(39, 215, 160, .10) !important;
+}
+
+/* Roster: compact player rows, clear jersey markers, and a distinct coaching workspace. */
+.app.dark-app-shell .roster-workspace .add-player-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 150px auto;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 20px;
+}
+.app.dark-app-shell .roster-workspace .add-player-form .form-buttons {
+  margin: 0;
+}
+.app.dark-app-shell .roster-list {
+  gap: 8px;
+}
+.app.dark-app-shell .roster-player {
+  min-width: 0;
+  padding: 11px 13px;
+  border: 1px solid #263e4e !important;
+  border-radius: 13px;
+  background: #0d1a25 !important;
+  transition: border-color .15s ease, background .15s ease;
+}
+.app.dark-app-shell .roster-player:hover {
+  border-color: #3a5a6b !important;
+  background: #112330 !important;
+}
+.app.dark-app-shell .roster-player > div:first-child > div:first-child {
+  color: #5ce9bd !important;
+  background: #102b32 !important;
+  border: 1px solid #23785f !important;
+}
+.app.dark-app-shell .roster-player strong {
+  color: #edf5fa !important;
+  font-size: 15px;
+}
+.app.dark-app-shell .roster-actions {
+  gap: 7px;
+  margin-top: 6px;
+}
+.app.dark-app-shell .roster-actions button {
+  min-height: 30px;
+  padding: 5px 10px;
+  color: #c7d8e4 !important;
+  background: #142635 !important;
+  border: 1px solid #30485a !important;
+  font-size: 12px;
+}
+.app.dark-app-shell .roster-actions button:last-child:not(.primary-button) {
+  color: #ffb0b0 !important;
+  border-color: #603a43 !important;
+}
+.app.dark-app-shell .coach-knowledge-section {
+  margin-top: 26px !important;
+  padding-top: 24px !important;
+  border-top: 1px solid #263d4c !important;
+}
+.app.dark-app-shell .coach-knowledge-section .section-header {
+  margin-bottom: 14px;
+}
+.app.dark-app-shell .coach-profile-row {
+  padding: 13px !important;
+  border: 1px solid #2a4252 !important;
+  border-radius: 13px !important;
+  background: #0c1822 !important;
+}
+.app.dark-app-shell .coach-profile-row > div:first-child {
+  flex-wrap: wrap;
+}
+.app.dark-app-shell .coach-profile-row > div:first-child > strong {
+  color: #eaf2f8 !important;
+}
+.app.dark-app-shell .coach-profile-row > div:first-child > button {
+  margin-left: auto;
+}
+.app.dark-app-shell .coach-profile-row > div[style*="display: grid"] {
+  padding-top: 12px;
+}
+.app.dark-app-shell .coach-profile-row label {
+  min-width: 0;
+}
+.app.dark-app-shell .coach-profile-row textarea {
+  min-height: 86px;
+}
+.app.dark-app-shell .inline-player-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* New Game: a deliberate, single-column form with a paired date/time row. */
+.app.dark-app-shell .new-game-workspace {
+  max-width: 780px;
+  margin-right: auto;
+  margin-left: auto;
+}
+.app.dark-app-shell .new-game-workspace .section-header {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #263d4c;
+}
+.app.dark-app-shell .new-game-workspace .section-header h2 {
+  font-size: clamp(26px, 3vw, 34px);
+}
+.app.dark-app-shell .new-game-workspace .add-player-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 13px;
+  margin: 0;
+}
+.app.dark-app-shell .new-game-workspace .add-player-form > input,
+.app.dark-app-shell .new-game-workspace .add-player-form > select {
+  min-height: 48px;
+}
+.app.dark-app-shell .game-date-time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.app.dark-app-shell .game-date-time-grid label {
+  min-width: 0;
+  gap: 7px;
+}
+.app.dark-app-shell .game-date-time-grid label > span {
+  color: #b7cbd8 !important;
+  font-size: 12px;
+  font-weight: 850;
+}
+.app.dark-app-shell .new-game-workspace .primary-button {
+  min-height: 48px;
+  margin-top: 3px;
+  font-size: 15px;
+}
+
+/* Games: separate match rows, clear status chips, and actions grouped together. */
+.app.dark-app-shell .games-workspace .section-header {
+  align-items: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #263d4c;
+}
+.app.dark-app-shell .games-workspace .section-header .primary-button {
+  white-space: nowrap;
+}
+.app.dark-app-shell .game-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 17px 0 !important;
+  border-bottom: 1px solid #263746 !important;
+}
+.app.dark-app-shell .game-row:last-child {
+  border-bottom: 0 !important;
+}
+.app.dark-app-shell .game-row > strong {
+  display: block;
+  color: #f0f6fa !important;
+  font-size: 16px;
+  font-weight: 850;
+}
+.app.dark-app-shell .game-row-date {
+  color: #a9bdcb !important;
+  font-size: 13px !important;
+}
+.app.dark-app-shell .game-row-status {
+  margin-top: 3px !important;
+}
+.app.dark-app-shell .game-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid #345063;
+  border-radius: 999px;
+  color: #c4d4df !important;
+  background: #142635;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+.app.dark-app-shell .game-status.is-upcoming {
+  color: #60e7b9 !important;
+  background: rgba(39, 215, 160, .09);
+  border-color: rgba(39, 215, 160, .28);
+}
+.app.dark-app-shell .game-status.is-completed {
+  color: #aebdca !important;
+  background: #182633;
+  border-color: #304252;
+}
+.app.dark-app-shell .game-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px !important;
+  margin-top: 9px !important;
+}
+.app.dark-app-shell .game-row-actions button {
+  min-height: 35px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.app.dark-app-shell .games-workspace > p {
+  color: var(--bo-muted) !important;
+}
+
+/* Help & Learning: course navigation, lesson content, and practice all use the same system. */
+.app.dark-app-shell .coach-guide > .eyebrow {
+  color: #54e7b8 !important;
+}
+.app.dark-app-shell .coach-guide > h2 {
+  margin: 5px 0 8px;
+  color: #f4f8fb !important;
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 900;
+  letter-spacing: -.04em;
+}
+.app.dark-app-shell .coach-guide-intro {
+  max-width: 760px;
+  margin: 0 0 22px;
+  color: #a9bdcb !important;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.app.dark-app-shell .guide-progress {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 22px 0;
+}
+.app.dark-app-shell .guide-progress button {
+  min-height: 48px;
+  padding: 9px 11px;
+  color: #c9d9e4 !important;
+  background: #0c1822 !important;
+  border: 1px solid #293f50 !important;
+  border-radius: 12px;
+  font-size: 13px;
+}
+.app.dark-app-shell .guide-progress button:hover {
+  background: #132735 !important;
+  border-color: #3a5b6c !important;
+}
+.app.dark-app-shell .guide-progress button.active {
+  color: #eafff7 !important;
+  background: rgba(20, 151, 111, .17) !important;
+  border-color: #21c99a !important;
+  box-shadow: inset 0 0 0 1px rgba(39, 215, 160, .12);
+}
+.app.dark-app-shell .guide-progress-number {
+  flex: 0 0 27px;
+  width: 27px;
+  height: 27px;
+  color: #c9d9e4 !important;
+  background: #1b3040 !important;
+}
+.app.dark-app-shell .guide-progress button.active .guide-progress-number {
+  color: #041a14 !important;
+  background: #39e0ad !important;
+}
+.app.dark-app-shell .guide-lesson {
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  gap: 20px;
+  padding: 20px;
+  background: #0b1721 !important;
+  border: 1px solid #263d4c !important;
+  border-radius: 16px;
+}
+.app.dark-app-shell .guide-lesson-copy > .eyebrow {
+  color: #54e7b8 !important;
+}
+.app.dark-app-shell .guide-lesson-copy h3 {
+  margin: 4px 0 18px;
+  color: #f2f7fb !important;
+  font-size: clamp(22px, 2.5vw, 28px);
+  line-height: 1.2;
+  letter-spacing: -.03em;
+}
+.app.dark-app-shell .guide-lesson-copy h4 {
+  margin: 18px 0 6px;
+  color: #dce9f1 !important;
+  font-size: 13px;
+  font-weight: 850;
+}
+.app.dark-app-shell .guide-lesson-copy p {
+  color: #a9bdcb !important;
+  line-height: 1.65;
+}
+.app.dark-app-shell .guide-numbered-actions .guide-action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 9px 0;
+}
+.app.dark-app-shell .guide-numbered-actions .guide-action-item > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 25px;
+  width: 25px;
+  height: 25px;
+  color: #5ce9bd !important;
+  background: #14352f;
+  border: 1px solid #255c4b;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 900;
+}
+.app.dark-app-shell .guide-numbered-actions .guide-action-item p {
+  margin: 2px 0 0;
+  color: #c0d0db !important;
+  font-size: 13px;
+}
+.app.dark-app-shell .coach-guide-note {
+  margin-top: 18px;
+  padding: 14px;
+  background: #102b29 !important;
+  border: 1px solid #24564b !important;
+  border-radius: 12px;
+}
+.app.dark-app-shell .coach-guide-note strong {
+  color: #5ce9bd !important;
+}
+.app.dark-app-shell .coach-guide-note p {
+  margin: 6px 0 0;
+  color: #d0e4e0 !important;
+}
+.app.dark-app-shell .guide-visual {
+  padding: 10px;
+  background: #111f2b !important;
+  border: 1px solid #2b4353 !important;
+  border-radius: 13px;
+  box-shadow: none;
+}
+.app.dark-app-shell .guide-real-screenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #344c5d;
+  border-radius: 9px;
+}
+.app.dark-app-shell .guide-visual-caption {
+  color: #849bad !important;
+  font-size: 11px;
+  line-height: 1.55;
+}
+.app.dark-app-shell .guide-practice {
+  align-items: center;
+  margin-top: 16px;
+  padding: 16px;
+  color: #eaf2f8;
+  background: #101f2b !important;
+  border: 1px solid #263d4c;
+  border-radius: 13px;
+}
+.app.dark-app-shell .guide-practice strong {
+  color: #f2f7fb !important;
+}
+.app.dark-app-shell .guide-practice p {
+  color: #9fb4c3 !important;
+}
+.app.dark-app-shell .guide-navigation {
+  gap: 12px;
+}
+.app.dark-app-shell .guide-navigation > span {
+  color: #91a6b6 !important;
+}
+.app.dark-app-shell .coach-guide .guide-navigation button {
+  min-height: 40px;
+}
+.app.dark-app-shell .coach-guide .guide-navigation button:disabled {
+  color: #718696 !important;
+  background: #0b1721 !important;
+  border-color: #233644 !important;
+}
+
+@media (min-width: 900px) {
+  .app.dark-app-shell .guide-progress {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .app.dark-app-shell .main-content {
+    width: calc(100% - 20px);
+    margin-top: 12px;
+    padding-bottom: 108px;
+  }
+  .app.dark-app-shell .team-card,
+  .app.dark-app-shell .section-card,
+  .app.dark-app-shell .next-game-card,
+  .app.dark-app-shell .analytics-card {
+    padding: 16px;
+    border-radius: 15px !important;
+  }
+  .app.dark-app-shell .section-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .app.dark-app-shell .section-header > .primary-button {
+    width: 100%;
+  }
+  .app.dark-app-shell .roster-workspace .add-player-form {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .app.dark-app-shell .roster-workspace .add-player-form .form-buttons {
+    grid-column: 1 / -1;
+  }
+  .app.dark-app-shell .roster-workspace .add-player-form .form-buttons button {
+    width: 100%;
+  }
+  .app.dark-app-shell .new-game-workspace .game-date-time-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app.dark-app-shell .guide-progress {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .app.dark-app-shell .guide-progress button {
+    align-items: flex-start;
+    gap: 7px;
+    padding: 9px 8px;
+    font-size: 12px;
+  }
+  .app.dark-app-shell .guide-lesson {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 13px;
+  }
+  .app.dark-app-shell .guide-lesson-copy h3 {
+    font-size: 23px;
+  }
+  .app.dark-app-shell .guide-practice {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .app.dark-app-shell .guide-practice button {
+    width: 100%;
+  }
+  .app.dark-app-shell .game-row-actions button {
+    flex: 0 1 auto;
+  }
+}
+@media (max-width: 420px) {
+  .app.dark-app-shell .roster-workspace .add-player-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app.dark-app-shell .roster-workspace .add-player-form .form-buttons {
+    grid-column: auto;
+  }
+  .app.dark-app-shell .game-row-actions button {
+    flex: 1 1 calc(50% - 8px);
+  }
+  .app.dark-app-shell .bottom-nav button {
+    font-size: 12px;
+    padding: 10px 4px;
+  }
+}
