@@ -1051,7 +1051,7 @@ export default function LiveGame({
   }
 
   return (
-    <div style={{ maxWidth: 560, margin: '0 auto', padding: 10, paddingBottom: 90 }}>
+    <div className="live-game-screen" style={{ maxWidth: 560, margin: '0 auto', padding: 10, paddingBottom: 90 }}>
       <button onClick={onBack} style={{ padding: '8px 12px', marginBottom: 6, minHeight: 42 }}>
         Back
       </button>
