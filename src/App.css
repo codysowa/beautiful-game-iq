@@ -1963,3 +1963,107 @@ div[style*="radial-gradient(circle at center"] > div[style*="position: relative"
   .rotation-export-window [style*="grid-template-columns: repeat(2"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .rotation-export-window [style*="minHeight: '156px'"] { min-height: 156px !important; }
 }
+
+
+/* Stitch-inspired coach dashboard refresh. Scoped to Home while remaining pages
+   are redesigned in sequence; existing workflows and data bindings stay intact. */
+.app.home-refresh {
+  --home-bg:#f2f5f8; --home-surface:#fff; --home-raised:#f8fafc;
+  --home-ink:#172b49; --home-muted:#687a90; --home-border:#dce5ee;
+  --home-green:#18845a; --home-green-strong:#116744; --home-glow:rgba(24,132,90,.12);
+  min-height:100vh; color:var(--home-ink); background:var(--home-bg);
+  background-image:radial-gradient(ellipse at 85% 0%,var(--home-glow),transparent 34%);
+}
+.app.home-refresh .app-header {background:transparent;box-shadow:none;padding:18px 24px 0;color:var(--home-ink)}
+.app.home-refresh .app-header::after {display:none}
+.app.home-refresh .app-header .header-content {display:flex;align-items:center;gap:12px;max-width:1320px}
+.app.home-refresh .app-header h1 {font-size:15px;font-weight:850;letter-spacing:-.025em}
+.app.home-refresh .app-header p {font-size:12px;opacity:.7}
+.app.home-refresh .main-content {width:min(1320px,calc(100% - 48px));margin:16px auto 0;padding-bottom:120px;overflow:visible}
+.app.home-refresh .welcome {padding:22px 0 18px;margin-bottom:8px}
+.home-dashboard-topline {display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px}
+.home-dashboard-label {font-size:11px;font-weight:850;letter-spacing:.16em;color:var(--home-muted)}
+.home-theme-toggle {display:inline-flex;align-items:center;gap:9px;border:1px solid var(--home-border);border-radius:999px;padding:9px 13px;color:var(--home-ink);background:var(--home-surface);box-shadow:none;font-size:12px;font-weight:750}
+.home-theme-toggle:hover {box-shadow:none;border-color:var(--home-green)}
+.home-theme-indicator {width:8px;height:8px;border-radius:50%;background:var(--home-green);box-shadow:0 0 0 4px var(--home-glow)}
+.app.home-refresh .home-team-identity {display:grid;grid-template-columns:minmax(0,1fr);gap:7px;margin-bottom:22px}
+.app.home-refresh .home-team-identity>.eyebrow {margin-bottom:0}
+.app.home-refresh .home-team-name {margin:0;font-size:clamp(36px,5.6vw,62px);line-height:1;letter-spacing:-.055em;font-weight:850;color:var(--home-ink)}
+.app.home-refresh .home-team-identity>div[style*="font-size: 13px"] {color:var(--home-muted)!important;font-size:14px!important}
+.app.home-refresh .home-coaches {margin-top:10px}
+.app.home-refresh .home-coaches-label,.app.home-refresh .home-coach>span {color:var(--home-muted)}
+.app.home-refresh .home-coach {color:var(--home-ink)}
+.app.home-refresh .home-team-bar {padding:14px;border:1px solid var(--home-border);border-radius:16px;background:var(--home-surface);box-shadow:0 4px 16px rgba(17,38,62,.035)}
+.app.home-refresh .home-team-bar label>span {color:var(--home-muted);font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.app.home-refresh .home-team-bar select {min-height:44px;border-color:var(--home-border);background:var(--home-raised);color:var(--home-ink)}
+.app.home-refresh .home-next-game {position:relative;overflow:hidden;padding:clamp(22px,3.4vw,36px);border:1px solid var(--home-border);border-left:0;border-radius:22px;background:linear-gradient(115deg,var(--home-surface),var(--home-raised) 72%,var(--home-glow));box-shadow:0 12px 32px rgba(17,38,62,.055)}
+.app.home-refresh .home-next-game::before {content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,#32b77a,var(--home-green-strong))}
+.app.home-refresh .home-next-game .section-header {align-items:center}
+.app.home-refresh .home-next-game h2 {margin-top:8px;color:var(--home-ink);font-size:clamp(26px,4vw,40px);letter-spacing:-.04em}
+.app.home-refresh .home-next-game .section-header>span {border:1px solid var(--home-border);border-radius:999px;padding:8px 12px;color:var(--home-muted);background:var(--home-surface);font-size:12px;font-weight:700}
+.app.home-refresh .next-game-location {color:var(--home-muted)}
+.app.home-refresh .home-action-row {display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.app.home-refresh .home-action-row button {min-height:44px;padding:12px 18px}
+.app.home-refresh .home-action-row button:not(.primary-button) {border:1px solid var(--home-border);background:var(--home-surface);color:var(--home-ink)}
+.app.home-refresh .home-record-card {display:grid;grid-template-columns:minmax(180px,.9fr) minmax(0,2fr);align-items:center;gap:22px;margin:18px 0;padding:24px;border:1px solid var(--home-border);border-radius:20px;background:var(--home-surface);box-shadow:0 6px 22px rgba(17,38,62,.035)}
+.app.home-refresh .home-record {margin-top:6px;color:var(--home-ink);font-size:clamp(38px,5vw,56px);font-weight:850;line-height:1;letter-spacing:-.05em}
+.app.home-refresh .record-main>span {color:var(--home-muted);font-size:11px;font-weight:800;letter-spacing:.12em}
+.app.home-refresh .home-record-meta {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.app.home-refresh .home-record-meta>div {display:grid;gap:5px;padding:14px;border:1px solid var(--home-border);border-radius:14px;background:var(--home-raised)}
+.app.home-refresh .home-record-meta strong {font-size:24px;letter-spacing:-.035em;color:var(--home-ink)}
+.app.home-refresh .home-record-meta span {color:var(--home-muted);font-size:11px;font-weight:750}
+.app.home-refresh .home-quick-actions {display:flex;flex-wrap:wrap;gap:9px;margin:18px 0}
+.app.home-refresh .home-quick-actions button {min-height:42px;border:1px solid var(--home-border);border-radius:12px;background:var(--home-surface);color:var(--home-ink);box-shadow:none}
+.app.home-refresh .home-quick-actions button:hover {border-color:var(--home-green);color:var(--home-green);box-shadow:none}
+.app.home-refresh .team-card,.app.home-refresh .home-season-analytics,.app.home-refresh .player-analytics-card {border:1px solid var(--home-border);border-radius:18px;background:var(--home-surface);box-shadow:0 6px 22px rgba(17,38,62,.035);color:var(--home-ink)}
+.app.home-refresh .team-card h2,.app.home-refresh .home-season-analytics h2,.app.home-refresh .player-analytics-card h2 {color:var(--home-ink)}
+.app.home-refresh .team-card p,.app.home-refresh .home-season-analytics .section-header span,.app.home-refresh .player-analytics-card .section-header span {color:var(--home-muted)}
+.app.home-refresh .home-team-summary {display:flex;align-items:center;justify-content:space-between;gap:16px}
+.app.home-refresh .home-team-summary>strong {white-space:nowrap;border-radius:999px;padding:8px 12px;background:var(--home-glow);color:var(--home-green);font-size:12px}
+.app.home-refresh .season-stat-grid>div {border:1px solid var(--home-border);border-radius:14px;background:var(--home-raised)}
+.app.home-refresh .season-stat-grid strong {color:var(--home-ink)}
+.app.home-refresh .season-stat-grid span {color:var(--home-muted)}
+.app.home-refresh .top-scorer-row {border-color:var(--home-border)}
+.app.home-refresh .top-scorer-row span {color:var(--home-ink)}
+.app.home-refresh .analytics-table-wrap {overflow-x:auto;border-radius:12px}
+.app.home-refresh .analytics-table {color:var(--home-ink)}
+.app.home-refresh .analytics-table th,.app.home-refresh .analytics-table td {border-color:var(--home-border)}
+.app.home-refresh .analytics-table th {color:var(--home-muted)}
+.app.home-refresh .analytics-table td {color:var(--home-ink)}
+.app.home-refresh .bottom-nav {border-color:var(--home-border);background:color-mix(in srgb,var(--home-surface) 92%,transparent);box-shadow:0 12px 34px rgba(0,0,0,.18);backdrop-filter:blur(18px)}
+.app.home-refresh .bottom-nav button {color:var(--home-ink)}
+.app.home-refresh .bottom-nav button:hover {background:var(--home-glow);color:var(--home-green)}
+.app.home-refresh.home-theme-dark {
+  --home-bg:#080f16;--home-surface:#101b26;--home-raised:#142331;--home-ink:#edf5fb;
+  --home-muted:#93a7b8;--home-border:#263a49;--home-green:#57d69a;--home-green-strong:#18845a;--home-glow:rgba(42,185,122,.14);
+  background-color:var(--home-bg);background-image:radial-gradient(ellipse at 82% 0%,rgba(28,122,88,.19),transparent 38%)
+}
+.app.home-refresh.home-theme-dark .app-header {color:var(--home-ink)}
+.app.home-refresh.home-theme-dark .home-next-game {box-shadow:0 14px 36px rgba(0,0,0,.2)}
+.app.home-refresh.home-theme-dark .home-record-meta>div {background:#12212d}
+.app.home-refresh.home-theme-dark .home-quick-actions button {border-color:var(--home-border)}
+.app.home-refresh.home-theme-dark .analytics-table th,.app.home-refresh.home-theme-dark .analytics-table td {border-color:#263a49}
+.app.home-refresh.home-theme-dark .analytics-table tbody tr:hover {background:#142331}
+.app.home-refresh.home-theme-dark .home-theme-toggle {color:var(--home-ink)}
+.app.home-refresh.home-theme-dark .bottom-nav {border-color:#2b3f4f}
+@media(max-width:760px) {
+  .app.home-refresh .app-header {padding:14px 14px 0}
+  .app.home-refresh .main-content {width:calc(100% - 28px);margin-top:8px}
+  .app.home-refresh .welcome {padding-top:14px}
+  .home-dashboard-topline {margin-bottom:18px}
+  .app.home-refresh .home-team-name {font-size:clamp(34px,10vw,48px);overflow-wrap:anywhere}
+  .app.home-refresh .home-next-game {padding:22px 18px;border-radius:18px}
+  .app.home-refresh .home-next-game .section-header {align-items:flex-start;flex-direction:column}
+  .app.home-refresh .home-record-card {grid-template-columns:1fr;gap:18px;padding:18px}
+  .app.home-refresh .home-record-meta {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .app.home-refresh .home-record-meta>div {padding:12px}
+  .app.home-refresh .home-record-meta strong {font-size:22px}
+  .app.home-refresh .home-team-summary {align-items:flex-start}
+  .app.home-refresh .home-team-bar {padding:10px}
+}
+@media(prefers-reduced-motion:no-preference) {
+  .app.home-refresh .home-next-game,.app.home-refresh .home-record-card,.app.home-refresh .team-card,.app.home-refresh .home-season-analytics,.app.home-refresh .player-analytics-card {animation:home-rise-in .35s ease both}
+  .app.home-refresh .home-record-card {animation-delay:.04s}
+  .app.home-refresh .home-season-analytics {animation-delay:.08s}
+}
+@keyframes home-rise-in {from{opacity:.8;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
