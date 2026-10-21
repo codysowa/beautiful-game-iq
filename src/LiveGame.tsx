@@ -97,6 +97,7 @@ export default function LiveGame({
   userRole,
 }: Props) {
   const canManageGame = userRole === 'owner' || userRole === 'coach'
+  const normalizedCaptainIds = new Set((loadedCaptainIds.length > 0 ? loadedCaptainIds : captainIds).map((id) => String(id).trim().toLowerCase()))
   const canStatTrack = userRole === 'owner' || userRole === 'coach' || userRole === 'viewer'
   const [quarter, setQuarter] = useState(1)
   const [events, setEvents] = useState<Event[]>([])
@@ -111,6 +112,7 @@ export default function LiveGame({
   const [goalAssister, setGoalAssister] = useState('')
   const [saving, setSaving] = useState(false)
   const [gameStatus, setGameStatus] = useState('Scheduled')
+  const [loadedCaptainIds, setLoadedCaptainIds] = useState<string[]>(captainIds)
   const [gameFormat, setGameFormat] = useState('7v7')
   const [liveLineup, setLiveLineup] = useState<Lineup[]>([])
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
@@ -146,12 +148,13 @@ export default function LiveGame({
   async function loadGame() {
     const { data } = await supabase
       .from('games')
-      .select('status, format, team_id')
+      .select('status, format, team_id, captain_1_id, captain_2_id')
       .eq('id', gameId)
       .single()
 
     if (data) {
       setGameStatus(data.status)
+      setLoadedCaptainIds([data.captain_1_id, data.captain_2_id].filter((id): id is string => Boolean(id)))
       const format = data.format || '7v7'
       setGameFormat(format)
       let defaultFormation = getDefaultFormationForFormat(format)
@@ -1070,9 +1073,7 @@ export default function LiveGame({
       ? `${firstName} ${lastName.charAt(0).toUpperCase()}.`
       : firstName
     const normalizedPlayerId = String(player.id).trim().toLowerCase()
-    const isCaptain = captainIds.some(
-      (captainId) => String(captainId).trim().toLowerCase() === normalizedPlayerId
-    )
+    const isCaptain = normalizedCaptainIds.has(normalizedPlayerId)
 
     return (
       <button
