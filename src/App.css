@@ -2381,3 +2381,29 @@ input:focus, select:focus, textarea:focus {
   .app.home-refresh .app-header .header-content .header-account-actions { gap:3px; padding-top:7px; }
   .app.home-refresh .app-header .header-account-actions button { padding:6px 7px; font-size:11px; }
 }
+
+
+/* Persistent dark canvas prevents white flashes between screen changes. */
+:root {
+  color-scheme: dark;
+  background: #080d12 !important;
+}
+html, body, #root {
+  min-height: 100%;
+  background: #080d12 !important;
+}
+body {
+  color: #e8f0f7;
+}
+#root {
+  isolation: isolate;
+}
+.app.dark-app-shell {
+  min-height: 100vh;
+  color: #e8f0f7;
+  background: #080d12 !important;
+}
+.app.dark-app-shell .main-content {
+  background: #080d12;
+  color: #e8f0f7;
+}
