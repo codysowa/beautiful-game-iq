@@ -1051,12 +1051,12 @@ export default function LiveGame({
   }
 
   return (
-    <div style={{ maxWidth: 560, margin: '0 auto', padding: 10, paddingBottom: 90 }}>
+    <div className="live-game-page" style={{ maxWidth: 560, margin: '0 auto', padding: 10, paddingBottom: 90 }}>
       <button onClick={onBack} style={{ padding: '8px 12px', marginBottom: 6, minHeight: 42 }}>
         Back
       </button>
 
-      <div style={{ textAlign: 'center', padding: '4px 0 10px' }}>
+      <div className="live-game-scoreboard" style={{ textAlign: 'center', padding: '4px 0 10px' }}>
         <div style={{ fontSize: 14, opacity: 0.7 }}>{gameStatus.toUpperCase()}</div>
         <h1 style={{ margin: '2px 0', fontSize: 21 }}>vs {opponent}</h1>
         <div style={{ fontSize: 48, fontWeight: 'bold', lineHeight: 1, marginTop: 6 }}>
@@ -1103,7 +1103,7 @@ export default function LiveGame({
         </button>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 5, marginBottom: 8 }}>
+      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 5, marginBottom: 8 }}>
         {[1, 2, 3, 4].map((q) => (
           <button
             key={q}
@@ -1145,7 +1145,7 @@ export default function LiveGame({
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+      <div className="live-game-event-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
         <button
           onClick={() => setShowGoal(true)}
           disabled={gameStatus !== 'Live' || saving}
@@ -1176,7 +1176,7 @@ export default function LiveGame({
         </button>
       </div>
 
-      <section style={{ marginTop: 10, border: '1px solid #ddd', borderRadius: 10, padding: 10 }}>
+      <section className="live-game-lineup-card" style={{ marginTop: 10, border: '1px solid #ddd', borderRadius: 10, padding: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <h2 style={{ margin: 0, fontSize: 17 }}>Q{quarter} Formation</h2>
           {canManageGame && gameStatus === 'Live' && (
@@ -1202,6 +1202,7 @@ export default function LiveGame({
         ) : (
           <>
             <div
+              className="live-game-pitch"
               style={{
                 background: '#dfe9df',
                 border: '2px solid #8a9b8a',
@@ -1345,7 +1346,7 @@ export default function LiveGame({
       )}
 
       {(playerStats.length > 0 || ourShots > 0 || teamSaves > 0) && (
-        <section style={{ marginTop: 12, border: '1px solid #ddd', borderRadius: 12, padding: 12 }}>
+        <section className="live-game-stats-card" style={{ marginTop: 12, border: '1px solid #ddd', borderRadius: 12, padding: 12 }}>
           <h2 style={{ margin: '0 0 10px', fontSize: 20 }}>{gameStatus === 'Completed' ? 'Game Stats' : 'Game Stats'}</h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: playerStats.length > 0 ? 10 : 0 }}>
             <span style={{ padding: '7px 10px', borderRadius: 8, fontWeight: 700, background: '#eee' }}>Shots {ourShots}</span>
@@ -1369,7 +1370,7 @@ export default function LiveGame({
         </section>
       )}
 
-      <details style={{ marginTop: 10, border: '1px solid #ddd', borderRadius: 10, padding: '0 10px' }}>
+      <details className="live-game-events-card" style={{ marginTop: 10, border: '1px solid #ddd', borderRadius: 10, padding: '0 10px' }}>
         <summary style={{ padding: '12px 2px', fontWeight: 700, cursor: 'pointer' }}>Recent Events ({events.length})</summary>
         <div style={{ paddingBottom: 4 }}>
           {events.length === 0 ? (
