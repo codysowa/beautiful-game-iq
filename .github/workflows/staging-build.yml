@@ -13,7 +13,7 @@ jobs:
   web-build:
     name: Build web app and sync Capacitor
     if: github.ref == 'refs/heads/dev/v2-backoffice-redesign-20261021'
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     timeout-minutes: 20
     steps:
       - name: Check out staging branch
@@ -29,3 +29,16 @@ jobs:
         run: npm run build
       - name: Sync Capacitor iOS project
         run: npx cap sync ios
+      - name: Compile native iOS target without signing
+        run: |
+          xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App
+          xcodebuild archive \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/BGIQUnsigned.xcarchive" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            archive
