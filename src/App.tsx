@@ -4007,8 +4007,8 @@ function playerAtPosition(position: string) {
         }
 
         const clean = (value: unknown) =>
-          String(value ?? '').normalize('NFKD').replace(/[^\\x20-\\x7E]/g, '')
-        const escapePdf = (value: unknown) =>
+          String(value ?? '').normalize('NFKD').replace(/[^\x20-\x7E]/g, '')
+        const escapePdf = (value: unknown) => clean(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
           clean(value).replace(/\\\\/g, '\\\\\\\\').replace(/\\(/g, '\\\\(').replace(/\\)/g, '\\\\)')
         const pdfLines: string[] = [
           'BEAUTIFUL GAME IQ - MATCH SHEET',
@@ -4054,28 +4054,28 @@ function playerAtPosition(position: string) {
         pages.forEach((pageLines, index) => {
           const pageId = pageIds[index]
           const streamId = pageId + 1
-          let stream = 'BT\\n/F1 15 Tf\\n50 750 Td\\n(' + escapePdf(pageLines[0] || 'MATCH SHEET') + ') Tj\\n/F1 9 Tf\\n0 -24 Td\\n'
+          let stream = 'BT\n/F1 15 Tf\n50 750 Td\n(' + escapePdf(pageLines[0] || 'MATCH SHEET') + ') Tj\n/F1 9 Tf\n0 -24 Td\n'
           pageLines.slice(1).forEach((line) => {
-            if (line) stream += '(' + escapePdf(line) + ') Tj\\n'
-            stream += `0 -${line ? 13 : 8} Td\\n`
+            if (line) stream += '(' + escapePdf(line) + ') Tj\n'
+            stream += `0 -${line ? 13 : 8} Td\n`
           })
           stream += 'ET'
           objects[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontId} 0 R >> >> /Contents ${streamId} 0 R >>`
-          objects[streamId] = `<< /Length ${new TextEncoder().encode(stream).length} >>\\nstream\\n${stream}\\nendstream`
+          objects[streamId] = `<< /Length ${new TextEncoder().encode(stream).length} >>\nstream\n${stream}\nendstream`
         })
         objects[fontId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
-        let pdf = '%PDF-1.4\\n'
+        let pdf = '%PDF-1.4\n'
         const offsets = [0]
         for (let id = 1; id < objects.length; id += 1) {
           offsets[id] = pdf.length
-          pdf += `${id} 0 obj\\n${objects[id]}\\nendobj\\n`
+          pdf += `${id} 0 obj\n${objects[id]}\nendobj\n`
         }
         const xrefOffset = pdf.length
-        pdf += `xref\\n0 ${objects.length}\\n0000000000 65535 f \\n`
-        for (let id = 1; id < objects.length; id += 1) pdf += `${String(offsets[id]).padStart(10, '0')} 00000 n \\n`
-        pdf += `trailer\\n<< /Size ${objects.length} /Root 1 0 R >>\\nstartxref\\n${xrefOffset}\\n%%EOF`
+        pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`
+        for (let id = 1; id < objects.length; id += 1) pdf += `${String(offsets[id]).padStart(10, '0')} 00000 n \n`
+        pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`
 
-        const fileName = `BGIQ-Match-Sheet-${clean(selectedGame.game_date || 'match').replace(/\\s+/g, '-')}.pdf`
+        const fileName = `BGIQ-Match-Sheet-${clean(selectedGame.game_date || 'match').replace(/\s+/g, '-')}.pdf`
         const file = new File([new Blob([pdf], { type: 'application/pdf' })], fileName, { type: 'application/pdf' })
         try {
           if (typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
