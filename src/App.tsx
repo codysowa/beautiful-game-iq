@@ -1805,45 +1805,25 @@ function playerAtPosition(position: string) {
 
   if (loading) {
     return (
-      <div className="app" style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
-        <header className="app-header">
-          <div className="header-content">
-            <h1>Beautiful Game IQ</h1>
-            <p>Know the game. Coach the moment.</p>
-            <p style={{ marginTop: '4px', opacity: 0.85 }}>Your AI copilot for game day.</p>
+      <div className="app dark-app-shell" style={{
+        minHeight: '100vh',
+        width: '100%',
+        maxWidth: '100%',
+        overflowX: 'hidden',
+        background: '#080d12',
+        color: '#f1f5f9',
+      }}>
+        <main className="main-content" style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          background: '#080d12',
+          color: '#cbd5e1',
+        }}>
+          <div style={{ display: 'grid', justifyItems: 'center', gap: 12 }}>
+            <strong style={{ fontSize: 20, color: '#f1f5f9' }}>Beautiful Game IQ</strong>
+            <span role="status" aria-live="polite">Loading...</span>
           </div>
-        </header>
-
-  
-      {bugReportOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '20px' }}>
-          <section style={{ background: 'white', color: '#111', borderRadius: '16px', padding: '22px', width: 'min(560px, 100%)', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
-            <h2 style={{ marginTop: 0 }}>Report a Bug</h2>
-            <p style={{ marginTop: 0 }}>Tell us what went wrong. The report is securely tracked and sent to Beautiful Game IQ support with useful diagnostic information.</p>
-            <label style={{ display: 'block', marginBottom: '12px' }}>
-              <span>Severity</span>
-              <select value={bugReport.severity} onChange={(e) => setBugReport({ ...bugReport, severity: e.target.value })} style={{ width: '100%' }}>
-                <option>Low</option><option>Normal</option><option>High</option><option>Game Day Critical</option>
-              </select>
-            </label>
-            <label style={{ display: 'block', marginBottom: '12px' }}>
-              <span>What is wrong?</span>
-              <input value={bugReport.summary} onChange={(e) => setBugReport({ ...bugReport, summary: e.target.value })} placeholder="Example: Save lineup button does nothing" style={{ width: '100%' }} />
-            </label>
-            <label style={{ display: 'block', marginBottom: '16px' }}>
-              <span>What happened?</span>
-              <textarea value={bugReport.details} onChange={(e) => setBugReport({ ...bugReport, details: e.target.value })} placeholder="What did you click, what did you expect, and what happened instead?" rows={6} style={{ width: '100%' }} />
-            </label>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setBugReportOpen(false)}>Cancel</button>
-              <button type="button" className="primary-button" disabled={!bugReport.summary.trim() || !bugReport.details.trim()} onClick={submitBugReport}>Send Bug Report</button>
-            </div>
-          </section>
-        </div>
-      )}
-
-        <main className={/^\/(?:admin\/)?analytics\/?$/.test(window.location.pathname) ? 'main-content analytics-route' : 'main-content'}>
-          <p>Loading...</p>
         </main>
       </div>
     )
