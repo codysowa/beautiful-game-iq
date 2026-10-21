@@ -2426,7 +2426,7 @@ div[style*="radial-gradient(circle at center"] > div[style*="position: relative"
 .live-game-screen [style*="background: white"],
 .live-game-screen [style*="background: 'white'"],
 .live-game-screen [style*="background: #fff"],
-.live-game-screen [style*="background: '#fff'] {
+.live-game-screen [style*="background: '#fff'"] {
   background: #111b29 !important;
   color: #edf4fb !important;
   border-color: #263548 !important;
