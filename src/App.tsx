@@ -233,6 +233,7 @@ function App() {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
   const [selectedQuarter, setSelectedQuarter] = useState(1)
   const [copySourceGameId, setCopySourceGameId] = useState('')
+  const [copySourceQuarter, setCopySourceQuarter] = useState(0)
 
   const [lineup, setLineup] = useState<LineupItem[]>([])
   const [allGameLineups, setAllGameLineups] = useState<LineupItem[]>([])
