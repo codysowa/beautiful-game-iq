@@ -1,6 +1,9 @@
 name: Build BGIQ TestFlight Release
 
 on:
+  push:
+    branches:
+      - dev/v2-backoffice-redesign-20261021
   workflow_dispatch:
 
 permissions:
