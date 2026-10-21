@@ -3981,515 +3981,525 @@ function playerAtPosition(position: string) {
   async function saveLineup() {
     return saveLineupData(lineup, selectedQuarter, true)
   }
-      function renderLineup() {
-        if (!selectedGame) return null
-
-        const canManageGame = currentUserRole === 'owner' || currentUserRole === 'coach'
-
-        // Name display helper
-        const getPlayerDisplayName = (p: any) => {
-          if (!p) return ''
-          if (p.first_name) return `${p.first_name} ${p.last_name ? p.last_name[0] + '.' : ''}`.trim()
-          return p.name || 'Player'
-        }
-
-        // Determine current format (e.g., 7v7, 9v9, 11v11) and filter formations
-        const currentFormat = selectedGame.format || '7v7'
-        const allowedFormations = Object.keys(formationRows).filter((key) => {
-          const rows = formationRows[key] || []
-          const totalPositions = rows.reduce((acc: number, row: string[]) => acc + row.length, 0)
-          if (currentFormat.includes('7')) return totalPositions === 7
-          if (currentFormat.includes('9')) return totalPositions === 9
-          if (currentFormat.includes('11')) return totalPositions === 11
-          if (currentFormat.includes('6')) return totalPositions === 6
-          return true
-        })
-
-        const activeFormations = allowedFormations.length > 0 ? allowedFormations : Object.keys(formationRows)
-
-        return (
-          <div style={{ background: '#090d12', color: '#e5e7eb', minHeight: '100vh', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-            
-            {/* Top Header Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '14px', width: '100%', boxSizing: 'border-box' }}>
-              <button
-                type="button"
-                onClick={async () => {
-                  if (canManageGame) {
-                    await saveLineup()
-                  }
-                  setScreen('home')
-                }}
-                style={{ background: '#1f2937', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
-              >
-                ← Home
-              </button>
-
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '100%' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const advice = rotationAdvice()
-                    setQuarterSuggestion(advice)
-                    if (!advice.suggestedLineup.length) {
-                      alert('Coach Assist could not build a lineup. Check player availability, roster size, and the selected formation.')
-                      return
-                    }
-                  }}
-                  disabled={!canManageGame}
-                  style={{ background: 'rgba(14, 116, 144, 0.25)', border: '1px solid #0891b2', color: '#22d3ee', borderRadius: '10px', padding: '8px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  Suggest Quarter Lineup
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const result = optimizeWholeGame()
-                    if (!result.gamePlan.length) {
-                      alert('Coach Assist could not build a complete whole-game plan. Check availability, team rules, and formation.')
-                    }
-                  }}
-                  disabled={!canManageGame || savingLineup}
-                  style={{ background: 'rgba(5, 150, 105, 0.18)', border: '1px solid #059669', color: '#6ee7b7', borderRadius: '10px', padding: '8px 12px', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
-                >
-                  Optimize Full Game
-                </button>
-                <button
-                  type="button"
-                  onClick={() => saveLineup()}
-                  disabled={savingLineup || !canManageGame}
-                  style={{ background: '#10b981', color: '#022c22', border: 'none', borderRadius: '10px', padding: '8px 16px', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
-                >
-                  {savingLineup ? 'Saving...' : 'Save Lineup'}
-                </button>
-              </div>
-            </div>
-
-            {/* Game Title Bar */}
-            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span style={{ background: '#10b981', color: '#022c22', fontWeight: 900, fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>{currentFormat.toUpperCase()}</span>
-                  <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', margin: 0 }}>vs. {selectedGame.opponent}</h1>
-                </div>
-                <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0, display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}><span>{selectedGame.game_date} {selectedGame.game_time ? formatGameTime(selectedGame.game_time) : ''}</span>{selectedGame.location?.trim() ? <span>Field: {selectedGame.location}</span> : null}</p>
-              </div>
-            </div>
-
-            {quarterSuggestion && (
-              <section style={{ background: '#0b1f26', border: '1px solid #0891b2', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <strong style={{ color: '#67e8f9', fontSize: '13px' }}>Coach Assist suggestion — Q{selectedQuarter}</strong>
-                  <button type="button" onClick={() => setQuarterSuggestion(null)} style={{ background: 'transparent', color: '#9ca3af', border: 'none', fontSize: '18px', cursor: 'pointer' }}>×</button>
-                </div>
-                {quarterSuggestion.suggestedLineup.length ? (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(125px, 1fr))', gap: '6px', marginBottom: '10px' }}>
-                      {quarterSuggestion.suggestedLineup.map(({ position, player }) => (
-                        <div key={position} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', padding: '7px 9px', borderRadius: '7px', background: '#071319', border: '1px solid #164e63', color: '#e5e7eb', fontSize: '12px' }}>
-                          <span>{player.name}</span><strong style={{ color: position === 'Goalkeeper' ? '#fbbf24' : '#34d399' }}>{positionShort(position)}</strong>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <button type="button" onClick={applySuggestedLineup} disabled={!canManageGame} style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', fontWeight: 800, cursor: 'pointer' }}>Apply suggestion</button>
-                      <button type="button" onClick={() => setQuarterSuggestion(null)} style={{ background: '#1f2937', color: '#d1d5db', border: '1px solid #374151', borderRadius: '8px', padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }}>Keep current lineup</button>
-                    </div>
-                  </>
-                ) : <p style={{ color: '#fca5a5', fontSize: '12px', margin: 0 }}>No complete suggestion available. Check availability and formation slots.</p>}
-              </section>
-            )}
-
-            {wholeGameSuggestion && (
-              <section style={{ background: '#08251f', border: '1px solid #059669', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                  <strong style={{ color: '#6ee7b7', fontSize: '13px' }}>Whole-game Coach Assist preview</strong>
-                  <button type="button" onClick={() => setWholeGameSuggestion(null)} style={{ background: 'transparent', color: '#9ca3af', border: 'none', fontSize: '18px', cursor: 'pointer' }}>×</button>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
-                  {[1, 2, 3, 4].map((quarter) => {
-                    const quarterPlan = wholeGameSuggestion.filter((item) => item.quarter === quarter)
-                    const rows = formationRows[optimizationFormation] || []
-                    return <div key={quarter} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1px solid #059669', borderRadius: '10px', padding: '8px', minWidth: 0 }}>
-                      <strong style={{ display: 'block', color: '#6ee7b7', fontSize: '12px', textAlign: 'center', marginBottom: '7px' }}>Q{quarter} · {quarterPlan.length} assigned</strong>
-                      <div style={{ position: 'relative', overflow: 'hidden', minHeight: '150px', display: 'grid', gridTemplateRows: rows.map(() => 'minmax(30px, 1fr)').join(' '), gap: '3px', background: 'rgba(0,0,0,.28)', border: '1px solid rgba(110,231,183,.3)', borderRadius: '7px', padding: '8px 5px' }}>
-                        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: .55 }}>
-                          <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', borderTop: '1px solid rgba(110,231,183,.35)' }} />
-                          <div style={{ position: 'absolute', width: '44px', height: '44px', border: '1px solid rgba(110,231,183,.35)', borderRadius: '50%', left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }} />
-                          <div style={{ position: 'absolute', width: '24%', height: '12px', border: '1px solid rgba(110,231,183,.3)', borderTop: 0, left: '38%', bottom: 0 }} />
-                        </div>
-                        {rows.length ? rows.map((row, rowIndex) => (
-                          <div key={rowIndex} style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '3px', minWidth: 0 }}>
-                            {row.map((position) => {
-                              const item = quarterPlan.find((assignment) => assignment.position === position)
-                              const player = item ? players.find((p) => p.id === item.player_id) : null
-                              const isGK = position === 'Goalkeeper'
-                              return <div key={position} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 0', minWidth: 0, gap: '2px' }}>
-                                <div style={{ width: '25px', height: '25px', flexShrink: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isGK ? '#f59e0b' : player ? '#34d399' : '#7f1d1d', color: isGK ? '#451a03' : '#022c22', fontSize: '8px', fontWeight: 900, border: isGK ? '1px solid #fcd34d' : player ? '1px solid #6ee7b7' : '1px dashed #f87171', boxShadow: player ? '0 0 8px rgba(52,211,153,.2)' : 'none' }}>
-                                  {player?.jersey_number != null ? '#'+player.jersey_number : player ? positionShort(position) : '+'}
-                                </div>
-                                <span style={{ color: player ? '#fff' : '#fca5a5', fontSize: '9px', fontWeight: 900, textAlign: 'center', lineHeight: 1.1, overflowWrap: 'anywhere', maxWidth: '100%', textShadow: '0 1px 2px #000' }}>{player ? getPlayerDisplayName(player) : 'Unassigned'}</span>
-                                <span style={{ color: isGK ? '#fbbf24' : '#6ee7b7', fontSize: '8px', fontWeight: 800 }}>{positionShort(position)}</span>
-                              </div>
-                            })}
-                          </div>
-                        )) : <div style={{ color: '#9ca3af', fontSize: '10px', textAlign: 'center' }}>Formation unavailable</div>}
-                      </div>
-                    </div>
-                  })}
-                </div>
-                <button type="button" onClick={() => { void applyWholeGamePlan() }} disabled={!canManageGame || savingLineup} style={{ marginTop: '10px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 12px', fontWeight: 800, cursor: 'pointer' }}>
-                  Apply all four quarters
-                </button>
-              </section>
-            )}
-
-            <section style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
-              <label style={{ color: '#d1d5db', fontSize: '12px', fontWeight: 800, display: 'grid', gap: '5px' }}>Game situation
-                <select value={gameSituation} disabled={!canManageGame} onChange={(e) => { setGameSituation(e.target.value as typeof gameSituation); setQuarterSuggestion(null); setWholeGameSuggestion(null) }} style={{ background: '#030712', color: '#f9fafb', border: '1px solid #374151', borderRadius: '8px', padding: '9px', width: '100%' }}>
-                  <option value='Normal'>Normal</option><option value='Protect Lead'>Protect Lead</option><option value='Need Goal'>Need Goal</option><option value='Development'>Development</option><option value='Pull Back'>Pull Back</option>
-                </select>
-              </label>
-              {((gameSituation === 'Need Goal' && !['3-1-2', '2-2-2', '2-3-1'].includes(optimizationFormation)) || (gameSituation === 'Protect Lead' && !['3-2-1', '4-2-0', '2-3-1'].includes(optimizationFormation))) && <div style={{ marginTop: '9px', color: '#fbbf24', background: '#29200b', border: '1px solid #92400e', borderRadius: '8px', padding: '8px 10px', fontSize: '12px' }}>Formation check: {optimizationFormation} may not fit {gameSituation}. {gameSituation === 'Need Goal' ? 'Consider an attacking shape such as 3-1-2.' : 'Consider a defensive shape such as 3-2-1.'}</div>}
-            </section>
-
-            {/* Restore a previous game plan */}
-            <details style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '10px 12px', marginBottom: '12px' }}>
-              <summary style={{ color: '#d1d5db', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Copy / reuse lineups</summary>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', paddingTop: '10px' }}>
-              <span style={{ color: '#d1d5db', fontSize: '11px', fontWeight: 800, whiteSpace: 'nowrap' }}>Reuse a previous lineup</span>
-              <select
-                aria-label="Previous game lineup"
-                value={copySourceGameId}
-                onChange={(event) => setCopySourceGameId(event.target.value)}
-                style={{ minWidth: '160px', flex: '1 1 180px', background: '#030712', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '8px', fontSize: '11px' }}
-              >
-                <option value="">Choose a previous game…</option>
-                {previousGamesForCopy().map((game) => (
-                  <option key={game.id} value={game.id}>{game.game_date} · {game.opponent}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => void copyEntireGameFromGame()}
-                disabled={!canManageGame || savingLineup || previousGamesForCopy().length === 0}
-                style={{ background: '#10b981', color: '#022c22', border: 'none', borderRadius: '8px', padding: '8px 12px', fontSize: '11px', fontWeight: 900, cursor: canManageGame ? 'pointer' : 'default' }}
-              >
-                Copy all 4 quarters
-              </button>
-              <span style={{ color: '#9ca3af', fontSize: '10px', flexBasis: '100%' }}>Copies saved player positions from an earlier game. You’ll confirm before replacing this game’s lineups.</span>
-              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', flexBasis: '100%', paddingTop: '4px', borderTop: '1px solid #1f2937' }}>
-                <span style={{ color: '#9ca3af', fontSize: '10px', fontWeight: 700 }}>Or copy a quarter:</span>
-                {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
-                  <button
-                    key={quarter}
-                    type="button"
-                    onClick={() => void copyQuarterFromCurrentGame(quarter)}
-                    disabled={!canManageGame || savingLineup || !allGameLineups.some((item) => item.quarter === quarter)}
-                    style={{ background: '#030712', color: '#d1d5db', border: '1px solid #374151', borderRadius: '7px', padding: '5px 8px', fontSize: '10px', fontWeight: 800, cursor: canManageGame ? 'pointer' : 'default' }}
-                  >
-                    Q{quarter} → Q{selectedQuarter}
-                  </button>
-                ))}
-              </div>
-              </div>
-            </details>
-
-            {/* Quarter Selection Tabs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px', marginBottom: '16px' }}>
-              {[1, 2, 3, 4].map((q) => {
-                const count = allGameLineups.filter((item) => item.quarter === q).length
-                const isActive = selectedQuarter === q
-                return (
-                  <button
-                    key={q}
-                    type="button"
-                    onClick={() => void changeQuarter(q)}
-                    style={{
-                      background: isActive ? '#10b981' : '#111827',
-                      border: isActive ? '2px solid #34d399' : '1px solid #1f2937',
-                      borderRadius: '12px',
-                      padding: '10px 6px',
-                      color: isActive ? '#022c22' : '#9ca3af',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{ fontSize: '14px', fontWeight: 900 }}>Q{q} {isActive && '•'}</div>
-                    <div style={{ fontSize: '9px', fontWeight: 800, marginTop: '2px', opacity: 0.9 }}>{count} Assigned</div>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Clear Action */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+    function renderLineup() {
+      if (!selectedGame) return null
+  
+      const canManageGame = currentUserRole === 'owner' || currentUserRole === 'coach'
+  
+      // Name display helper
+      const getPlayerDisplayName = (p: any) => {
+        if (!p) return ''
+        if (p.first_name) return `${p.first_name} ${p.last_name ? p.last_name[0] + '.' : ''}`.trim()
+        return p.name || 'Player'
+      }
+  
+      // Determine current format (e.g., 7v7, 9v9, 11v11) and filter formations
+      const currentFormat = selectedGame.format || '7v7'
+      const allowedFormations = Object.keys(formationRows).filter((key) => {
+        const rows = formationRows[key] || []
+        const totalPositions = rows.reduce((acc: number, row: string[]) => acc + row.length, 0)
+        if (currentFormat.includes('7')) return totalPositions === 7
+        if (currentFormat.includes('9')) return totalPositions === 9
+        if (currentFormat.includes('11')) return totalPositions === 11
+        if (currentFormat.includes('6')) return totalPositions === 6
+        return true
+      })
+  
+      const activeFormations = allowedFormations.length > 0 ? allowedFormations : Object.keys(formationRows)
+  
+      return (
+        <div style={{ background: '#090d12', color: '#e5e7eb', minHeight: '100vh', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          
+          {/* Top Header Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '14px', width: '100%', boxSizing: 'border-box' }}>
+            <button
+              type="button"
+              onClick={async () => {
+                if (canManageGame) {
+                  await saveLineup()
+                }
+                setScreen('home')
+              }}
+              style={{ background: '#1f2937', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              ← Home
+            </button>
+  
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '100%' }}>
               <button
                 type="button"
                 onClick={() => {
-                  if (confirm('Clear current quarter lineup?')) setLineup([])
+                  const advice = rotationAdvice()
+                  setQuarterSuggestion(advice)
+                  if (!advice.suggestedLineup.length) {
+                    alert('Coach Assist could not build a lineup. Check player availability, roster size, and the selected formation.')
+                    return
+                  }
                 }}
-                style={{ background: '#1f2937', color: '#f87171', border: '1px solid #374151', borderRadius: '10px', padding: '8px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                disabled={!canManageGame}
+                style={{ background: 'rgba(14, 116, 144, 0.25)', border: '1px solid #0891b2', color: '#22d3ee', borderRadius: '10px', padding: '8px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                Clear Q{selectedQuarter}
+                Suggest Quarter Lineup
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const result = optimizeWholeGame()
+                  if (!result.gamePlan.length) {
+                    alert('Coach Assist could not build a complete whole-game plan. Check availability, team rules, and formation.')
+                  }
+                }}
+                disabled={!canManageGame || savingLineup}
+                style={{ background: 'rgba(5, 150, 105, 0.18)', border: '1px solid #059669', color: '#6ee7b7', borderRadius: '10px', padding: '8px 12px', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                Optimize Full Game
+              </button>
+              <button
+                type="button"
+                onClick={() => saveLineup()}
+                disabled={savingLineup || !canManageGame}
+                style={{ background: '#10b981', color: '#022c22', border: 'none', borderRadius: '10px', padding: '8px 16px', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                {savingLineup ? 'Saving...' : 'Save Lineup'}
               </button>
             </div>
-
-            <details style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '10px 12px', marginBottom: '12px' }}>
-              <summary style={{ fontSize: '13px', color: '#f9fafb', fontWeight: 900, cursor: 'pointer' }}>
-                Captains {((captain1Id || selectedGame?.captain_1_id) || (captain2Id || selectedGame?.captain_2_id)) ? '· ' + [captain1Id || selectedGame?.captain_1_id, captain2Id || selectedGame?.captain_2_id].filter(Boolean).map((id) => getPlayerDisplayName(players.find((p) => p.id === id) || { id, name: 'Player' } as Player)).join(' / ') : ''}
-              </summary>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px' }}>
-                <label style={{ color: '#9ca3af', fontSize: '11px', fontWeight: 800 }}>Captain 1<select value={captain1Id || selectedGame?.captain_1_id || ''} disabled={!canManageGame} onChange={(e) => setCaptain1Id(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '4px', background: '#030712', color: '#f9fafb', border: '1px solid #374151', borderRadius: '8px', padding: '8px' }}><option value=''>Choose captain</option>{players.map((p) => <option key={p.id} value={p.id}>{getPlayerDisplayName(p)}</option>)}</select></label>
-                <label style={{ color: '#9ca3af', fontSize: '11px', fontWeight: 800 }}>Captain 2<select value={captain2Id || selectedGame?.captain_2_id || ''} disabled={!canManageGame} onChange={(e) => setCaptain2Id(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '4px', background: '#030712', color: '#f9fafb', border: '1px solid #374151', borderRadius: '8px', padding: '8px' }}><option value=''>Choose captain</option>{players.map((p) => <option key={p.id} value={p.id}>{getPlayerDisplayName(p)}</option>)}</select></label>
+          </div>
+  
+          {/* Game Title Bar */}
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span style={{ background: '#10b981', color: '#022c22', fontWeight: 900, fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>{currentFormat.toUpperCase()}</span>
+                <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#fff', margin: 0 }}>vs. {selectedGame.opponent}</h1>
               </div>
-              <button type='button' disabled={!canManageGame} onClick={() => { void saveCaptains() }} style={{ marginTop: '8px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', fontWeight: 800 }}>Save captains</button>
-            </details>
-
-            <details style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
-              <summary style={{ color: '#f9fafb', fontSize: '13px', fontWeight: 900, cursor: 'pointer' }}>Availability — {players.filter((p) => (gameAttendance[p.id]?.available_quarters ?? [1, 2, 3, 4]).length > 0).length} available</summary>
-              <p style={{ color: '#9ca3af', fontSize: '11px', margin: '8px 0' }}>Tap Q1–Q4 to mark availability. Use All or None for quick changes.</p>
-              <div style={{ display: 'grid', gap: '6px' }}>{players.map((p) => { const available = gameAttendance[p.id]?.available_quarters ?? [1, 2, 3, 4]; return <div key={p.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(95px, 1fr) repeat(4, 34px) auto auto', gap: '5px', alignItems: 'center', color: '#e5e7eb', fontSize: '11px' }}><strong style={{ overflowWrap: 'anywhere' }}>{getPlayerDisplayName(p)}</strong>{[1,2,3,4].map((q) => <button key={q} type='button' disabled={!canManageGame} onClick={() => { const next = available.includes(q) ? available.filter((n) => n !== q) : [...available, q].sort((a,b)=>a-b); void saveAttendanceAvailability(p.id, next) }} style={{ background: available.includes(q) ? '#10b981' : '#374151', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 0', fontWeight: 900 }}>Q{q}</button>)}<button type='button' disabled={!canManageGame} onClick={() => { void saveAttendanceAvailability(p.id, [1,2,3,4]) }} style={{ background: '#1f2937', color: '#d1d5db', border: '1px solid #374151', borderRadius: '6px', padding: '6px' }}>All</button><button type='button' disabled={!canManageGame} onClick={() => { void saveAttendanceAvailability(p.id, []) }} style={{ background: '#1f2937', color: '#fca5a5', border: '1px solid #374151', borderRadius: '6px', padding: '6px' }}>None</button></div> })}</div>
-            </details>
-
-            {/* Modern Broadcast-Style Tactical Pitch Visualizer */}
-            <div style={{
-              position: 'relative',
-              borderRadius: '20px',
-              padding: '24px 12px 32px',
-              background: 'linear-gradient(180deg, #0f5132 0%, #0a3822 50%, #062b1a 100%)',
-              backgroundImage: `
-                repeating-linear-gradient(0deg, transparent, transparent 32px, rgba(255, 255, 255, 0.03) 32px, rgba(255, 255, 255, 0.03) 64px),
-                radial-gradient(ellipse at center, #135d39 0%, #072a1a 100%)
-              `,
-              border: '3px solid #10b981',
-              boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.7), inset 0 0 50px rgba(0, 0, 0, 0.5)',
-              marginBottom: '20px',
-              overflow: 'hidden',
-            }}>
-              {/* Authentic Field Markings */}
-              <div style={{ position: 'absolute', inset: '12px', border: '2px solid rgba(255, 255, 255, 0.35)', borderRadius: '8px', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', top: '50%', left: '12px', right: '12px', height: '2px', background: 'rgba(255, 255, 255, 0.35)', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90px', height: '90px', border: '2px solid rgba(255, 255, 255, 0.35)', borderRadius: '50%', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '6px', height: '6px', background: 'rgba(255, 255, 255, 0.6)', borderRadius: '50%', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', top: '12px', left: '30%', right: '30%', height: '42px', border: '2px solid rgba(255, 255, 255, 0.35)', borderTop: 'none', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', bottom: '12px', left: '22%', right: '22%', height: '70px', border: '2px solid rgba(255, 255, 255, 0.35)', borderBottom: 'none', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', bottom: '12px', left: '34%', right: '34%', height: '28px', border: '2px solid rgba(255, 255, 255, 0.35)', borderBottom: 'none', pointerEvents: 'none' }} />
-
-              {/* Pitch Header Badge & Formation Switcher */}
-              <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '10px', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 2, padding: '0 6px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 900, color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '12px', border: '1px solid rgba(52,211,153,0.3)' }}>
-                  ATTACKING · Q{selectedQuarter}
-                </span>
-                <select
-                  aria-label="Select formation"
-                  value={optimizationFormation}
-                  onChange={(e) => {
-                    const nextFormation = e.target.value
-                    const nextPositions = (formationRows[nextFormation] || []).flat()
-                    const currentPositions = (formationRows[optimizationFormation] || []).flat()
-                    setOptimizationFormation(nextFormation)
-                    setQuarterSuggestion(null)
-                    setWholeGameSuggestion(null)
-                    setLineup((current) => {
-                      const ordered = [...current].sort((a, b) => currentPositions.indexOf(a.position) - currentPositions.indexOf(b.position))
-                      const goalkeeper = ordered.find((item) => item.position === 'Goalkeeper')
-                      const fieldPlayers = ordered.filter((item) => item.position !== 'Goalkeeper')
-                      const slots = nextPositions.filter((position) => position !== 'Goalkeeper')
-                      return [...(goalkeeper && nextPositions.includes('Goalkeeper') ? [{ ...goalkeeper, position: 'Goalkeeper' }] : []), ...fieldPlayers.slice(0, slots.length).map((item, index) => ({ ...item, position: slots[index] }))]
-                    })
-                  }}
-                  style={{ background: 'rgba(9,13,18,0.85)', color: '#34d399', border: '1.5px solid #10b981', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', width: 'auto', minWidth: '76px', maxWidth: '112px', flex: '0 0 auto' }}
+              <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0, display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}><span>{selectedGame.game_date} {selectedGame.game_time ? formatGameTime(selectedGame.game_time) : ''}</span>{selectedGame.location?.trim() ? <span>Field: {selectedGame.location}</span> : null}</p>
+            </div>
+          </div>
+  
+          {quarterSuggestion && (
+            <section style={{ background: '#0b1f26', border: '1px solid #0891b2', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <strong style={{ color: '#67e8f9', fontSize: '13px' }}>Coach Assist suggestion — Q{selectedQuarter}</strong>
+                <button type="button" onClick={() => setQuarterSuggestion(null)} style={{ background: 'transparent', color: '#9ca3af', border: 'none', fontSize: '18px', cursor: 'pointer' }}>×</button>
+              </div>
+              {quarterSuggestion.suggestedLineup.length ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(125px, 1fr))', gap: '6px', marginBottom: '10px' }}>
+                    {quarterSuggestion.suggestedLineup.map(({ position, player }) => (
+                      <div key={position} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', padding: '7px 9px', borderRadius: '7px', background: '#071319', border: '1px solid #164e63', color: '#e5e7eb', fontSize: '12px' }}>
+                        <span>{player.name}</span><strong style={{ color: position === 'Goalkeeper' ? '#fbbf24' : '#34d399' }}>{positionShort(position)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button type="button" onClick={applySuggestedLineup} disabled={!canManageGame} style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', fontWeight: 800, cursor: 'pointer' }}>Apply suggestion</button>
+                    <button type="button" onClick={() => setQuarterSuggestion(null)} style={{ background: '#1f2937', color: '#d1d5db', border: '1px solid #374151', borderRadius: '8px', padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }}>Keep current lineup</button>
+                  </div>
+                </>
+              ) : <p style={{ color: '#fca5a5', fontSize: '12px', margin: 0 }}>No complete suggestion available. Check availability and formation slots.</p>}
+            </section>
+          )}
+  
+          {wholeGameSuggestion && (
+            <section style={{ background: '#08251f', border: '1px solid #059669', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <strong style={{ color: '#6ee7b7', fontSize: '13px' }}>Whole-game Coach Assist preview</strong>
+                <button type="button" onClick={() => setWholeGameSuggestion(null)} style={{ background: 'transparent', color: '#9ca3af', border: 'none', fontSize: '18px', cursor: 'pointer' }}>×</button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
+                {[1, 2, 3, 4].map((quarter) => {
+                  const quarterPlan = wholeGameSuggestion.filter((item) => item.quarter === quarter)
+                  const rows = formationRows[optimizationFormation] || []
+                  return <div key={quarter} style={{ background: 'radial-gradient(circle at center, #064e3b 0%, #022c22 100%)', border: '1px solid #059669', borderRadius: '10px', padding: '8px', minWidth: 0 }}>
+                    <strong style={{ display: 'block', color: '#6ee7b7', fontSize: '12px', textAlign: 'center', marginBottom: '7px' }}>Q{quarter} · {quarterPlan.length} assigned</strong>
+                    <div style={{ position: 'relative', overflow: 'hidden', minHeight: '150px', display: 'grid', gridTemplateRows: rows.map(() => 'minmax(30px, 1fr)').join(' '), gap: '3px', background: 'rgba(0,0,0,.28)', border: '1px solid rgba(110,231,183,.3)', borderRadius: '7px', padding: '8px 5px' }}>
+                      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: .55 }}>
+                        <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', borderTop: '1px solid rgba(110,231,183,.35)' }} />
+                        <div style={{ position: 'absolute', width: '44px', height: '44px', border: '1px solid rgba(110,231,183,.35)', borderRadius: '50%', left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }} />
+                        <div style={{ position: 'absolute', width: '24%', height: '12px', border: '1px solid rgba(110,231,183,.3)', borderTop: 0, left: '38%', bottom: 0 }} />
+                      </div>
+                      {rows.length ? rows.map((row, rowIndex) => (
+                        <div key={rowIndex} style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '3px', minWidth: 0 }}>
+                          {row.map((position) => {
+                            const item = quarterPlan.find((assignment) => assignment.position === position)
+                            const player = item ? players.find((p) => p.id === item.player_id) : null
+                            const isGK = position === 'Goalkeeper'
+                            return <div key={position} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 0', minWidth: 0, gap: '2px' }}>
+                              <div style={{ width: '25px', height: '25px', flexShrink: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isGK ? '#f59e0b' : player ? '#34d399' : '#7f1d1d', color: isGK ? '#451a03' : '#022c22', fontSize: '8px', fontWeight: 900, border: isGK ? '1px solid #fcd34d' : player ? '1px solid #6ee7b7' : '1px dashed #f87171', boxShadow: player ? '0 0 8px rgba(52,211,153,.2)' : 'none' }}>
+                                {player?.jersey_number != null ? '#'+player.jersey_number : player ? positionShort(position) : '+'}
+                              </div>
+                              <span style={{ color: player ? '#fff' : '#fca5a5', fontSize: '9px', fontWeight: 900, textAlign: 'center', lineHeight: 1.1, overflowWrap: 'anywhere', maxWidth: '100%', textShadow: '0 1px 2px #000' }}>{player ? getPlayerDisplayName(player) : 'Unassigned'}</span>
+                              <span style={{ color: isGK ? '#fbbf24' : '#6ee7b7', fontSize: '8px', fontWeight: 800 }}>{positionShort(position)}</span>
+                            </div>
+                          })}
+                        </div>
+                      )) : <div style={{ color: '#9ca3af', fontSize: '10px', textAlign: 'center' }}>Formation unavailable</div>}
+                    </div>
+                  </div>
+                })}
+              </div>
+              <button type="button" onClick={() => { void applyWholeGamePlan() }} disabled={!canManageGame || savingLineup} style={{ marginTop: '10px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 12px', fontWeight: 800, cursor: 'pointer' }}>
+                Apply all four quarters
+              </button>
+            </section>
+          )}
+  
+          <section style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
+            <label style={{ color: '#d1d5db', fontSize: '12px', fontWeight: 800, display: 'grid', gap: '5px' }}>Game situation
+              <select value={gameSituation} disabled={!canManageGame} onChange={(e) => { setGameSituation(e.target.value as typeof gameSituation); setQuarterSuggestion(null); setWholeGameSuggestion(null) }} style={{ background: '#030712', color: '#f9fafb', border: '1px solid #374151', borderRadius: '8px', padding: '9px', width: '100%' }}>
+                <option value='Normal'>Normal</option><option value='Protect Lead'>Protect Lead</option><option value='Need Goal'>Need Goal</option><option value='Development'>Development</option><option value='Pull Back'>Pull Back</option>
+              </select>
+            </label>
+            {((gameSituation === 'Need Goal' && !['3-1-2', '2-2-2', '2-3-1'].includes(optimizationFormation)) || (gameSituation === 'Protect Lead' && !['3-2-1', '4-2-0', '2-3-1'].includes(optimizationFormation))) && <div style={{ marginTop: '9px', color: '#fbbf24', background: '#29200b', border: '1px solid #92400e', borderRadius: '8px', padding: '8px 10px', fontSize: '12px' }}>Formation check: {optimizationFormation} may not fit {gameSituation}. {gameSituation === 'Need Goal' ? 'Consider an attacking shape such as 3-1-2.' : 'Consider a defensive shape such as 3-2-1.'}</div>}
+          </section>
+  
+          {/* Restore a previous game plan */}
+          <details style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '10px 12px', marginBottom: '12px' }}>
+            <summary style={{ color: '#d1d5db', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Copy / reuse lineups</summary>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', paddingTop: '10px' }}>
+            <span style={{ color: '#d1d5db', fontSize: '11px', fontWeight: 800, whiteSpace: 'nowrap' }}>Reuse a previous lineup</span>
+            <select
+              aria-label="Previous game lineup"
+              value={copySourceGameId}
+              onChange={(event) => setCopySourceGameId(event.target.value)}
+              style={{ minWidth: '160px', flex: '1 1 180px', background: '#030712', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '8px', fontSize: '11px' }}
+            >
+              <option value="">Choose a previous game…</option>
+              {previousGamesForCopy().map((game) => (
+                <option key={game.id} value={game.id}>{game.game_date} · {game.opponent}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => void copyEntireGameFromGame()}
+              disabled={!canManageGame || savingLineup || previousGamesForCopy().length === 0}
+              style={{ background: '#10b981', color: '#022c22', border: 'none', borderRadius: '8px', padding: '8px 12px', fontSize: '11px', fontWeight: 900, cursor: canManageGame ? 'pointer' : 'default' }}
+            >
+              Copy all 4 quarters
+            </button>
+            <span style={{ color: '#9ca3af', fontSize: '10px', flexBasis: '100%' }}>Copies saved player positions from an earlier game. You’ll confirm before replacing this game’s lineups.</span>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', flexBasis: '100%', paddingTop: '4px', borderTop: '1px solid #1f2937' }}>
+              <span style={{ color: '#9ca3af', fontSize: '10px', fontWeight: 700 }}>Or copy a quarter:</span>
+              {[1, 2, 3, 4].filter((quarter) => quarter !== selectedQuarter).map((quarter) => (
+                <button
+                  key={quarter}
+                  type="button"
+                  onClick={() => void copyQuarterFromCurrentGame(quarter)}
+                  disabled={!canManageGame || savingLineup || !allGameLineups.some((item) => item.quarter === quarter)}
+                  style={{ background: '#030712', color: '#d1d5db', border: '1px solid #374151', borderRadius: '7px', padding: '5px 8px', fontSize: '10px', fontWeight: 800, cursor: canManageGame ? 'pointer' : 'default' }}
                 >
-                  {activeFormations.map((formKey) => (
-                    <option key={formKey} value={formKey}>{formKey.toUpperCase()}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Dynamic Grid Layout for Formation Positions */}
-              <div style={{ display: 'grid', gap: '22px', position: 'relative', zIndex: 2, gridTemplateRows: (formationRows[optimizationFormation] || []).map(() => 'minmax(82px, auto)').join(' ') }}>
-                {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
-                  <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-                    {row.map((position) => {
-                      const assignment = playerAtPosition(position)
-                      const player = assignment ? players.find((p) => p.id === assignment.player_id) : null
-                      const isGK = position === 'Goalkeeper'
-                      const isSelectedForMove = selectedMovePlayerId && assignment?.player_id === selectedMovePlayerId
-
-                      return (
-                        <button
-                          key={position}
-                          type="button"
-                          draggable={Boolean(assignment) && canManageGame}
-                          onDragStart={(event) => {
-                            if (assignment) event.dataTransfer.setData('text/plain', assignment.player_id)
-                            event.dataTransfer.effectAllowed = 'move'
-                          }}
-                          onDragOver={(event) => {
-                            if (canManageGame) { event.preventDefault(); event.dataTransfer.dropEffect = 'move' }
-                          }}
-                          onDrop={(event) => {
-                            event.preventDefault()
-                            const draggedPlayerId = event.dataTransfer.getData('text/plain')
-                            if (draggedPlayerId && canManageGame) assignPlayer(draggedPlayerId, position)
-                          }}
-                          onClick={() => {
-                            if (!canManageGame) return
-                            if (selectedMovePlayerId) {
-                              if (selectedMovePlayerId !== assignment?.player_id) assignPlayer(selectedMovePlayerId, position)
-                              setSelectedMovePlayerId(null)
-                              return
-                            }
-                            if (assignment) setSelectedMovePlayerId(assignment.player_id)
-                            else setSelectedPreplanPlayerId(`__empty__:${position}`)
-                          }}
-                          disabled={!canManageGame}
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
+                  Q{quarter} → Q{selectedQuarter}
+                </button>
+              ))}
+            </div>
+            </div>
+          </details>
+  
+          {/* Quarter Selection Tabs */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px', marginBottom: '16px' }}>
+            {[1, 2, 3, 4].map((q) => {
+              const count = allGameLineups.filter((item) => item.quarter === q).length
+              const isActive = selectedQuarter === q
+              return (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => void changeQuarter(q)}
+                  style={{
+                    background: isActive ? '#10b981' : '#111827',
+                    border: isActive ? '2px solid #34d399' : '1px solid #1f2937',
+                    borderRadius: '12px',
+                    padding: '10px 6px',
+                    color: isActive ? '#022c22' : '#9ca3af',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ fontSize: '14px', fontWeight: 900 }}>Q{q} {isActive && '•'}</div>
+                  <div style={{ fontSize: '9px', fontWeight: 800, marginTop: '2px', opacity: 0.9 }}>{count} Assigned</div>
+                </button>
+              )
+            })}
+          </div>
+  
+          {/* Clear Action */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('Clear current quarter lineup?')) setLineup([])
+              }}
+              style={{ background: '#1f2937', color: '#f87171', border: '1px solid #374151', borderRadius: '10px', padding: '8px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              Clear Q{selectedQuarter}
+            </button>
+          </div>
+  
+          <details style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '10px 12px', marginBottom: '12px' }}>
+            <summary style={{ fontSize: '13px', color: '#f9fafb', fontWeight: 900, cursor: 'pointer' }}>
+              Captains {((captain1Id || selectedGame?.captain_1_id) || (captain2Id || selectedGame?.captain_2_id)) ? '· ' + [captain1Id || selectedGame?.captain_1_id, captain2Id || selectedGame?.captain_2_id].filter(Boolean).map((id) => getPlayerDisplayName(players.find((p) => p.id === id) || { id, name: 'Player' } as Player)).join(' / ') : ''}
+            </summary>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px' }}>
+              <label style={{ color: '#9ca3af', fontSize: '11px', fontWeight: 800 }}>Captain 1<select value={captain1Id || selectedGame?.captain_1_id || ''} disabled={!canManageGame} onChange={(e) => setCaptain1Id(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '4px', background: '#030712', color: '#f9fafb', border: '1px solid #374151', borderRadius: '8px', padding: '8px' }}><option value=''>Choose captain</option>{players.map((p) => <option key={p.id} value={p.id}>{getPlayerDisplayName(p)}</option>)}</select></label>
+              <label style={{ color: '#9ca3af', fontSize: '11px', fontWeight: 800 }}>Captain 2<select value={captain2Id || selectedGame?.captain_2_id || ''} disabled={!canManageGame} onChange={(e) => setCaptain2Id(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '4px', background: '#030712', color: '#f9fafb', border: '1px solid #374151', borderRadius: '8px', padding: '8px' }}><option value=''>Choose captain</option>{players.map((p) => <option key={p.id} value={p.id}>{getPlayerDisplayName(p)}</option>)}</select></label>
+            </div>
+            <button type='button' disabled={!canManageGame} onClick={() => { void saveCaptains() }} style={{ marginTop: '8px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', fontWeight: 800 }}>Save captains</button>
+          </details>
+  
+          <details style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px', marginBottom: '12px' }}>
+            <summary style={{ color: '#f9fafb', fontSize: '13px', fontWeight: 900, cursor: 'pointer' }}>Availability — {players.filter((p) => (gameAttendance[p.id]?.available_quarters ?? [1, 2, 3, 4]).length > 0).length} available</summary>
+            <p style={{ color: '#9ca3af', fontSize: '11px', margin: '8px 0' }}>Tap Q1–Q4 to mark availability. Use All or None for quick changes.</p>
+            <div style={{ display: 'grid', gap: '6px' }}>{players.map((p) => { const available = gameAttendance[p.id]?.available_quarters ?? [1, 2, 3, 4]; return <div key={p.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(95px, 1fr) repeat(4, 34px) auto auto', gap: '5px', alignItems: 'center', color: '#e5e7eb', fontSize: '11px' }}><strong style={{ overflowWrap: 'anywhere' }}>{getPlayerDisplayName(p)}</strong>{[1,2,3,4].map((q) => <button key={q} type='button' disabled={!canManageGame} onClick={() => { const next = available.includes(q) ? available.filter((n) => n !== q) : [...available, q].sort((a,b)=>a-b); void saveAttendanceAvailability(p.id, next) }} style={{ background: available.includes(q) ? '#10b981' : '#374151', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 0', fontWeight: 900 }}>Q{q}</button>)}<button type='button' disabled={!canManageGame} onClick={() => { void saveAttendanceAvailability(p.id, [1,2,3,4]) }} style={{ background: '#1f2937', color: '#d1d5db', border: '1px solid #374151', borderRadius: '6px', padding: '6px' }}>All</button><button type='button' disabled={!canManageGame} onClick={() => { void saveAttendanceAvailability(p.id, []) }} style={{ background: '#1f2937', color: '#fca5a5', border: '1px solid #374151', borderRadius: '6px', padding: '6px' }}>None</button></div> })}</div>
+          </details>
+  
+          {/* Modern Broadcast-Style Tactical Pitch Visualizer */}
+          <div style={{
+            position: 'relative',
+            borderRadius: '20px',
+            padding: '24px 12px 32px',
+            background: 'linear-gradient(180deg, #0f5132 0%, #0a3822 50%, #062b1a 100%)',
+            backgroundImage: `
+              repeating-linear-gradient(0deg, transparent, transparent 32px, rgba(255, 255, 255, 0.03) 32px, rgba(255, 255, 255, 0.03) 64px),
+              radial-gradient(ellipse at center, #135d39 0%, #072a1a 100%)
+            `,
+            border: '3px solid #10b981',
+            boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.7), inset 0 0 50px rgba(0, 0, 0, 0.5)',
+            marginBottom: '20px',
+            overflow: 'hidden',
+          }}>
+            {/* Authentic Field Markings */}
+            {/* Pitch Outer Boundary Line */}
+            <div style={{ position: 'absolute', inset: '12px', border: '2px solid rgba(255, 255, 255, 0.35)', borderRadius: '8px', pointerEvents: 'none' }} />
+            {/* Halfway Line */}
+            <div style={{ position: 'absolute', top: '50%', left: '12px', right: '12px', height: '2px', background: 'rgba(255, 255, 255, 0.35)', pointerEvents: 'none' }} />
+            {/* Center Circle & Spot */}
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90px', height: '90px', border: '2px solid rgba(255, 255, 255, 0.35)', borderRadius: '50%', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '6px', height: '6px', background: 'rgba(255, 255, 255, 0.6)', borderRadius: '50%', pointerEvents: 'none' }} />
+            {/* Attacking Goal Box (Top) */}
+            <div style={{ position: 'absolute', top: '12px', left: '30%', right: '30%', height: '42px', border: '2px solid rgba(255, 255, 255, 0.35)', borderTop: 'none', pointerEvents: 'none' }} />
+            {/* Defending Penalty Area & Goal Box (Bottom) */}
+            <div style={{ position: 'absolute', bottom: '12px', left: '22%', right: '22%', height: '70px', border: '2px solid rgba(255, 255, 255, 0.35)', borderBottom: 'none', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: '12px', left: '34%', right: '34%', height: '28px', border: '2px solid rgba(255, 255, 255, 0.35)', borderBottom: 'none', pointerEvents: 'none' }} />
+  
+            {/* Pitch Header Badge & Formation Switcher */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 2, padding: '0 6px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 900, color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '12px', border: '1px solid rgba(52,211,153,0.3)' }}>
+                ATTACKING • Q{selectedQuarter}
+              </span>
+              <select
+                aria-label="Select formation"
+                value={optimizationFormation}
+                onChange={(e) => {
+                  const nextFormation = e.target.value
+                  const nextPositions = (formationRows[nextFormation] || []).flat()
+                  const currentPositions = (formationRows[optimizationFormation] || []).flat()
+                  setOptimizationFormation(nextFormation)
+                  setQuarterSuggestion(null)
+                  setWholeGameSuggestion(null)
+                  setLineup((current) => {
+                    const ordered = [...current].sort((a, b) => currentPositions.indexOf(a.position) - currentPositions.indexOf(b.position))
+                    const goalkeeper = ordered.find((item) => item.position === 'Goalkeeper')
+                    const fieldPlayers = ordered.filter((item) => item.position !== 'Goalkeeper')
+                    const slots = nextPositions.filter((position) => position !== 'Goalkeeper')
+                    return [...(goalkeeper && nextPositions.includes('Goalkeeper') ? [{ ...goalkeeper, position: 'Goalkeeper' }] : []), ...fieldPlayers.slice(0, slots.length).map((item, index) => ({ ...item, position: slots[index] }))]
+                  })
+                }}
+                style={{ background: 'rgba(9,13,18,0.85)', color: '#34d399', border: '1.5px solid #10b981', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
+              >
+                {activeFormations.map((formKey) => (
+                  <option key={formKey} value={formKey}>{formKey.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+  
+            {/* Dynamic Grid Layout for Formation Positions */}
+            <div style={{ display: 'grid', gap: '22px', position: 'relative', zIndex: 2, gridTemplateRows: (formationRows[optimizationFormation] || []).map(() => 'minmax(82px, auto)').join(' ') }}>
+              {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
+                <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                  {row.map((position) => {
+                    const assignment = playerAtPosition(position)
+                    const player = assignment ? players.find((p) => p.id === assignment.player_id) : null
+                    const isGK = position === 'Goalkeeper'
+                    const isSelectedForMove = selectedMovePlayerId && assignment?.player_id === selectedMovePlayerId
+  
+                    return (
+                      <button
+                        key={position}
+                        type="button"
+                        draggable={Boolean(assignment) && canManageGame}
+                        onDragStart={(event) => {
+                          if (assignment) event.dataTransfer.setData('text/plain', assignment.player_id)
+                          event.dataTransfer.effectAllowed = 'move'
+                        }}
+                        onDragOver={(event) => {
+                          if (canManageGame) { event.preventDefault(); event.dataTransfer.dropEffect = 'move' }
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault()
+                          const draggedPlayerId = event.dataTransfer.getData('text/plain')
+                          if (draggedPlayerId && canManageGame) assignPlayer(draggedPlayerId, position)
+                        }}
+                        onClick={() => {
+                          if (!canManageGame) return
+                          if (selectedMovePlayerId) {
+                            if (selectedMovePlayerId !== assignment?.player_id) assignPlayer(selectedMovePlayerId, position)
+                            setSelectedMovePlayerId(null)
+                            return
+                          }
+                          if (assignment) setSelectedMovePlayerId(assignment.player_id)
+                          else setSelectedPreplanPlayerId(`__empty__:${position}`)
+                        }}
+                        disabled={!canManageGame}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifySelf: 'center',
+                          width: '100%',
+                          minWidth: 0,
+                          cursor: canManageGame ? 'pointer' : 'default',
+                          padding: 0,
+                          transition: 'transform 0.15s ease',
+                        }}
+                      >
+                        <div style={{ position: 'relative' }}>
+                          <div style={{
+                            width: '50px',
+                            height: '50px',
+                            borderRadius: '50%',
+                            background: !player
+                              ? 'rgba(15, 23, 42, 0.65)'
+                              : isGK
+                              ? 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)'
+                              : 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
+                            border: isSelectedForMove
+                              ? '3px solid #f59e0b'
+                              : !player
+                              ? '2px dashed #34d399'
+                              : isGK
+                              ? '2.5px solid #fef08a'
+                              : '2.5px solid #a7f3d0',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            justifySelf: 'center',
-                            width: '100%',
-                            minWidth: 0,
-                            cursor: canManageGame ? 'pointer' : 'default',
-                            padding: 0,
-                            transition: 'transform 0.15s ease',
-                          }}
-                        >
-                          <div style={{ position: 'relative' }}>
-                            <div style={{
-                              width: '50px',
-                              height: '50px',
-                              borderRadius: '50%',
-                              background: !player
-                                ? 'rgba(15, 23, 42, 0.65)'
-                                : isGK
-                                ? 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)'
-                                : 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
-                              border: isSelectedForMove
-                                ? '3px solid #f59e0b'
-                                : !player
-                                ? '2px dashed #34d399'
-                                : isGK
-                                ? '2.5px solid #fef08a'
-                                : '2.5px solid #a7f3d0',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: '#fff',
-                              boxShadow: isSelectedForMove
-                                ? '0 0 18px #f59e0b'
-                                : !player
-                                ? 'none'
-                                : isGK
-                                ? '0 6px 16px rgba(245, 158, 11, 0.45)'
-                                : '0 6px 16px rgba(16, 185, 129, 0.45)',
-                            }}>
-                              <span style={{ fontSize: '13px', fontWeight: 900, lineHeight: 1, color: !player ? '#34d399' : isGK ? '#451a03' : '#022c22' }}>
-                                {player?.jersey_number != null ? `#${player.jersey_number}` : '+'}
-                              </span>
-                              <span style={{ fontSize: '8px', fontWeight: 800, color: !player ? '#6ee7b7' : isGK ? '#78350f' : '#064e3b', marginTop: '2px' }}>
-                                {positionShort(position)}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div style={{
-                            marginTop: '6px',
-                            background: player ? 'rgba(15, 23, 42, 0.92)' : 'rgba(0, 0, 0, 0.6)',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            backdropFilter: 'blur(4px)',
-                            padding: '4px 10px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 900,
-                            color: player ? '#f9fafb' : '#34d399',
-                            whiteSpace: 'nowrap',
-                            maxWidth: 'min(140px, 30vw)',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            boxShadow: '0 4px 8px rgba(0,0,0,0.4)',
+                            justifyContent: 'center',
+                            color: '#fff',
+                            boxShadow: isSelectedForMove
+                              ? '0 0 18px #f59e0b'
+                              : !player
+                              ? 'none'
+                              : isGK
+                              ? '0 6px 16px rgba(245, 158, 11, 0.45)'
+                              : '0 6px 16px rgba(16, 185, 129, 0.45)',
                           }}>
-                            <span>{player ? getPlayerDisplayName(player) : 'Assign'}</span>
-                            {player && [captain1Id || selectedGame?.captain_1_id, captain2Id || selectedGame?.captain_2_id].includes(player.id) && (
-                              <span title="Captain" style={{ marginLeft: '4px', background: '#f59e0b', color: '#000', fontSize: '9px', fontWeight: 900, padding: '1px 4px', borderRadius: '4px' }}>C</span>
-                            )}
+                            <span style={{ fontSize: '13px', fontWeight: 900, lineHeight: 1, color: !player ? '#34d399' : isGK ? '#451a03' : '#022c22' }}>
+                              {player?.jersey_number != null ? `#${player.jersey_number}` : '+'}
+                            </span>
+                            <span style={{ fontSize: '8px', fontWeight: 800, color: !player ? '#6ee7b7' : isGK ? '#78350f' : '#064e3b', marginTop: '2px' }}>
+                              {positionShort(position)}
+                            </span>
                           </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Bench / Resting Players Component */}
-            <div
-              onDragOver={(event) => { if (canManageGame) { event.preventDefault(); event.dataTransfer.dropEffect = 'move' } }}
-              onDrop={(event) => {
-                event.preventDefault()
-                const draggedPlayerId = event.dataTransfer.getData('text/plain')
-                if (draggedPlayerId && canManageGame) setLineup((current) => current.filter((item) => item.player_id !== draggedPlayerId))
-              }}
-              style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <strong style={{ fontSize: '13px', color: '#fff' }}>Bench / Resting Players (Tap or drag to pitch)</strong>
-                <span style={{ background: '#1f2937', color: '#9ca3af', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '10px' }}>
-                  {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).length} AVAILABLE
-                </span>
-              </div>
-
-              {selectedMovePlayerId && (
-                <div style={{ marginBottom: '10px', padding: '9px 11px', border: '1px solid #06b6d4', borderRadius: '9px', background: '#082f3a', color: '#a5f3fc', fontSize: '12px', fontWeight: 800 }}>
-                  Player selected — tap a pitch position to place {getPlayerDisplayName(players.find((p) => p.id === selectedMovePlayerId) || players[0])}. <button type="button" onClick={() => setSelectedMovePlayerId(null)} style={{ marginLeft: '8px', background: 'transparent', color: '#a5f3fc', border: 'none', fontWeight: 900, cursor: 'pointer' }}>Cancel</button>
+                        </div>
+  
+                        <div style={{
+                          marginTop: '6px',
+                          background: player ? 'rgba(15, 23, 42, 0.92)' : 'rgba(0, 0, 0, 0.6)',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          backdropFilter: 'blur(4px)',
+                          padding: '4px 10px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 900,
+                          color: player ? '#f9fafb' : '#34d399',
+                          whiteSpace: 'nowrap',
+                          maxWidth: 'min(140px, 30vw)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.4)',
+                        }}>
+                          <span>{player ? getPlayerDisplayName(player) : 'Assign'}</span>
+                          {player && [captain1Id || selectedGame?.captain_1_id, captain2Id || selectedGame?.captain_2_id].includes(player.id) && (
+                            <span title="Captain" style={{ marginLeft: '4px', background: '#f59e0b', color: '#000', fontSize: '9px', fontWeight: 900, padding: '1px 4px', borderRadius: '4px' }}>C</span>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
-              )}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
-                  <button
-                    key={player.id}
-                    type="button"
-                    draggable={canManageGame}
-                    onDragStart={(event) => {
-                      event.dataTransfer.setData('text/plain', player.id)
-                      event.dataTransfer.effectAllowed = 'move'
-                    }}
-                    onClick={() => {
-                      if (selectedMovePlayerId === player.id) setSelectedMovePlayerId(null)
-                      else setSelectedMovePlayerId(player.id)
-                    }}
-                    disabled={!canManageGame}
-                    style={{
-                      background: '#1f2937',
-                      color: '#f3f4f6',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      padding: '8px 12px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      cursor: canManageGame ? 'pointer' : 'default',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <span>{getPlayerDisplayName(player)}</span>
-                    <span style={{ opacity: 0.6 }}>#{player.jersey_number ?? '-'}</span>
-                    <span style={{ color: '#38bdf8', fontSize: '11px', marginLeft: '2px' }}>+ Pitch</span>
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
-
-            {/* Playing Time & Position Breakdown */}
+          </div>
+  
+          {/* Bench / Resting Players Component */}
+          <div
+            onDragOver={(event) => { if (canManageGame) { event.preventDefault(); event.dataTransfer.dropEffect = 'move' } }}
+            onDrop={(event) => {
+              event.preventDefault()
+              const draggedPlayerId = event.dataTransfer.getData('text/plain')
+              if (draggedPlayerId && canManageGame) setLineup((current) => current.filter((item) => item.player_id !== draggedPlayerId))
+            }}
+            style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <strong style={{ fontSize: '13px', color: '#fff' }}>Bench / Resting Players (Tap or drag to pitch)</strong>
+              <span style={{ background: '#1f2937', color: '#9ca3af', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '10px' }}>
+                {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).length} AVAILABLE
+              </span>
+            </div>
+  
+            {selectedMovePlayerId && (
+              <div style={{ marginBottom: '10px', padding: '9px 11px', border: '1px solid #06b6d4', borderRadius: '9px', background: '#082f3a', color: '#a5f3fc', fontSize: '12px', fontWeight: 800 }}>
+                Player selected — tap a pitch position to place {getPlayerDisplayName(players.find((p) => p.id === selectedMovePlayerId) || players[0])}. <button type="button" onClick={() => setSelectedMovePlayerId(null)} style={{ marginLeft: '8px', background: 'transparent', color: '#a5f3fc', border: 'none', fontWeight: 900, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            )}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).map((player) => (
+                <button
+                  key={player.id}
+                  type="button"
+                  draggable={canManageGame}
+                  onDragStart={(event) => {
+                    event.dataTransfer.setData('text/plain', player.id)
+                    event.dataTransfer.effectAllowed = 'move'
+                  }}
+                  onClick={() => {
+                    if (selectedMovePlayerId === player.id) setSelectedMovePlayerId(null)
+                    else setSelectedMovePlayerId(player.id)
+                  }}
+                  disabled={!canManageGame}
+                  style={{
+                    background: '#1f2937',
+                    color: '#f3f4f6',
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: canManageGame ? 'pointer' : 'default',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span>{getPlayerDisplayName(player)}</span>
+                  <span style={{ opacity: 0.6 }}>#{player.jersey_number ?? '-'}</span>
+                  <span style={{ color: '#38bdf8', fontSize: '11px', marginLeft: '2px' }}>+ Pitch</span>
+                </button>
+              ))}
+              {players.filter((p) => !lineup.some((item) => item.player_id === p.id)).length === 0 && (
+                <span style={{ fontSize: '12px', color: '#9ca3af' }}>All roster players are assigned to Q{selectedQuarter} pitch</span>
+              )}
+            </div>
+          </div>
+  
+          <div className="rotation-export-window">
+            {/* Playing Time Breakdown Table */}
             <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <strong style={{ fontSize: '13px', color: '#fff' }}>Playing Time & Position Breakdown (Max 2 GK Quarters)</strong>
               </div>
+  
               <div style={{ display: 'grid', gap: '10px' }}>
                 {players.map((player) => {
                   const assignedQuarters = [1, 2, 3, 4].map((q) => {
@@ -4497,42 +4507,192 @@ function playerAtPosition(position: string) {
                     return source.find((item) => item.player_id === player.id)
                   })
                   const totalPlayed = assignedQuarters.filter(Boolean).length
-
+  
                   return (
                     <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
                       <div style={{ width: '110px', fontWeight: 700, color: totalPlayed < 2 ? '#f87171' : '#f3f4f6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {getPlayerDisplayName(player)} <span style={{ color: '#6b7280', fontSize: '10px' }}>#{player.jersey_number ?? '-'}</span>
                       </div>
+  
                       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '4px', height: '22px' }}>
                         {[0, 1, 2, 3].map((idx) => {
                           const item = assignedQuarters[idx]
-                          if (!item) return <div key={idx} style={{ background: '#1f2937', borderRadius: '4px' }} />
+                          if (!item) {
+                            return <div key={idx} style={{ background: '#1f2937', borderRadius: '4px' }} />
+                          }
                           const isGK = item.position === 'Goalkeeper'
                           return (
-                            <div key={idx} style={{ background: isGK ? '#f59e0b' : '#34d399', color: isGK ? '#451a03' : '#022c22', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 900 }}>
+                            <div
+                              key={idx}
+                              style={{
+                                background: isGK ? '#f59e0b' : '#34d399',
+                                color: isGK ? '#451a03' : '#022c22',
+                                borderRadius: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '9px',
+                                fontWeight: 900,
+                              }}
+                            >
                               {isGK ? 'GK' : positionShort(item.position)}
                             </div>
                           )
                         })}
                       </div>
-                      <span style={{ width: '32px', textAlign: 'right', fontWeight: 800, color: totalPlayed < 2 ? '#f87171' : '#34d399', fontSize: '11px' }}>{totalPlayed}/4</span>
+  
+                      <span style={{ width: '32px', textAlign: 'right', fontWeight: 800, color: totalPlayed < 2 ? '#f87171' : '#34d399', fontSize: '11px' }}>
+                        {totalPlayed}/4
+                      </span>
                     </div>
                   )
                 })}
               </div>
             </div>
-
-            {/* Full Match Rotation Overview (Tactical Mini-Pitches) */}
-            <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px', marginBottom: '20px' }}>
+  
+            {/* Full Match Rotation Overview (Tactical Mini-Pitches with Matching Design) */}
+            <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '14px', padding: '14px' }}>
               <strong style={{ fontSize: '13px', color: '#fff', display: 'block', marginBottom: '12px' }}>Full Match Rotation Overview (Tactical Mini-Pitches)</strong>
+              
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
                 {[1, 2, 3, 4].map((q) => {
                   const qLineup = allGameLineups.filter((item) => item.quarter === q)
                   const rows = formationRows[optimizationFormation] || []
                   return (
-                    <div key={q} style={{ background: 'linear-gradient(180deg, #0a3822 0%, #062b1a 100%)', border: '1.5px solid #10b981', borderRadius: '12px', padding: '10px', minWidth: 0, boxShadow: 'inset 0 0 20px rgba(0,0,0,0.4)' }}>
-                      <div style={{ fontSize: '11px', fontWeight: 900, color: '#34d399', marginBottom: '8px', textAlign: 'center' }}>Q{q}
-
+                    <div key={q} style={{
+                      background: 'linear-gradient(180deg, #0a3822 0%, #062b1a 100%)',
+                      border: '1.5px solid #10b981',
+                      borderRadius: '12px',
+                      padding: '10px',
+                      minWidth: 0,
+                      boxShadow: 'inset 0 0 20px rgba(0,0,0,0.4)'
+                    }}>
+                      <div style={{ fontSize: '11px', fontWeight: 900, color: '#34d399', marginBottom: '8px', textAlign: 'center' }}>Q{q} Mini Pitch ({qLineup.length} Set)</div>
+                      <div style={{ position: 'relative', overflow: 'hidden', minHeight: '156px', display: 'grid', gridTemplateRows: rows.map(() => 'minmax(30px, 1fr)').join(' '), gap: '4px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(52,211,153,0.25)', padding: '7px', borderRadius: '8px' }}>
+                        {/* Mini Field Markings */}
+                        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.4 }}>
+                          <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', borderTop: '1px solid rgba(255,255,255,0.4)' }} />
+                          <div style={{ position: 'absolute', width: '40px', height: '40px', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }} />
+                          <div style={{ position: 'absolute', width: '30%', height: '14px', border: '1px solid rgba(255,255,255,0.4)', borderTop: 0, left: '35%', bottom: 0 }} />
+                        </div>
+                        {rows.length ? rows.map((row, rowIndex) => (
+                          <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '4px', minWidth: 0, position: 'relative', zIndex: 1 }}>
+                            {row.map((position) => {
+                              const item = qLineup.find((assignment) => assignment.position === position)
+                              const player = item ? players.find((p) => p.id === item.player_id) : null
+                              const isGK = position === 'Goalkeeper'
+                              return (
+                                <div key={position} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: '1 1 0', minWidth: 0, gap: '2px' }}>
+                                  <div style={{
+                                    width: '22px',
+                                    height: '22px',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    background: isGK ? '#f59e0b' : player ? '#10b981' : '#1f2937',
+                                    color: isGK ? '#451a03' : player ? '#022c22' : '#9ca3af',
+                                    fontSize: '9px',
+                                    fontWeight: 900,
+                                    border: isGK ? '1px solid #fcd34d' : player ? '1px solid #a7f3d0' : '1px dashed #374151'
+                                  }}>
+                                    {isGK ? 'GK' : player?.jersey_number != null ? `#${player.jersey_number}` : positionShort(position)}
+                                  </div>
+                                  <span style={{ color: '#fff', fontSize: '9px', fontWeight: 800, textAlign: 'center', lineHeight: 1.1, overflowWrap: 'anywhere', maxWidth: '100%', textShadow: '0 1px 2px #000' }}>
+                                    {player ? getPlayerDisplayName(player) : '—'}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )) : <div style={{ color: '#9ca3af', fontSize: '10px', textAlign: 'center' }}>Formation unavailable</div>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+  
+            <div className="rotation-export-actions">
+              <button type="button" onClick={() => window.print()} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
+                Save & Share Match Sheet · PDF
+              </button>
+            </div>
+          </div>
+  
+          {/* Modal Sheet for Direct Player Assignment */}
+          {selectedPreplanPlayerId && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 999 }}>
+              <div style={{ background: '#111827', border: '1px solid #374151', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '20px', width: '100%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', color: '#fff' }}>Select Player Assignment</h3>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPreplanPlayerId(null)}
+                    style={{ background: '#1f2937', color: '#9ca3af', border: 'none', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', fontWeight: 800 }}
+                  >
+                    ✕
+                  </button>
+                </div>
+  
+                <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: 0 }}>Select an available player to place into this position:</p>
+  
+                <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
+                  {players.map((p) => {
+                    const isCurrent = lineup.some((item) => item.player_id === p.id)
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          const targetPos = selectedPreplanPlayerId.startsWith('__empty__:')
+                            ? selectedPreplanPlayerId.replace('__empty__:', '')
+                            : lineup.find((item) => item.player_id === selectedPreplanPlayerId)?.position
+                          if (targetPos) assignPlayer(p.id, targetPos)
+                          setSelectedPreplanPlayerId(null)
+                        }}
+                        style={{
+                          background: '#1f2937',
+                          border: isCurrent ? '1px solid #10b981' : '1px solid #374151',
+                          borderRadius: '10px',
+                          padding: '12px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <span style={{ fontWeight: 700, fontSize: '13px' }}>{getPlayerDisplayName(p)}</span>
+                        <span style={{ fontSize: '11px', color: '#9ca3af', background: '#111827', padding: '2px 8px', borderRadius: '6px' }}>#{p.jersey_number ?? '-'}</span>
+                      </button>
+                    )
+                  })}
+  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (selectedPreplanPlayerId.startsWith('__empty__:')) {
+                        const targetPos = selectedPreplanPlayerId.replace('__empty__:', '')
+                        setLineup((prev) => prev.filter((i) => i.position !== targetPos))
+                      } else {
+                        setLineup((prev) => prev.filter((i) => i.player_id !== selectedPreplanPlayerId))
+                      }
+                      setSelectedPreplanPlayerId(null)
+                    }}
+                    style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#f87171', borderRadius: '10px', padding: '12px', fontWeight: 800, marginTop: '8px', cursor: 'pointer' }}
+                  >
+                    Clear Position / Unassign
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+  
+        </div>
+      )
+    }
   return (
     <>
       <div className="app">
