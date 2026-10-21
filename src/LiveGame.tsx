@@ -1026,6 +1026,15 @@ export default function LiveGame({
 
   function handleFieldPlayerTap(position: string) {
     if (!canManageGame || gameStatus !== 'Live') return
+
+    // A selected bench player can be placed directly into a field slot by tapping it.
+    if (selectedBenchPlayerId) {
+      assignPlayerToPosition(selectedBenchPlayerId, position)
+      setSelectedBenchPlayerId('')
+      setSelectedMovePosition('')
+      return
+    }
+
     if (!selectedMovePosition) {
       setSelectedMovePosition(position)
       return
@@ -1048,11 +1057,13 @@ export default function LiveGame({
 
     const isGk = position === 'Goalkeeper'
     const isSelected = selectedMovePosition === position
-    const fullName = player.name?.trim() || player.first_name || ''
-    const nameParts = fullName.split(/\\s+/).filter(Boolean)
-    const displayName = nameParts.length > 1
-      ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`
-      : fullName || 'Player'
+    const fullName = player.name?.trim() || [player.first_name, player.last_name].filter(Boolean).join(' ')
+    const firstName = player.first_name?.trim() || fullName.split(/\s+/).filter(Boolean)[0] || 'Player'
+    const lastName = player.last_name?.trim() || fullName.split(/\s+/).filter(Boolean).slice(-1)[0] || ''
+    const displayName = lastName && lastName.toLowerCase() !== firstName.toLowerCase()
+      ? `${firstName} ${lastName.charAt(0).toUpperCase()}.`
+      : firstName
+    const isCaptain = captainIds.includes(player.id)
 
     return (
       <button
@@ -1132,8 +1143,16 @@ export default function LiveGame({
                 : '0 5px 12px rgba(16,185,129,.32)',
           }}
         >
-          <span style={{ fontSize: 12, fontWeight: 900, lineHeight: 1 }}>
+          <span style={{ fontSize: 12, fontWeight: 900, lineHeight: 1, position: 'relative' }}>
             #{player.jersey_number ?? '-'}
+            {isCaptain && (
+              <span aria-label="Captain" title="Captain" style={{
+                position: 'absolute', top: -13, right: -20, minWidth: 14, height: 14,
+                padding: '0 2px', borderRadius: 5, background: '#fbbf24', color: '#422006',
+                border: '1px solid #fef3c7', fontSize: 9, lineHeight: '12px',
+                fontWeight: 900, textAlign: 'center',
+              }}>C</span>
+            )}
           </span>
           <span style={{ fontSize: 8, fontWeight: 800, marginTop: 2, textTransform: 'uppercase' }}>
             {positionShort[position] || position}
