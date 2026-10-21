@@ -3240,3 +3240,96 @@ body {
     padding: 10px 4px;
   }
 }
+
+
+/* Match-sheet PDF: print only the dedicated export, not the surrounding app UI. */
+@page {
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #111 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .rotation-export-window,
+  .rotation-export-window * {
+    visibility: visible !important;
+  }
+
+  .rotation-export-window {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+
+  .rotation-export-actions {
+    display: none !important;
+  }
+
+  .rotation-export-window > div {
+    color: #111 !important;
+    background: #fff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+    break-inside: auto;
+  }
+
+  .rotation-export-window [style*="linear-gradient"],
+  .rotation-export-window [style*="rgba(0,0,0,0.3)"] {
+    background: #fff !important;
+  }
+
+  .rotation-export-window [style*="color: #fff"],
+  .rotation-export-window [style*="color: #f8fafc"],
+  .rotation-export-window [style*="color: #f3f4f6"],
+  .rotation-export-window [style*="color: #e8f0f7"],
+  .rotation-export-window [style*="color: #cbd5e1"],
+  .rotation-export-window [style*="color: #9ca3af"],
+  .rotation-export-window [style*="color: #94a3b8"] {
+    color: #111 !important;
+  }
+
+  .rotation-export-window [style*="text-shadow"] {
+    text-shadow: none !important;
+  }
+
+  .rotation-export-window [style*="border: 1px solid rgba(255,255,255"],
+  .rotation-export-window [style*="borderTop: 1px solid rgba(255,255,255"],
+  .rotation-export-window [style*="border: 1px solid rgba(52,211,153"] {
+    border-color: #cbd5e1 !important;
+  }
+
+  .rotation-export-window button {
+    display: none !important;
+  }
+
+  .rotation-export-window > div:nth-child(2) > div > div {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
