@@ -97,7 +97,6 @@ export default function LiveGame({
   userRole,
 }: Props) {
   const canManageGame = userRole === 'owner' || userRole === 'coach'
-  const normalizedCaptainIds = new Set((loadedCaptainIds.length > 0 ? loadedCaptainIds : captainIds).map((id) => String(id).trim().toLowerCase()))
   const canStatTrack = userRole === 'owner' || userRole === 'coach' || userRole === 'viewer'
   const [quarter, setQuarter] = useState(1)
   const [events, setEvents] = useState<Event[]>([])
@@ -113,6 +112,7 @@ export default function LiveGame({
   const [saving, setSaving] = useState(false)
   const [gameStatus, setGameStatus] = useState('Scheduled')
   const [loadedCaptainIds, setLoadedCaptainIds] = useState<string[]>(captainIds)
+  const normalizedCaptainIds = new Set((loadedCaptainIds.length > 0 ? loadedCaptainIds : captainIds).map((id) => String(id).trim().toLowerCase()))
   const [gameFormat, setGameFormat] = useState('7v7')
   const [liveLineup, setLiveLineup] = useState<Lineup[]>([])
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
@@ -1185,9 +1185,7 @@ export default function LiveGame({
           }}
         >
           {displayName}
-          {isCaptain && (
-            <span aria-label="Captain" title="Captain" style={{ marginLeft: 4, background: '#f59e0b', color: '#000', fontSize: 9, fontWeight: 900, padding: '1px 4px', borderRadius: 4, verticalAlign: 'middle' }}>C</span>
-          )}
+
         </span>
       </button>
     )
