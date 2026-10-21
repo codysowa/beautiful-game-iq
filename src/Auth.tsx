@@ -119,6 +119,27 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
+          <div className="auth-emblem" aria-label="Beautiful Game IQ soccer mark">
+            <svg viewBox="0 0 64 64" role="img" aria-hidden="true">
+              <defs>
+                <linearGradient id="bgiq-mark-bg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#153d35" />
+                  <stop offset="100%" stopColor="#071b19" />
+                </linearGradient>
+                <linearGradient id="bgiq-mark-accent" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#4af0b1" />
+                  <stop offset="100%" stopColor="#00a875" />
+                </linearGradient>
+              </defs>
+              <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#bgiq-mark-bg)" stroke="#35dba0" strokeWidth="1.5" />
+              <path d="M9 19H55M9 45H55M19 9V55M45 9V55" stroke="#b2f7db" strokeOpacity=".13" />
+              <circle cx="32" cy="32" r="17" fill="none" stroke="#4af0b1" strokeOpacity=".75" strokeWidth="1.5" />
+              <path d="m32 21 8 6-3 10h-10l-3-10z" fill="url(#bgiq-mark-accent)" stroke="#d6fff0" strokeWidth="1.2" strokeLinejoin="round" />
+              <path d="m32 21-1-7m9 13 7-3m-10 13 4 7m-14-7-7 5m-3-15-6-2" stroke="#4af0b1" strokeWidth="2" strokeLinecap="round" />
+              <text x="32" y="56" textAnchor="middle" fontSize="6.5" fontWeight="900" fill="#e8fff6" letterSpacing="1">BGIQ</text>
+            </svg>
+          </div>
+          <div className="auth-status"><span className="auth-status-dot" /> COACH COPILOT <span className="auth-status-divider">·</span> GAME DAY READY</div>
           <div className="auth-kicker">BEAUTIFUL GAME IQ</div>
 
           <h1>
