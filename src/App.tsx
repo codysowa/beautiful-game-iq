@@ -4015,10 +4015,7 @@ function playerAtPosition(position: string) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '14px', width: '100%', boxSizing: 'border-box' }}>
             <button
               type="button"
-              onClick={async () => {
-                if (canManageGame) {
-                  await saveLineup()
-                }
+              onClick={() => {
                 setScreen('home')
               }}
               style={{ background: '#1f2937', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
@@ -4283,11 +4280,10 @@ function playerAtPosition(position: string) {
             <div style={{ position: 'absolute', bottom: '12px', left: '34%', right: '34%', height: '28px', border: '2px solid rgba(255, 255, 255, 0.35)', borderBottom: 'none', pointerEvents: 'none' }} />
   
             {/* Pitch Header Badge & Formation Switcher */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 2, padding: '0 6px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 900, color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '12px', border: '1px solid rgba(52,211,153,0.3)' }}>
-                ATTACKING • Q{selectedQuarter}
-              </span>
+            <div className="lineup-pitch-toolbar" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 2, padding: '0 6px' }}>
+              
               <select
+                className="lineup-formation-select"
                 aria-label="Select formation"
                 value={optimizationFormation}
                 onChange={(e) => {
