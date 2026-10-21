@@ -2067,3 +2067,62 @@ div[style*="radial-gradient(circle at center"] > div[style*="position: relative"
   .app.home-refresh .home-season-analytics {animation-delay:.08s}
 }
 @keyframes home-rise-in {from{opacity:.8;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+
+/* Mobile correction pass based on the actual iPhone deployment screenshots. */
+.app.home-refresh { width:100%; max-width:100%; overflow-x:clip; }
+.app.home-refresh .app-header { width:100%; box-sizing:border-box; }
+.app.home-refresh .app-header .header-content {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:6px 12px;
+  width:100%;
+  min-width:0;
+}
+.app.home-refresh .app-header .header-content h1 { grid-column:1; min-width:0; margin:0; }
+.app.home-refresh .app-header .header-content p { grid-column:1; min-width:0; margin:0 !important; overflow-wrap:anywhere; }
+.app.home-refresh .app-header .header-content .header-help-button { grid-column:2; grid-row:1 / span 3; align-self:start; }
+.app.home-refresh .main-content { min-width:0; box-sizing:border-box; }
+.app.home-refresh .welcome, .app.home-refresh .home-next-game,
+.app.home-refresh .home-record-card, .app.home-refresh .team-card,
+.app.home-refresh .home-season-analytics, .app.home-refresh .player-analytics-card { min-width:0; box-sizing:border-box; }
+.app.home-refresh .analytics-table-wrap {
+  width:100%; max-width:100%; min-width:0; overflow-x:auto;
+  overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
+}
+.app.home-refresh .analytics-table { width:max-content; min-width:100%; border-collapse:separate; border-spacing:0; }
+.app.home-refresh .analytics-table th,
+.app.home-refresh .analytics-table td { white-space:nowrap; }
+.app.home-refresh .analytics-table .player-col {
+  position:sticky; left:0; z-index:2; min-width:132px; max-width:132px;
+  background:var(--home-raised); color:var(--home-ink);
+  box-shadow:8px 0 12px -10px rgba(0,0,0,.45);
+}
+.app.home-refresh .analytics-table thead .player-col { z-index:3; background:var(--home-raised); }
+.app.home-refresh .analytics-table tbody .player-col { background:var(--home-surface); }
+.app.home-refresh .bottom-nav {
+  box-sizing:border-box; width:calc(100% - 24px); max-width:920px;
+  left:50%; right:auto; transform:translateX(-50%);
+  bottom:max(10px, env(safe-area-inset-bottom));
+  padding:8px 10px;
+}
+.app.home-refresh .bottom-nav button { min-width:0; padding:10px 4px; }
+@media(max-width:760px) {
+  .app.home-refresh .app-header { padding:12px 14px 0; }
+  .app.home-refresh .app-header .header-content { grid-template-columns:minmax(0,1fr) auto; }
+  .app.home-refresh .app-header .header-content h1 { font-size:17px; }
+  .app.home-refresh .app-header .header-content p { font-size:12px; line-height:1.35; }
+  .app.home-refresh .main-content { width:calc(100% - 28px); margin-top:8px; padding-bottom:150px; }
+  .app.home-refresh .home-team-identity { overflow-wrap:anywhere; }
+  .app.home-refresh .home-team-name { overflow-wrap:break-word; }
+  .app.home-refresh .home-team-bar { flex-direction:column; align-items:stretch !important; }
+  .app.home-refresh .home-team-bar > label,
+  .app.home-refresh .home-team-bar > button { width:100%; flex:1 1 auto !important; box-sizing:border-box; }
+  .app.home-refresh .home-action-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .app.home-refresh .home-action-row button { min-width:0; padding:12px 10px; }
+  .app.home-refresh .home-quick-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .app.home-refresh .home-quick-actions button { min-width:0; padding:10px 8px; }
+  .app.home-refresh .home-team-summary { flex-wrap:wrap; }
+  .app.home-refresh .player-analytics-card { overflow:hidden; }
+}
