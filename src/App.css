@@ -2203,3 +2203,25 @@ div[style*="radial-gradient(circle at center"] > div[style*="position: relative"
     min-width: 0;
   }
 }
+
+
+/* Home polish: visible scorer ranks and readable analytics header labels.
+   Presentation-only changes; no markup, data, or layout behavior changes. */
+.app.home-refresh .top-scorer-row b {
+  background: var(--home-glow);
+  color: var(--home-green);
+  border: 1px solid var(--home-border);
+  font-size: 12px;
+  font-weight: 800;
+}
+.app.home-refresh .analytics-table thead th:not(.player-col) {
+  background: #e8eef4;
+  color: #26384a;
+}
+.app.home-refresh .analytics-table thead th:not(.player-col) span {
+  color: #52677b;
+}
+.app.home-refresh .analytics-table thead .player-col {
+  background: var(--home-raised);
+  color: var(--home-ink);
+}
