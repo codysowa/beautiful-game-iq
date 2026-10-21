@@ -556,8 +556,21 @@ export default function LiveGame({
     if (!canManageGame || gameStatus !== 'Live') return
 
     const source = activeLineup.find((item) => item.player_id === playerId)
-    const occupant = activeLineup.find((item) => item.position === position)
 
+    // Dropping a field player on the bench removes that player from this quarter's
+    // active lineup. Dropping a bench player on the field inserts them into the slot.
+    if (position === 'Bench') {
+      if (!source) return
+      const nextLineup = activeLineup.filter((item) => item.player_id !== playerId)
+      setLiveLineup(nextLineup)
+      void persistLiveLineup(nextLineup)
+      setSelectedPosition('')
+      setSelectedMovePosition('')
+      setSelectedBenchPlayerId('')
+      return
+    }
+
+    const occupant = activeLineup.find((item) => item.position === position)
     let nextLineup: Lineup[]
 
     if (source) {
@@ -579,6 +592,7 @@ export default function LiveGame({
     void persistLiveLineup(nextLineup)
     setSelectedPosition('')
     setSelectedMovePosition('')
+    setSelectedBenchPlayerId('')
   }
 
   function changeFormation(newFormation: string) {
@@ -603,10 +617,10 @@ export default function LiveGame({
       if (slot === 'Goalkeeper' || usedPositions.has(slot)) continue
 
       const samePosition = remainingPlayers.find(
-        (item) => item.position === slot && !usedPositions.has(item.player_id)
+        (item) => item.position === slot && !usedPlayers.has(item.player_id)
       )
       const player = samePosition || remainingPlayers.find(
-        (item) => !usedPositions.has(item.player_id)
+        (item) => !usedPlayers.has(item.player_id)
       )
 
       if (!player) continue
@@ -1373,15 +1387,55 @@ export default function LiveGame({
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #334155' }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#f8fafc', marginBottom: 8 }}>Bench</div>
               <div
+                onDragOver={(event) => {
+                  if (canManageGame && gameStatus === 'Live') {
+                    event.preventDefault()
+                    event.dataTransfer.dropEffect = 'move'
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  const draggedPlayerId = event.dataTransfer.getData('text/plain')
+                  if (draggedPlayerId && canManageGame && gameStatus === 'Live') {
+                    assignPlayerToPosition(draggedPlayerId, 'Bench')
+                  }
+                }}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
                   gap: 6,
+                  minHeight: 52,
+                  padding: 4,
+                  borderRadius: 8,
+                  background: 'rgba(15,23,42,.24)',
                 }}
               >
                 {benchPlayers.map((player) => (
                   <button
                     key={player.id}
+                    type="button"
+                    draggable={Boolean(canManageGame && gameStatus === 'Live')}
+                    onDragStart={(event) => {
+                      event.dataTransfer.setData('text/plain', player.id)
+                      event.dataTransfer.effectAllowed = 'move'
+                      setSelectedBenchPlayerId(player.id)
+                    }}
+                    onDragEnd={() => setSelectedBenchPlayerId('')}
+                    onDragOver={(event) => {
+                      if (canManageGame && gameStatus === 'Live') {
+                        event.preventDefault()
+                        event.dataTransfer.dropEffect = 'move'
+                      }
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      const draggedPlayerId = event.dataTransfer.getData('text/plain')
+                      if (draggedPlayerId && canManageGame && gameStatus === 'Live' && draggedPlayerId !== player.id) {
+                        // Dropping onto a bench player returns the dragged field player to the bench.
+                        assignPlayerToPosition(draggedPlayerId, 'Bench')
+                      }
+                    }}
                     onClick={() => { setSelectedMovePosition(''); if (canManageGame && gameStatus === 'Live') setSelectedBenchPlayerId(player.id) }}
                     disabled={!canManageGame || gameStatus !== 'Live'}
                     style={{
@@ -1392,13 +1446,15 @@ export default function LiveGame({
                       borderRadius: 10,
                       background: '#1e293b',
                       color: '#f8fafc',
-                      cursor: canManageGame && gameStatus === 'Live' ? 'pointer' : 'default',
+                      cursor: canManageGame && gameStatus === 'Live' ? 'grab' : 'default',
+                      touchAction: 'manipulation',
                     }}
                   >
                     <div style={{ fontWeight: 700, fontSize: 12 }}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</div>
-                    {gameStatus === 'Live' && <div style={{ fontSize: 10, marginTop: 2, color: '#38bdf8', fontWeight: 600 }}>Tap to move</div>}
+                    {gameStatus === 'Live' && <div style={{ fontSize: 10, marginTop: 2, color: '#38bdf8', fontWeight: 600 }}>Drag to field · tap to move</div>}
                   </button>
                 ))}
+                {benchPlayers.length === 0 && <div style={{ color: '#94a3b8', fontSize: 12, padding: 8 }}>Drop a player here to bench them.</div>}
               </div>
             </div>
           </>
