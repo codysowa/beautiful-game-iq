@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - dev/v2-backoffice-redesign-20261021
+  pull_request:
+    branches:
+      - dev/v2-backoffice-redesign-20261021
   workflow_dispatch:
 
 permissions:
@@ -15,7 +18,7 @@ concurrency:
 
 jobs:
   build-and-upload:
-    if: github.ref == 'refs/heads/dev/v2-backoffice-redesign-20261021'
+    if: github.ref == 'refs/heads/dev/v2-backoffice-redesign-20261021' || github.base_ref == 'dev/v2-backoffice-redesign-20261021'
     name: Build, sign, and upload iOS app
     runs-on: macos-15
     timeout-minutes: 60
