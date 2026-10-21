@@ -1882,3 +1882,16 @@ input:focus, select:focus, textarea:focus {
 .live-game-page span[style*="#eee"] { color: var(--lg-text) !important; background: #1a3040 !important; }
 .live-game-page input, .live-game-page label, .live-game-page option { color: var(--lg-text); }
 @media (max-width: 600px) { .live-game-page { padding: 8px 8px 124px !important; } .live-game-scoreboard { border-radius: 15px; padding: 14px 10px 16px !important; } .live-game-page .live-game-event-actions button { min-height: 60px !important; padding: 10px !important; font-size: 14px !important; } }
+
+/* Lineup Builder toolbar: keep the formation control compact at the pitch's top-right. */
+.lineup-pitch-toolbar { width: 100%; min-width: 0; }
+.lineup-formation-select {
+  display: block;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 88px;
+  max-width: 140px;
+}
+@media (max-width: 600px) {
+  .lineup-formation-select { min-width: 82px; max-width: 112px; }
+}
