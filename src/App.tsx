@@ -1812,7 +1812,7 @@ function playerAtPosition(position: string) {
 
   if (loading) {
     return (
-      <div className="app" style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
+      <div className={`app home-refresh home-theme-${homeTheme}`} style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
         <header className="app-header">
           <div className="header-content">
             <h1>Beautiful Game IQ</h1>
