@@ -3994,6 +3994,8 @@ function playerAtPosition(position: string) {
       const activeFormations = allowedFormations.length > 0 ? allowedFormations : Object.keys(formationRows)
 
       async function saveAndShareMatchSheet() {
+        const game = selectedGame
+        if (!game) return
         // Desktop browsers can print the full designed match sheet. The native iOS
         // WebView does not reliably implement window.print(), so create a real PDF
         // file there and pass it to the system share sheet when supported.
@@ -4012,8 +4014,8 @@ function playerAtPosition(position: string) {
 
         const pdfLines: string[] = [
           'BEAUTIFUL GAME IQ - MATCH SHEET',
-          `Opponent: ${clean(opponent || selectedGame.opponent || 'TBD')}`,
-          `Date: ${clean(selectedGame.game_date || 'Not set')}    Format: ${clean(selectedGame.format || currentFormat)}`,
+          `Opponent: ${clean(opponent || game.opponent || 'TBD')}`,
+          `Date: ${clean(game.game_date || 'Not set')}    Format: ${clean(game.format || currentFormat)}`,
           '',
         ]
         const formationSlots = optimizationFormations[optimizationFormation] || []
@@ -4075,7 +4077,7 @@ function playerAtPosition(position: string) {
         for (let id = 1; id < objects.length; id += 1) pdf += `${String(offsets[id]).padStart(10, '0')} 00000 n \n`
         pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`
 
-        const fileName = `BGIQ-Match-Sheet-${clean(selectedGame.game_date || 'match').replace(/\s+/g, '-')}.pdf`
+        const fileName = `BGIQ-Match-Sheet-${clean(game.game_date || 'match').replace(/\s+/g, '-')}.pdf`
         const file = new File([new Blob([pdf], { type: 'application/pdf' })], fileName, { type: 'application/pdf' })
         try {
           if (typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
