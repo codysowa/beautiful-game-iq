@@ -601,10 +601,10 @@ export default function LiveGame({
       if (slot === 'Goalkeeper' || usedPositions.has(slot)) continue
 
       const samePosition = remainingPlayers.find(
-        (item) => item.position === slot && !usedPlayers.has(item.player_id)
+        (item) => item.position === slot && !usedPositions.has(item.player_id)
       )
       const player = samePosition || remainingPlayers.find(
-        (item) => !usedPlayers.has(item.player_id)
+        (item) => !usedPositions.has(item.player_id)
       )
 
       if (!player) continue
@@ -998,7 +998,7 @@ export default function LiveGame({
     if (!saved) return
 
     setShowNextQuarterOptimizer(false)
-setNextQuarterAdvice(null)
+    setNextQuarterAdvice(null)
   }
 
   function fieldRows() {
@@ -1014,6 +1014,8 @@ setNextQuarterAdvice(null)
     const player = players.find((entry) => entry.id === item.player_id)
     if (!player) return null
 
+    const isGk = position === 'Goalkeeper'
+
     return (
       <button
         key={`${position}-${player.id}`}
@@ -1021,24 +1023,50 @@ setNextQuarterAdvice(null)
         disabled={!canManageGame || gameStatus !== 'Live'}
         style={{
           width: '100%',
-          minHeight: 64,
-          padding: '8px 6px',
-          border: '1px solid rgba(255, 255, 255, 0.25)',
+          minHeight: 56,
+          padding: '6px 8px',
+          border: isGk ? '1px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.2)',
           borderRadius: 12,
-          background: 'rgba(15, 23, 42, 0.85)',
-          backdropFilter: 'blur(4px)',
+          background: isGk
+            ? 'linear-gradient(135deg, rgba(217, 119, 6, 0.9) 0%, rgba(180, 83, 9, 0.95) 100%)'
+            : 'linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(30, 41, 59, 0.92) 100%)',
+          backdropFilter: 'blur(6px)',
           color: '#ffffff',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          boxShadow: '0 6px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
           boxSizing: 'border-box',
           cursor: canManageGame && gameStatus === 'Live' ? 'pointer' : 'default',
-          transition: 'transform 0.15s ease, background 0.15s ease',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          position: 'relative',
+          overflow: 'hidden',
+          zIndex: 2,
         }}
       >
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', color: '#38bdf8', textTransform: 'uppercase', marginBottom: 2 }}>
-          {positionShort[position] || position}
+        <div
+          style={{
+            minWidth: 28,
+            height: 28,
+            borderRadius: '50%',
+            background: isGk ? '#fff' : '#0284c7',
+            color: isGk ? '#b45309' : '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 800,
+            fontSize: 12,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+          }}
+        >
+          #{player.jersey_number ?? '-'}
         </div>
-        <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
+        <div style={{ textAlign: 'left', flex: 1, overflow: 'hidden' }}>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.06em', color: isGk ? '#fef3c7' : '#38bdf8', textTransform: 'uppercase' }}>
+            {positionShort[position] || position}
+          </div>
+          <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {player.first_name || player.name.split(' ')[0]}
+          </div>
         </div>
       </button>
     )
@@ -1050,9 +1078,9 @@ setNextQuarterAdvice(null)
         ← Back
       </button>
 
-      <div className="live-game-scoreboard" style={{ textAlign: 'center', padding: '8px 0 16px', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', borderRadius: 16, border: '1px solid #334155', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)', marginBottom: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', color: '#38bdf8', marginBottom: 4 }}>{gameStatus.toUpperCase()}</div>
-        <h1 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800, color: '#f8fafc' }}>vs {opponent}</h1>
+      <div className="live-game-scoreboard" style={{ textAlign: 'center', padding: '12px 0 18px', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', borderRadius: 16, border: '1px solid #334155', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)', marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', color: '#38bdf8', marginBottom: 4 }}>{gameStatus.toUpperCase()}</div>
+        <h1 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 800, color: '#f8fafc' }}>vs {opponent}</h1>
         <div style={{ fontSize: 52, fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em', color: '#ffffff', textShadow: '0 2px 10px rgba(56,189,248,0.3)' }}>
           {ourGoals} - {theirGoals}
         </div>
@@ -1067,7 +1095,7 @@ setNextQuarterAdvice(null)
         <button
           onClick={() => updateGameStatus('Live')}
           disabled={saving}
-          style={{ width: '100%', minHeight: 64, fontSize: 20, fontWeight: 800, marginBottom: 12, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)', color: '#fff', boxShadow: '0 4px 14px rgba(2,132,199,0.4)', cursor: 'pointer' }}
+          style={{ width: '100%', minHeight: 60, fontSize: 18, fontWeight: 800, marginBottom: 12, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)', color: '#fff', boxShadow: '0 4px 14px rgba(2,132,199,0.4)', cursor: 'pointer' }}
         >
           START GAME
         </button>
@@ -1081,7 +1109,7 @@ setNextQuarterAdvice(null)
             }
           }}
           disabled={saving}
-          style={{ width: '100%', minHeight: 48, fontSize: 15, fontWeight: 700, marginBottom: 12, borderRadius: 10, border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', cursor: 'pointer' }}
+          style={{ width: '100%', minHeight: 46, fontSize: 14, fontWeight: 700, marginBottom: 12, borderRadius: 10, border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', cursor: 'pointer' }}
         >
           END GAME
         </button>
@@ -1091,7 +1119,7 @@ setNextQuarterAdvice(null)
         <button
           onClick={() => updateGameStatus('Live')}
           disabled={saving}
-          style={{ width: '100%', minHeight: 48, fontSize: 15, fontWeight: 700, marginBottom: 12, borderRadius: 10, border: '1px solid #334155', background: '#1e293b', color: '#cbd5e1', cursor: 'pointer' }}
+          style={{ width: '100%', minHeight: 46, fontSize: 14, fontWeight: 700, marginBottom: 12, borderRadius: 10, border: '1px solid #334155', background: '#1e293b', color: '#cbd5e1', cursor: 'pointer' }}
         >
           REOPEN GAME
         </button>
@@ -1104,10 +1132,10 @@ setNextQuarterAdvice(null)
             onClick={() => changeQuarter(q)}
             disabled={lineupLoading}
             style={{ 
-              padding: '12px 4px', 
+              padding: '10px 4px', 
               fontWeight: quarter === q ? 800 : 600, 
               fontSize: 15, 
-              minHeight: 46,
+              minHeight: 44,
               borderRadius: 10,
               border: quarter === q ? '2px solid #38bdf8' : '1px solid #334155',
               background: quarter === q ? '#0284c7' : '#1e293b',
@@ -1125,7 +1153,7 @@ setNextQuarterAdvice(null)
         <button
           onClick={openCurrentQuarterOptimizer}
           disabled={lineupLoading || optimizerLoading}
-          style={{ width: '100%', minHeight: 48, fontSize: 14, fontWeight: 700, marginBottom: 8, borderRadius: 10, border: '1px solid #0284c7', background: '#0369a1', color: '#fff', cursor: 'pointer' }}
+          style={{ width: '100%', minHeight: 46, fontSize: 14, fontWeight: 700, marginBottom: 8, borderRadius: 10, border: '1px solid #0284c7', background: '#0369a1', color: '#fff', cursor: 'pointer' }}
         >
           {optimizerLoading ? 'PREPARING...' : `⚡ OPTIMIZE Q${quarter} NOW`}
         </button>
@@ -1136,14 +1164,14 @@ setNextQuarterAdvice(null)
           <button
             onClick={openNextQuarterOptimizer}
             disabled={lineupLoading || optimizerLoading}
-            style={{ minHeight: 48, fontSize: 14, fontWeight: 700, borderRadius: 10, border: '1px solid #334155', background: '#1e293b', color: '#cbd5e1', cursor: 'pointer' }}
+            style={{ minHeight: 46, fontSize: 13, fontWeight: 700, borderRadius: 10, border: '1px solid #334155', background: '#1e293b', color: '#cbd5e1', cursor: 'pointer' }}
           >
             {optimizerLoading ? 'PREPARING...' : `⚡ OPTIMIZE Q${quarter + 1}`}
           </button>
           <button
             onClick={() => changeQuarter(quarter + 1)}
             disabled={lineupLoading}
-            style={{ minHeight: 48, fontSize: 15, fontWeight: 700, borderRadius: 10, border: '1px solid #0284c7', background: '#0284c7', color: '#fff', cursor: 'pointer' }}
+            style={{ minHeight: 46, fontSize: 14, fontWeight: 700, borderRadius: 10, border: '1px solid #0284c7', background: '#0284c7', color: '#fff', cursor: 'pointer' }}
           >
             {lineupLoading ? 'LOADING...' : `START Q${quarter + 1} →`}
           </button>
@@ -1154,28 +1182,28 @@ setNextQuarterAdvice(null)
         <button
           onClick={() => setShowGoal(true)}
           disabled={gameStatus !== 'Live' || saving}
-          style={{ minHeight: 60, fontSize: 16, fontWeight: 800, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', boxShadow: '0 4px 12px rgba(16,185,129,0.3)', cursor: 'pointer' }}
+          style={{ minHeight: 56, fontSize: 15, fontWeight: 800, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', boxShadow: '0 4px 12px rgba(16,185,129,0.3)', cursor: 'pointer' }}
         >
           ⚽ OUR GOAL
         </button>
         <button
           onClick={recordTheirGoal}
           disabled={gameStatus !== 'Live' || saving}
-          style={{ minHeight: 60, fontSize: 16, fontWeight: 800, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff', boxShadow: '0 4px 12px rgba(239,68,68,0.3)', cursor: 'pointer' }}
+          style={{ minHeight: 56, fontSize: 15, fontWeight: 800, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff', boxShadow: '0 4px 12px rgba(239,68,68,0.3)', cursor: 'pointer' }}
         >
           ❌ THEIR GOAL
         </button>
         <button
           onClick={recordSave}
           disabled={gameStatus !== 'Live' || saving || lineupLoading}
-          style={{ minHeight: 52, fontSize: 15, fontWeight: 700, borderRadius: 12, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc', cursor: 'pointer' }}
+          style={{ minHeight: 48, fontSize: 14, fontWeight: 700, borderRadius: 12, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc', cursor: 'pointer' }}
         >
           🧤 SAVE
         </button>
         <button
           onClick={() => { setShotPlayer(''); setShowShot(true) }}
           disabled={gameStatus !== 'Live' || saving || lineupLoading}
-          style={{ minHeight: 52, fontSize: 15, fontWeight: 700, borderRadius: 12, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc', cursor: 'pointer' }}
+          style={{ minHeight: 48, fontSize: 14, fontWeight: 700, borderRadius: 12, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc', cursor: 'pointer' }}
         >
           🎯 OUR SHOT
         </button>
@@ -1183,7 +1211,7 @@ setNextQuarterAdvice(null)
 
       <section className="live-game-lineup-card" style={{ marginTop: 12, border: '1px solid #334155', borderRadius: 16, padding: 14, background: '#0f172a', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#f8fafc' }}>Q{quarter} Formation</h2>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f8fafc' }}>Q{quarter} Formation</h2>
           {canManageGame && gameStatus === 'Live' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>Formation</span>
@@ -1206,31 +1234,47 @@ setNextQuarterAdvice(null)
           <p style={{ margin: 0, color: '#94a3b8', textAlign: 'center', padding: '40px 0' }}>No saved lineup for this quarter.</p>
         ) : (
           <>
+            {/* BROADCAST TACTICAL PITCH OVERHAUL */}
             <div
               className="live-game-pitch"
               style={{
-                background: 'linear-gradient(180deg, #134e4a 0%, #064e3b 50%, #134e4a 100%)',
-                border: '2px solid #059669',
-                borderRadius: 14,
-                padding: '16px 10px',
+                background: 'repeating-linear-gradient(180deg, #0b3c2d 0px, #0b3c2d 32px, #0f4b38 32px, #0f4b38 64px)',
+                border: '3px solid rgba(255, 255, 255, 0.4)',
+                borderRadius: 16,
+                padding: '20px 12px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 10,
-                minHeight: 320,
+                gap: 12,
+                minHeight: 380,
                 boxSizing: 'border-box',
                 position: 'relative',
-                boxShadow: 'inset 0 0 30px rgba(0,0,0,0.4)',
+                overflow: 'hidden',
+                boxShadow: 'inset 0 0 40px rgba(0,0,0,0.6)',
               }}
             >
+              {/* Pitch Markings Overlay */}
+              <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+                {/* Center Halfway Line */}
+                <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: 'rgba(255, 255, 255, 0.25)', transform: 'translateY(-50%)' }} />
+                {/* Center Circle */}
+                <div style={{ position: 'absolute', top: '50%', left: '50%', width: 100, height: 100, borderRadius: '50%', border: '2px solid rgba(255, 255, 255, 0.25)', transform: 'translate(-50%, -50%)' }} />
+                {/* Penalty Area Top */}
+                <div style={{ position: 'absolute', top: 0, left: '25%', right: '25%', height: 50, border: '2px solid rgba(255, 255, 255, 0.25)', borderTop: 'none' }} />
+                {/* Penalty Area Bottom */}
+                <div style={{ position: 'absolute', bottom: 0, left: '25%', right: '25%', height: 50, border: '2px solid rgba(255, 255, 255, 0.25)', borderBottom: 'none' }} />
+              </div>
+
+              {/* Player Grid Lines */}
               {fieldRows().map((row, rowIndex) => (
                 <div
                   key={`row-${rowIndex}`}
                   style={{
                     display: 'grid',
                     gridTemplateColumns: `repeat(${Math.min(row.length, 3)}, 1fr)`,
-                    gap: 8,
+                    gap: 10,
                     alignItems: 'center',
                     flex: rowIndex === fieldRows().length - 1 ? 0 : 1,
+                    zIndex: 1,
                   }}
                 >
                   {row.map((position) => fieldPlayer(position))}
@@ -1257,9 +1301,9 @@ setNextQuarterAdvice(null)
                     onClick={() => canManageGame && gameStatus === 'Live' && setSelectedBenchPlayerId(player.id)}
                     disabled={!canManageGame || gameStatus !== 'Live'}
                     style={{
-                      padding: 10,
+                      padding: '8px 10px',
                       textAlign: 'left',
-                      minHeight: 58,
+                      minHeight: 52,
                       border: '1px dashed #475569',
                       borderRadius: 10,
                       background: '#1e293b',
@@ -1267,7 +1311,7 @@ setNextQuarterAdvice(null)
                       cursor: canManageGame && gameStatus === 'Live' ? 'pointer' : 'default',
                     }}
                   >
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</div>
+                    <div style={{ fontWeight: 700, fontSize: 12 }}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</div>
                     {gameStatus === 'Live' && <div style={{ fontSize: 10, marginTop: 2, color: '#38bdf8', fontWeight: 600 }}>Tap to move</div>}
                   </button>
                 ))}
