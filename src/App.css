@@ -2427,3 +2427,51 @@ body {
   background: #080d12;
   color: #e8f0f7;
 }
+
+
+/* Lineup Builder pitch mirrors the Live Game field: compact player tokens, consistent turf,
+   identical inset markings, and no stretched button-card backgrounds. */
+.lineup-builder-pitch {
+  background: repeating-linear-gradient(to bottom, #0d4a34 0 32px, #0b402f 32px 64px) !important;
+  border: 2px solid #2acb98 !important;
+  border-radius: 13px !important;
+  box-sizing: border-box;
+  min-height: 370px;
+  padding: 14px 8px !important;
+  position: relative;
+  overflow: hidden;
+}
+.lineup-builder-pitch::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: 8px;
+  border: 1px solid rgba(210,244,231,.35);
+  border-radius: 5px;
+  z-index: 0;
+}
+.lineup-builder-pitch .lineup-pitch-toolbar { position: absolute; top: 8px; right: 8px; width: auto; z-index: 3; }
+.lineup-builder-pitch .lineup-pitch-grid { position: relative; z-index: 1; }
+.lineup-builder-pitch .lineup-pitch-player {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: #eaf7f3;
+  flex: 0 1 auto;
+  width: auto !important;
+  max-width: 100%;
+  padding: 0 !important;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.lineup-builder-pitch .lineup-pitch-player:hover,
+.lineup-builder-pitch .lineup-pitch-player:active {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+@media (max-width: 600px) {
+  .lineup-builder-pitch { min-height: 330px; padding: 12px 6px !important; }
+  .lineup-builder-pitch .lineup-pitch-grid { min-height: 300px !important; gap: 4px !important; }
+}
