@@ -3839,7 +3839,7 @@ function playerAtPosition(position: string) {
         opponent={selectedGame.opponent}
         players={players}
         lineups={allGameLineups}
-        captainIds={[captain1Id || selectedGame.captain_1_id, captain2Id || selectedGame.captain_2_id].filter(Boolean).map(String)}
+        captainIds={[selectedGame.captain_1_id || captain1Id, selectedGame.captain_2_id || captain2Id].filter((id): id is string => Boolean(id)).map((id) => String(id).trim())}
         userRole={currentUserRole || 'viewer'}
         onBack={() => { setScreen('home'); void loadApp(selectedTeamId, false) }}
       />
