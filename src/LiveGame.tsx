@@ -1084,11 +1084,13 @@ export default function LiveGame({
         }}
         onDrop={(event) => {
           event.preventDefault()
+          event.stopPropagation()
           const draggedPlayerId = event.dataTransfer.getData('text/plain')
           if (draggedPlayerId && canManageGame && gameStatus === 'Live') {
             assignPlayerToPosition(draggedPlayerId, position)
           }
           setSelectedMovePosition('')
+          setSelectedBenchPlayerId('')
         }}
         onClick={() => handleFieldPlayerTap(position)}
         disabled={!canManageGame || gameStatus !== 'Live'}
@@ -1147,10 +1149,10 @@ export default function LiveGame({
             #{player.jersey_number ?? '-'}
             {isCaptain && (
               <span aria-label="Captain" title="Captain" style={{
-                position: 'absolute', top: -13, right: -20, minWidth: 14, height: 14,
-                padding: '0 2px', borderRadius: 5, background: '#fbbf24', color: '#422006',
-                border: '1px solid #fef3c7', fontSize: 9, lineHeight: '12px',
-                fontWeight: 900, textAlign: 'center',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 13, height: 13, marginLeft: 3, borderRadius: 4,
+                background: '#fbbf24', color: '#422006', border: '1px solid #fef3c7',
+                fontSize: 9, lineHeight: 1, fontWeight: 900, verticalAlign: 'middle',
               }}>C</span>
             )}
           </span>
@@ -1391,7 +1393,26 @@ export default function LiveGame({
                   }}
                 >
                   {row.map((position) => (
-                    <div key={position} style={{ flex: row.length === 1 ? '0 1 auto' : '1 1 0', display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0 }}>
+                    <div
+                      key={position}
+                      onDragOver={(event) => {
+                        if (canManageGame && gameStatus === 'Live') {
+                          event.preventDefault()
+                          event.dataTransfer.dropEffect = 'move'
+                        }
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        const draggedPlayerId = event.dataTransfer.getData('text/plain')
+                        if (draggedPlayerId && canManageGame && gameStatus === 'Live') {
+                          assignPlayerToPosition(draggedPlayerId, position)
+                        }
+                        setSelectedMovePosition('')
+                        setSelectedBenchPlayerId('')
+                      }}
+                      style={{ flex: row.length === 1 ? '0 1 auto' : '1 1 0', display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0, minHeight: 74, borderRadius: 8 }}
+                    >
                       {fieldPlayer(position)}
                     </div>
                   ))}
