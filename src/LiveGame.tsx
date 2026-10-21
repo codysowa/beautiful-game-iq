@@ -115,6 +115,7 @@ export default function LiveGame({
   const [liveLineup, setLiveLineup] = useState<Lineup[]>([])
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
   const [selectedPosition, setSelectedPosition] = useState('')
+  const [selectedMovePosition, setSelectedMovePosition] = useState('')
   const [selectedBenchPlayerId, setSelectedBenchPlayerId] = useState('')
   const [subInPlayerId, setSubInPlayerId] = useState('')
   const [liveFormation, setLiveFormation] = useState('3-2-1')
@@ -577,6 +578,7 @@ export default function LiveGame({
     setLiveLineup(nextLineup)
     void persistLiveLineup(nextLineup)
     setSelectedPosition('')
+    setSelectedMovePosition('')
   }
 
   function changeFormation(newFormation: string) {
@@ -1008,6 +1010,22 @@ export default function LiveGame({
     )
   }
 
+  function handleFieldPlayerTap(position: string) {
+    if (!canManageGame || gameStatus !== 'Live') return
+    if (!selectedMovePosition) {
+      setSelectedMovePosition(position)
+      return
+    }
+    if (selectedMovePosition === position) {
+      setSelectedMovePosition('')
+      setSelectedPosition(position)
+      return
+    }
+    const source = activeLineup.find((entry) => entry.position === selectedMovePosition)
+    if (source) assignPlayerToPosition(source.player_id, position)
+    setSelectedMovePosition('')
+  }
+
   function fieldPlayer(position: string) {
     const item = activeLineup.find((entry) => entry.position === position)
     if (!item) return null
@@ -1019,13 +1037,13 @@ export default function LiveGame({
     return (
       <button
         key={`${position}-${player.id}`}
-        onClick={() => canManageGame && gameStatus === 'Live' && setSelectedPosition(position)}
+        onClick={() => handleFieldPlayerTap(position)}
         disabled={!canManageGame || gameStatus !== 'Live'}
         style={{
           width: '100%',
-          minHeight: 56,
-          padding: '6px 8px',
-          border: isGk ? '1px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.2)',
+          minHeight: 50,
+          padding: '5px 6px',
+          border: selectedMovePosition === position ? '2px solid #fbbf24' : isGk ? '1px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.2)',
           borderRadius: 12,
           background: isGk
             ? 'linear-gradient(135deg, rgba(217, 119, 6, 0.9) 0%, rgba(180, 83, 9, 0.95) 100%)'
@@ -1035,6 +1053,8 @@ export default function LiveGame({
           boxShadow: '0 6px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
           boxSizing: 'border-box',
           cursor: canManageGame && gameStatus === 'Live' ? 'pointer' : 'default',
+          touchAction: 'manipulation',
+          userSelect: 'none',
           display: 'flex',
           alignItems: 'center',
           gap: 8,
@@ -1045,8 +1065,9 @@ export default function LiveGame({
       >
         <div
           style={{
-            minWidth: 28,
-            height: 28,
+            minWidth: 24,
+            width: 24,
+            height: 24,
             borderRadius: '50%',
             background: isGk ? '#fff' : '#0284c7',
             color: isGk ? '#b45309' : '#fff',
@@ -1270,20 +1291,29 @@ export default function LiveGame({
                   key={`row-${rowIndex}`}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: `repeat(${Math.min(row.length, 3)}, 1fr)`,
-                    gap: 10,
+                    display: 'grid',
+                    gridTemplateColumns: row.length === 1 && row[0] === 'Center Mid'
+                      ? 'repeat(3, minmax(0, 1fr))'
+                      : row.length === 1 && row[0] === 'Goalkeeper'
+                        ? 'minmax(0, 1fr)'
+                        : `repeat(${Math.min(row.length, 3)}, minmax(0, 1fr))`,
+                    gap: 8,
                     alignItems: 'center',
                     flex: rowIndex === fieldRows().length - 1 ? 0 : 1,
                     zIndex: 1,
                   }}
                 >
-                  {row.map((position) => fieldPlayer(position))}
+                  {row.map((position) => (
+                    <div key={position} style={{ minWidth: 0, gridColumn: row.length === 1 && position === 'Center Mid' ? '2 / 3' : 'auto' }}>
+                      {fieldPlayer(position)}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
 
             <div style={{ marginTop: 10, fontSize: 12, color: '#94a3b8', textAlign: 'center', fontWeight: 500 }}>
-              Tap any player on the pitch to move or swap positions.
+              Tap a player, then tap another position to move or swap. Tap the same player twice to choose a replacement.
             </div>
 
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #334155' }}>
@@ -1298,7 +1328,7 @@ export default function LiveGame({
                 {benchPlayers.map((player) => (
                   <button
                     key={player.id}
-                    onClick={() => canManageGame && gameStatus === 'Live' && setSelectedBenchPlayerId(player.id)}
+                    onClick={() => { setSelectedMovePosition(''); if (canManageGame && gameStatus === 'Live') setSelectedBenchPlayerId(player.id) }}
                     disabled={!canManageGame || gameStatus !== 'Live'}
                     style={{
                       padding: '8px 10px',
