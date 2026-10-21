@@ -4695,8 +4695,8 @@ function playerAtPosition(position: string) {
     }
   return (
     <>
-      <div className={`app${screen === 'lineup' ? ' lineup-page' : ''}${screen === 'home' ? ' home-refresh home-theme-dark' : ''}`}>
-      {screen !== 'lineup' ? <header className="app-header">
+      <div className={`app${screen === 'lineup' ? ' lineup-page' : ''}${screen === 'home' ? ' home-refresh home-theme-dark' : ''}${screen !== 'home' && screen !== 'lineup' ? ' dark-app-shell' : ''}`}>
+      {screen === 'home' ? <header className="app-header">
         <div className="header-content">
           <h1>Beautiful Game IQ</h1>
           <p>Know the game. Coach the moment.</p>
