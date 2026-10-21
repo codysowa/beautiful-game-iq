@@ -2225,3 +2225,85 @@ div[style*="radial-gradient(circle at center"] > div[style*="position: relative"
   background: var(--home-raised);
   color: var(--home-ink);
 }
+
+
+/* Home header refresh: deliberate brand banner and compact mobile account area. */
+.app.home-refresh .app-header {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  margin:0;
+  padding:24px 24px 22px;
+  border-bottom:1px solid var(--home-border);
+  background:linear-gradient(115deg,#10283f 0%,#173b55 58%,#075c4c 100%);
+  color:#f4f8fc;
+  box-shadow:0 14px 34px rgba(4,18,30,.12);
+}
+.app.home-refresh .app-header::before {
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:360px;height:360px;
+  right:-110px;top:-245px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:50%;
+  box-shadow:0 0 0 38px rgba(255,255,255,.025),0 0 0 78px rgba(255,255,255,.025);
+}
+.app.home-refresh .app-header .header-content {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:start;
+  gap:7px 14px;
+  max-width:1320px;
+  margin:0 auto;
+}
+.app.home-refresh .app-header .header-content h1 {
+  grid-column:1;
+  margin:0;
+  color:#f7fbff;
+  font-size:clamp(22px,3vw,30px);
+  line-height:1.12;
+  letter-spacing:-.035em;
+}
+.app.home-refresh .app-header .header-content p {
+  grid-column:1;
+  margin:0 !important;
+  color:#d1deea;
+  font-size:14px;
+  line-height:1.4;
+  opacity:1;
+}
+.app.home-refresh .app-header .header-content .header-help-button {
+  grid-column:2;grid-row:1;
+  justify-self:end;
+  background:rgba(255,255,255,.12);
+  color:#f7fbff;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:999px;
+  padding:9px 16px;
+}
+.app.home-refresh .app-header .header-content .header-account-actions {
+  grid-column:1/-1;
+  display:flex;flex-wrap:wrap;gap:8px;
+  margin-top:7px;
+}
+.app.home-refresh .app-header .header-account-actions button {
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:12px;
+  background:rgba(255,255,255,.1);
+  color:#f7fbff;
+  padding:9px 13px;
+}
+.app.home-refresh.home-theme-light .app-header {
+  background:linear-gradient(115deg,#102b49 0%,#1d4966 58%,#08715c 100%);
+  color:#f7fbff;
+}
+@media(max-width:600px) {
+  .app.home-refresh .app-header { padding:22px 18px 20px; }
+  .app.home-refresh .app-header .header-content { gap:8px 10px; }
+  .app.home-refresh .app-header .header-content h1 { font-size:23px; }
+  .app.home-refresh .app-header .header-content p { font-size:13px; }
+  .app.home-refresh .app-header .header-content .header-help-button { padding:8px 13px; }
+  .app.home-refresh .app-header .header-content .header-account-actions { gap:7px; }
+  .app.home-refresh .app-header .header-account-actions button { font-size:13px; }
+}
