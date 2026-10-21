@@ -1033,62 +1033,120 @@ export default function LiveGame({
     if (!player) return null
 
     const isGk = position === 'Goalkeeper'
+    const isSelected = selectedMovePosition === position
+    const fullName = player.name?.trim() || player.first_name || ''
+    const nameParts = fullName.split(/\\s+/).filter(Boolean)
+    const displayName = nameParts.length > 1
+      ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`
+      : fullName || 'Player'
 
     return (
       <button
         key={`${position}-${player.id}`}
+        type="button"
+        draggable={Boolean(canManageGame && gameStatus === 'Live')}
+        onDragStart={(event) => {
+          event.dataTransfer.setData('text/plain', player.id)
+          event.dataTransfer.effectAllowed = 'move'
+          setSelectedMovePosition(position)
+        }}
+        onDragEnd={() => setSelectedMovePosition('')}
+        onDragOver={(event) => {
+          if (canManageGame && gameStatus === 'Live') {
+            event.preventDefault()
+            event.dataTransfer.dropEffect = 'move'
+          }
+        }}
+        onDrop={(event) => {
+          event.preventDefault()
+          const draggedPlayerId = event.dataTransfer.getData('text/plain')
+          if (draggedPlayerId && canManageGame && gameStatus === 'Live') {
+            assignPlayerToPosition(draggedPlayerId, position)
+          }
+          setSelectedMovePosition('')
+        }}
         onClick={() => handleFieldPlayerTap(position)}
         disabled={!canManageGame || gameStatus !== 'Live'}
+        aria-label={`#${player.jersey_number ?? '-'} ${displayName}, ${position}. Drag or select to move.`}
         style={{
-          width: '100%',
-          minHeight: 50,
-          padding: '5px 6px',
-          border: selectedMovePosition === position ? '2px solid #fbbf24' : isGk ? '1px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.2)',
-          borderRadius: 12,
-          background: isGk
-            ? 'linear-gradient(135deg, rgba(217, 119, 6, 0.9) 0%, rgba(180, 83, 9, 0.95) 100%)'
-            : 'linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(30, 41, 59, 0.92) 100%)',
-          backdropFilter: 'blur(6px)',
-          color: '#ffffff',
-          boxShadow: '0 6px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
-          boxSizing: 'border-box',
-          cursor: canManageGame && gameStatus === 'Live' ? 'pointer' : 'default',
+          background: 'transparent',
+          border: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          justifySelf: 'center',
+          width: 'auto',
+          minWidth: 0,
+          maxWidth: '100%',
+          padding: 0,
+          gap: 0,
+          cursor: canManageGame && gameStatus === 'Live' ? 'grab' : 'default',
           touchAction: 'manipulation',
           userSelect: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
+          WebkitUserSelect: 'none',
+          transition: 'transform 0.15s ease',
+          transform: isSelected ? 'scale(1.06)' : 'none',
           position: 'relative',
-          overflow: 'hidden',
           zIndex: 2,
         }}
       >
-        <div
+        <span
           style={{
-            minWidth: 24,
-            width: 24,
-            height: 24,
+            width: 46,
+            height: 46,
+            flex: '0 0 46px',
+            boxSizing: 'border-box',
             borderRadius: '50%',
-            background: isGk ? '#fff' : '#0284c7',
-            color: isGk ? '#b45309' : '#fff',
+            background: isGk
+              ? 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)'
+              : 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
+            border: isSelected
+              ? '3px solid #fbbf24'
+              : isGk
+                ? '2.5px solid #fef08a'
+                : '2.5px solid #a7f3d0',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontWeight: 800,
-            fontSize: 12,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+            color: isGk ? '#451a03' : '#022c22',
+            boxShadow: isSelected
+              ? '0 0 18px rgba(251,191,36,.8)'
+              : isGk
+                ? '0 5px 12px rgba(245,158,11,.35)'
+                : '0 5px 12px rgba(16,185,129,.32)',
           }}
         >
-          #{player.jersey_number ?? '-'}
-        </div>
-        <div style={{ textAlign: 'left', flex: 1, overflow: 'hidden' }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.06em', color: isGk ? '#fef3c7' : '#38bdf8', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 12, fontWeight: 900, lineHeight: 1 }}>
+            #{player.jersey_number ?? '-'}
+          </span>
+          <span style={{ fontSize: 8, fontWeight: 800, marginTop: 2, textTransform: 'uppercase' }}>
             {positionShort[position] || position}
-          </div>
-          <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {player.first_name || player.name.split(' ')[0]}
-          </div>
-        </div>
+          </span>
+        </span>
+        <span
+          style={{
+            display: 'block',
+            marginTop: 6,
+            maxWidth: 'min(132px, 28vw)',
+            padding: '4px 9px',
+            boxSizing: 'border-box',
+            borderRadius: 8,
+            border: isSelected ? '1px solid #fbbf24' : '1px solid rgba(255,255,255,.15)',
+            background: 'rgba(15,23,42,.94)',
+            color: '#f8fafc',
+            fontSize: 12,
+            fontWeight: 900,
+            lineHeight: 1.2,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            boxShadow: '0 4px 8px rgba(0,0,0,.3)',
+          }}
+        >
+          {displayName}
+        </span>
       </button>
     )
   }
@@ -1259,14 +1317,14 @@ export default function LiveGame({
             <div
               className="live-game-pitch"
               style={{
-                background: 'repeating-linear-gradient(180deg, #0b3c2d 0px, #0b3c2d 32px, #0f4b38 32px, #0f4b38 64px)',
-                border: '3px solid rgba(255, 255, 255, 0.4)',
-                borderRadius: 16,
-                padding: '20px 12px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-                minHeight: 380,
+                background: 'repeating-linear-gradient(180deg, #0a3822 0px, #0a3822 32px, #0e442d 32px, #0e442d 64px)',
+                border: '2px solid #10b981',
+                borderRadius: 12,
+                padding: '8px',
+                display: 'grid',
+                gridTemplateRows: fieldRows().map(() => 'minmax(72px, 1fr)').join(' '),
+                gap: 8,
+                minHeight: 370,
                 boxSizing: 'border-box',
                 position: 'relative',
                 overflow: 'hidden',
@@ -1290,20 +1348,17 @@ export default function LiveGame({
                 <div
                   key={`row-${rowIndex}`}
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: row.length === 1 && row[0] === 'Center Mid'
-                      ? 'repeat(3, minmax(0, 1fr))'
-                      : row.length === 1 && row[0] === 'Goalkeeper'
-                        ? 'minmax(0, 1fr)'
-                        : `repeat(${Math.min(row.length, 3)}, minmax(0, 1fr))`,
-                    gap: 8,
+                    display: 'flex',
+                    justifyContent: 'space-around',
                     alignItems: 'center',
-                    flex: rowIndex === fieldRows().length - 1 ? 0 : 1,
+                    gap: 4,
+                    minWidth: 0,
+                    position: 'relative',
                     zIndex: 1,
                   }}
                 >
                   {row.map((position) => (
-                    <div key={position} style={{ minWidth: 0, gridColumn: row.length === 1 && position === 'Center Mid' ? '2 / 3' : 'auto' }}>
+                    <div key={position} style={{ flex: row.length === 1 ? '0 1 auto' : '1 1 0', display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0 }}>
                       {fieldPlayer(position)}
                     </div>
                   ))}
