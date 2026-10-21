@@ -4009,7 +4009,7 @@ function playerAtPosition(position: string) {
         const clean = (value: unknown) =>
           String(value ?? '').normalize('NFKD').replace(/[^\x20-\x7E]/g, '')
         const escapePdf = (value: unknown) => clean(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
-          clean(value).replace(/\\\\/g, '\\\\\\\\').replace(/\\(/g, '\\\\(').replace(/\\)/g, '\\\\)')
+
         const pdfLines: string[] = [
           'BEAUTIFUL GAME IQ - MATCH SHEET',
           `Opponent: ${clean(opponent || selectedGame.opponent || 'TBD')}`,
