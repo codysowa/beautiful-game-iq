@@ -2404,3 +2404,57 @@ div[style*="radial-gradient(circle at center"] > div[style*="position: relative"
   .app.home-refresh .app-header .header-content .header-account-actions { gap:3px; padding-top:7px; }
   .app.home-refresh .app-header .header-account-actions button { padding:6px 7px; font-size:11px; }
 }
+
+
+/* Live Game: keep the same dark match-day visual language as Lineup Builder. */
+.app:has(.live-game-screen) {
+  background: #090d12 !important;
+  color: #e5e7eb !important;
+  min-height: 100vh;
+}
+.app:has(.live-game-screen) .app-header {
+  display: none !important;
+}
+.live-game-screen {
+  color: #e5e7eb !important;
+  background: #090d12 !important;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 760px !important;
+  box-sizing: border-box;
+}
+.live-game-screen [style*="background: white"],
+.live-game-screen [style*="background: 'white'"],
+.live-game-screen [style*="background: #fff"],
+.live-game-screen [style*="background: '#fff'] {
+  background: #111b29 !important;
+  color: #edf4fb !important;
+  border-color: #263548 !important;
+}
+.live-game-screen button,
+.live-game-screen select,
+.live-game-screen input,
+.live-game-screen textarea {
+  color: #edf4fb;
+  border-color: #2a3a4d;
+}
+.live-game-screen button {
+  background-color: #142536;
+  border-radius: 9px;
+}
+.live-game-screen h1,
+.live-game-screen h2,
+.live-game-screen h3,
+.live-game-screen strong,
+.live-game-screen label {
+  color: #f3f7fc;
+}
+.live-game-screen > div {
+  box-sizing: border-box;
+}
+@media (max-width: 640px) {
+  .live-game-screen {
+    padding: 10px 10px 100px !important;
+    max-width: 100% !important;
+  }
+}
