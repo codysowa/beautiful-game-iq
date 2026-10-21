@@ -1147,16 +1147,7 @@ export default function LiveGame({
         >
           <span style={{ fontSize: 12, fontWeight: 900, lineHeight: 1, position: 'relative' }}>
             #{player.jersey_number ?? '-'}
-            {isCaptain && (
-              <span aria-label="Captain" title="Captain" style={{
-                position: 'absolute', top: -7, right: -8, zIndex: 4,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: 19, height: 19, borderRadius: '50%',
-                background: '#fbbf24', color: '#422006', border: '2px solid #fef3c7',
-                fontSize: 11, lineHeight: 1, fontWeight: 900,
-                boxShadow: '0 2px 7px rgba(0,0,0,.45)',
-              }}>C</span>
-            )}
+
           </span>
           <span style={{ fontSize: 8, fontWeight: 800, marginTop: 2, textTransform: 'uppercase' }}>
             {positionShort[position] || position}
@@ -1183,6 +1174,9 @@ export default function LiveGame({
           }}
         >
           {displayName}
+          {isCaptain && (
+            <span aria-label="Captain" title="Captain" style={{ marginLeft: 4, background: '#f59e0b', color: '#000', fontSize: 9, fontWeight: 900, padding: '1px 4px', borderRadius: 4, verticalAlign: 'middle' }}>C</span>
+          )}
         </span>
       </button>
     )
@@ -1440,20 +1434,50 @@ export default function LiveGame({
                             disabled={!canManageGame || gameStatus !== 'Live'}
                             aria-label={`Empty ${positionShort[position] || position} position. Drop or tap a player here.`}
                             style={{
+                              background: 'transparent',
+                              border: 'none',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                               width: '100%',
-                              maxWidth: 150,
-                              minHeight: 58,
-                              border: selectedBenchPlayerId || selectedMovePosition ? '1px dashed #34d399' : '1px dashed rgba(167,243,208,.35)',
-                              borderRadius: 10,
-                              background: selectedBenchPlayerId || selectedMovePosition ? 'rgba(16,185,129,.12)' : 'rgba(15,23,42,.18)',
-                              color: '#a7f3d0',
-                              fontSize: 10,
-                              fontWeight: 800,
+                              minWidth: 0,
+                              padding: 0,
                               cursor: canManageGame && gameStatus === 'Live' ? 'pointer' : 'default',
+                              touchAction: 'manipulation',
                             }}
                           >
-                            + {positionShort[position] || position}
-                            <div style={{ fontSize: 9, fontWeight: 500, marginTop: 3, color: '#94a3b8' }}>Open position</div>
+                            <span style={{
+                              width: 50,
+                              height: 50,
+                              flex: '0 0 50px',
+                              boxSizing: 'border-box',
+                              borderRadius: '50%',
+                              background: 'rgba(15, 23, 42, 0.65)',
+                              border: selectedBenchPlayerId || selectedMovePosition ? '2px dashed #34d399' : '2px dashed rgba(52,211,153,.8)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#34d399',
+                            }}>
+                              <span style={{ fontSize: 13, fontWeight: 900, lineHeight: 1 }}>+</span>
+                              <span style={{ fontSize: 8, fontWeight: 800, marginTop: 2, color: '#6ee7b7' }}>{positionShort[position] || position}</span>
+                            </span>
+                            <span style={{
+                              display: 'block',
+                              marginTop: 6,
+                              background: 'rgba(0, 0, 0, 0.6)',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              padding: '4px 10px',
+                              borderRadius: 8,
+                              fontSize: 12,
+                              fontWeight: 900,
+                              lineHeight: 1.2,
+                              color: '#34d399',
+                              whiteSpace: 'nowrap',
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.4)',
+                            }}>Assign</span>
                           </button>
                         )}
                     </div>
