@@ -4291,10 +4291,11 @@ function renderLineup() {
             {/* Pitch Header Badge & Formation Switcher */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 2, padding: '0 6px' }}>
               <span style={{ fontSize: '11px', fontWeight: 900, color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '12px', border: '1px solid rgba(52,211,153,0.3)' }}>
-                ✈ ATTACKING • Q{selectedQuarter}
+                ATTACKING • Q{selectedQuarter}
               </span>
               <select
                 aria-label="Select formation"
+                style={{ width: 'auto', minWidth: '112px', maxWidth: '220px', flex: '0 1 220px' }}
                 value={optimizationFormation}
                 onChange={(e) => {
                   const nextFormation = e.target.value
