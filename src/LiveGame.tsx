@@ -112,8 +112,11 @@ export default function LiveGame({
   const [saving, setSaving] = useState(false)
   const [gameStatus, setGameStatus] = useState('Scheduled')
   const [loadedCaptainIds, setLoadedCaptainIds] = useState<string[]>(captainIds)
-  const primaryCaptainId = (loadedCaptainIds.length > 0 ? loadedCaptainIds : captainIds).find((id) => id != null && String(id).trim() !== '')
-  const normalizedCaptainIds = new Set(primaryCaptainId == null ? [] : [String(primaryCaptainId).trim().toLowerCase()])
+  const normalizedCaptainIds = new Set(
+    (loadedCaptainIds.length > 0 ? loadedCaptainIds : captainIds)
+      .filter((id): id is string => id != null && String(id).trim() !== '')
+      .map((id) => String(id).trim().toLowerCase())
+  )
   const [gameFormat, setGameFormat] = useState('7v7')
   const [liveLineup, setLiveLineup] = useState<Lineup[]>([])
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
