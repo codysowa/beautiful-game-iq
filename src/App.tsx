@@ -4234,14 +4234,16 @@ function playerAtPosition(position: string) {
           </details>
   
           {/* Modern Broadcast-Style Tactical Pitch Visualizer */}
-          <div style={{
+          <div className="lineup-builder-pitch" style={{
             position: 'relative',
             borderRadius: '12px',
-            padding: '8px',
+            padding: '14px 8px',
             background: 'repeating-linear-gradient(180deg, #0a3822 0px, #0a3822 32px, #0e442d 32px, #0e442d 64px)',
             border: '2px solid #10b981',
             boxShadow: 'inset 0 0 40px rgba(0,0,0,0.6)',
             marginBottom: '20px',
+            minHeight: 370,
+            boxSizing: 'border-box',
             overflow: 'hidden',
           }}>
             {/* Authentic Field Markings */}
@@ -4258,7 +4260,7 @@ function playerAtPosition(position: string) {
             <div style={{ position: 'absolute', bottom: 0, left: '25%', right: '25%', height: 50, border: '2px solid rgba(255, 255, 255, 0.25)', borderBottom: 'none', pointerEvents: 'none' }} />
   
             {/* Pitch Header Badge & Formation Switcher */}
-            <div className="lineup-pitch-toolbar" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '8px', position: 'relative', zIndex: 2, padding: '0 2px' }}>
+            <div className="lineup-pitch-toolbar" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 0, position: 'absolute', top: 8, right: 8, zIndex: 3, padding: '0 2px', width: 'auto' }}>
               
               <select
                 className="lineup-formation-select"
@@ -4288,9 +4290,9 @@ function playerAtPosition(position: string) {
             </div>
   
             {/* Dynamic Grid Layout for Formation Positions */}
-            <div style={{ display: 'grid', gap: 8, minHeight: 370, boxSizing: 'border-box', position: 'relative', zIndex: 2, gridTemplateRows: (formationRows[optimizationFormation] || []).map(() => 'minmax(72px, 1fr)').join(' ') }}>
+            <div className="lineup-pitch-grid" style={{ display: 'grid', gap: 8, minHeight: 340, boxSizing: 'border-box', position: 'relative', zIndex: 2, gridTemplateRows: (formationRows[optimizationFormation] || []).map(() => 'minmax(72px, 1fr)').join(' ') }}>
               {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
-                <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: 4, minWidth: 0, position: 'relative', zIndex: 1 }}>
                   {row.map((position) => {
                     const assignment = playerAtPosition(position)
                     const player = assignment ? players.find((p) => p.id === assignment.player_id) : null
@@ -4301,6 +4303,7 @@ function playerAtPosition(position: string) {
                       <button
                         key={position}
                         type="button"
+                        className="lineup-pitch-player"
                         draggable={Boolean(assignment) && canManageGame}
                         onDragStart={(event) => {
                           if (assignment) event.dataTransfer.setData('text/plain', assignment.player_id)
@@ -4332,17 +4335,27 @@ function playerAtPosition(position: string) {
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifySelf: 'center',
-                          width: '100%',
+                          width: 'auto',
                           minWidth: 0,
-                          cursor: canManageGame ? 'pointer' : 'default',
+                          maxWidth: '100%',
+                          justifyContent: 'center',
+                          cursor: canManageGame ? 'grab' : 'default',
                           padding: 0,
+                          gap: 0,
+                          touchAction: 'manipulation',
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
+                          position: 'relative',
+                          zIndex: 2,
                           transition: 'transform 0.15s ease',
                         }}
                       >
                         <div style={{ position: 'relative' }}>
                           <div style={{
-                            width: '50px',
-                            height: '50px',
+                            width: '46px',
+                            height: '46px',
+                            flex: '0 0 46px',
+                            boxSizing: 'border-box',
                             borderRadius: '50%',
                             background: !player
                               ? 'rgba(15, 23, 42, 0.65)'
@@ -4361,6 +4374,7 @@ function playerAtPosition(position: string) {
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: '#fff',
+                            position: 'relative',
                             boxShadow: isSelectedForMove
                               ? '0 0 18px #f59e0b'
                               : !player
@@ -4369,7 +4383,10 @@ function playerAtPosition(position: string) {
                               ? '0 6px 16px rgba(245, 158, 11, 0.45)'
                               : '0 6px 16px rgba(16, 185, 129, 0.45)',
                           }}>
-                            <span style={{ fontSize: '13px', fontWeight: 900, lineHeight: 1, color: !player ? '#34d399' : isGK ? '#451a03' : '#022c22' }}>
+                            {player && [captain1Id || selectedGame?.captain_1_id, captain2Id || selectedGame?.captain_2_id].some((id) => id && String(id).trim().toLowerCase() === String(player.id).trim().toLowerCase()) && (
+                              <span aria-label="Captain" title="Captain" style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fbbf24', border: '2px solid #0f172a', color: '#422006', fontSize: 11, fontWeight: 950, lineHeight: 1, zIndex: 3 }}>C</span>
+                            )}
+                            <span style={{ fontSize: '12px', fontWeight: 900, lineHeight: 1, color: !player ? '#34d399' : isGK ? '#451a03' : '#022c22' }}>
                               {player?.jersey_number != null ? `#${player.jersey_number}` : '+'}
                             </span>
                             <span style={{ fontSize: '8px', fontWeight: 800, color: !player ? '#6ee7b7' : isGK ? '#78350f' : '#064e3b', marginTop: '2px' }}>
@@ -4380,24 +4397,22 @@ function playerAtPosition(position: string) {
   
                         <div style={{
                           marginTop: '6px',
-                          background: player ? 'rgba(15, 23, 42, 0.92)' : 'rgba(0, 0, 0, 0.6)',
+                          background: player ? 'rgba(15, 23, 42, 0.94)' : 'rgba(0, 0, 0, 0.6)',
                           border: '1px solid rgba(255, 255, 255, 0.15)',
                           backdropFilter: 'blur(4px)',
-                          padding: '4px 10px',
+                          padding: '4px 9px',
+                          boxSizing: 'border-box',
                           borderRadius: '8px',
                           fontSize: '12px',
                           fontWeight: 900,
                           color: player ? '#f9fafb' : '#34d399',
                           whiteSpace: 'nowrap',
-                          maxWidth: 'min(140px, 30vw)',
+                          maxWidth: 'min(132px, 28vw)',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           boxShadow: '0 4px 8px rgba(0,0,0,0.4)',
                         }}>
                           <span>{player ? getPlayerDisplayName(player) : 'Assign'}</span>
-                          {player && [captain1Id || selectedGame?.captain_1_id, captain2Id || selectedGame?.captain_2_id].includes(player.id) && (
-                            <span title="Captain" style={{ marginLeft: '4px', background: '#f59e0b', color: '#000', fontSize: '9px', fontWeight: 900, padding: '1px 4px', borderRadius: '4px' }}>C</span>
-                          )}
                         </div>
                       </button>
                     )
