@@ -2126,3 +2126,26 @@ div[style*="radial-gradient(circle at center"] > div[style*="position: relative"
   .app.home-refresh .home-team-summary { flex-wrap:wrap; }
   .app.home-refresh .player-analytics-card { overflow:hidden; }
 }
+
+
+/* Shared mobile shell safeguards: apply on every page, not only Home. */
+.app { min-width:0; }
+.app-header { width:100%; min-width:0; }
+.app-header .header-content { width:100%; min-width:0; }
+.app-header .header-content > * { min-width:0; }
+.app-header .header-content p { overflow-wrap:anywhere; }
+.main-content { min-width:0; }
+@media(max-width:600px) {
+  .app-header { padding:16px 14px; }
+  .app-header .header-content {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:start;
+    gap:5px 10px;
+  }
+  .app-header .header-content h1 { grid-column:1; font-size:20px; line-height:1.2; }
+  .app-header .header-content p { grid-column:1; font-size:12px; line-height:1.4; margin:0; }
+  .app-header .header-content .header-help-button { grid-column:2; grid-row:1 / span 3; justify-self:end; }
+  .bottom-nav { gap:2px; padding:6px; }
+  .bottom-nav button { min-width:0; padding:10px 4px; white-space:nowrap; }
+}
