@@ -1,6 +1,13 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <style id="critical-dark-shell">
+      html, body, #root { min-height: 100%; margin: 0; background: #080d12 !important; color: #e8f0f7; color-scheme: dark; }
+      body { min-width: 320px; min-height: 100vh; }
+      #root .app-header { background: #080d12 !important; box-shadow: none !important; }
+      #root .app { min-height: 100vh; background: #080d12; }
+      #root .app-header::before { display: none !important; }
+    </style>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
