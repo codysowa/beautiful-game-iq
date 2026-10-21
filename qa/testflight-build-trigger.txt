@@ -1,0 +1,2 @@
+Temporary same-repository QA trigger for the Beautiful Game IQ 2.0.0 TestFlight build.
+This branch must not be merged; the release workflow builds the staging candidate only.
