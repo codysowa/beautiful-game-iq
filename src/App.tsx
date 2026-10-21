@@ -4236,34 +4236,29 @@ function playerAtPosition(position: string) {
           {/* Modern Broadcast-Style Tactical Pitch Visualizer */}
           <div style={{
             position: 'relative',
-            borderRadius: '20px',
-            padding: '24px 12px 32px',
-            background: 'linear-gradient(180deg, #0f5132 0%, #0a3822 50%, #062b1a 100%)',
-            backgroundImage: `
-              repeating-linear-gradient(0deg, transparent, transparent 32px, rgba(255, 255, 255, 0.03) 32px, rgba(255, 255, 255, 0.03) 64px),
-              radial-gradient(ellipse at center, #135d39 0%, #072a1a 100%)
-            `,
-            border: '3px solid #10b981',
-            boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.7), inset 0 0 50px rgba(0, 0, 0, 0.5)',
+            borderRadius: '12px',
+            padding: '8px',
+            background: 'repeating-linear-gradient(180deg, #0a3822 0px, #0a3822 32px, #0e442d 32px, #0e442d 64px)',
+            border: '2px solid #10b981',
+            boxShadow: 'inset 0 0 40px rgba(0,0,0,0.6)',
             marginBottom: '20px',
             overflow: 'hidden',
           }}>
             {/* Authentic Field Markings */}
             {/* Pitch Outer Boundary Line */}
-            <div style={{ position: 'absolute', inset: '12px', border: '2px solid rgba(255, 255, 255, 0.35)', borderRadius: '8px', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', inset: 0, border: '2px solid rgba(255, 255, 255, 0.25)', borderRadius: '4px', pointerEvents: 'none' }} />
             {/* Halfway Line */}
-            <div style={{ position: 'absolute', top: '50%', left: '12px', right: '12px', height: '2px', background: 'rgba(255, 255, 255, 0.35)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: 'rgba(255, 255, 255, 0.25)', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             {/* Center Circle & Spot */}
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90px', height: '90px', border: '2px solid rgba(255, 255, 255, 0.35)', borderRadius: '50%', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 100, height: 100, border: '2px solid rgba(255, 255, 255, 0.25)', borderRadius: '50%', pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '6px', height: '6px', background: 'rgba(255, 255, 255, 0.6)', borderRadius: '50%', pointerEvents: 'none' }} />
             {/* Attacking Goal Box (Top) */}
-            <div style={{ position: 'absolute', top: '12px', left: '30%', right: '30%', height: '42px', border: '2px solid rgba(255, 255, 255, 0.35)', borderTop: 'none', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: 0, left: '25%', right: '25%', height: 50, border: '2px solid rgba(255, 255, 255, 0.25)', borderTop: 'none', pointerEvents: 'none' }} />
             {/* Defending Penalty Area & Goal Box (Bottom) */}
-            <div style={{ position: 'absolute', bottom: '12px', left: '22%', right: '22%', height: '70px', border: '2px solid rgba(255, 255, 255, 0.35)', borderBottom: 'none', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: '12px', left: '34%', right: '34%', height: '28px', border: '2px solid rgba(255, 255, 255, 0.35)', borderBottom: 'none', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: 0, left: '25%', right: '25%', height: 50, border: '2px solid rgba(255, 255, 255, 0.25)', borderBottom: 'none', pointerEvents: 'none' }} />
   
             {/* Pitch Header Badge & Formation Switcher */}
-            <div className="lineup-pitch-toolbar" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 2, padding: '0 6px' }}>
+            <div className="lineup-pitch-toolbar" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '8px', position: 'relative', zIndex: 2, padding: '0 2px' }}>
               
               <select
                 className="lineup-formation-select"
@@ -4293,7 +4288,7 @@ function playerAtPosition(position: string) {
             </div>
   
             {/* Dynamic Grid Layout for Formation Positions */}
-            <div style={{ display: 'grid', gap: '22px', position: 'relative', zIndex: 2, gridTemplateRows: (formationRows[optimizationFormation] || []).map(() => 'minmax(82px, auto)').join(' ') }}>
+            <div style={{ display: 'grid', gap: 8, minHeight: 370, boxSizing: 'border-box', position: 'relative', zIndex: 2, gridTemplateRows: (formationRows[optimizationFormation] || []).map(() => 'minmax(72px, 1fr)').join(' ') }}>
               {(formationRows[optimizationFormation] || []).map((row, rowIndex) => (
                 <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
                   {row.map((position) => {
