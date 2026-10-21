@@ -2307,3 +2307,100 @@ div[style*="radial-gradient(circle at center"] > div[style*="position: relative"
   .app.home-refresh .app-header .header-content .header-account-actions { gap:7px; }
   .app.home-refresh .app-header .header-account-actions button { font-size:13px; }
 }
+
+
+/* Home v2: remove the legacy blue/green hero and make account utilities secondary. */
+.app.home-refresh .app-header {
+  background: var(--home-bg, #08131c) !important;
+  color: var(--home-ink, #edf4fa) !important;
+  border-bottom: 1px solid var(--home-border, #243746);
+  box-shadow: none;
+  padding: 22px 24px 18px;
+}
+.app.home-refresh .app-header::before { display:none; }
+.app.home-refresh .app-header .header-content {
+  position:relative;
+  grid-template-columns:minmax(0,1fr) auto;
+  max-width:1320px;
+  gap:8px 16px;
+}
+.app.home-refresh .app-header .header-content h1 {
+  font-size:clamp(24px,3vw,32px);
+  font-weight:800;
+  letter-spacing:-.045em;
+}
+.app.home-refresh .app-header .header-content p {
+  color:var(--home-muted, #95a9b9);
+}
+.app.home-refresh .app-header .header-content p:nth-of-type(1) {
+  font-size:14px;
+  margin-top:5px !important;
+}
+.app.home-refresh .app-header .header-content p:nth-of-type(2) {
+  font-size:13px;
+  margin-top:0 !important;
+  color:var(--home-muted, #95a9b9);
+}
+.app.home-refresh .app-header .header-content p:nth-of-type(3) {
+  grid-column:1/-1;
+  font-size:12px !important;
+  margin:8px 0 0 !important;
+  color:var(--home-muted, #95a9b9);
+  overflow-wrap:anywhere;
+}
+.app.home-refresh .app-header .header-content .header-help-button {
+  grid-column:2;
+  grid-row:1;
+  align-self:start;
+  background:transparent;
+  color:var(--home-muted, #95a9b9);
+  border:1px solid var(--home-border, #243746);
+  padding:8px 13px;
+}
+.app.home-refresh .app-header .header-content .header-account-actions {
+  grid-column:1/-1;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  margin-top:6px;
+  padding-top:10px;
+  border-top:1px solid var(--home-border, #243746);
+}
+.app.home-refresh .app-header .header-account-actions button {
+  background:transparent;
+  color:var(--home-muted, #95a9b9);
+  border:1px solid transparent;
+  border-radius:9px;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:600;
+}
+.app.home-refresh .app-header .header-account-actions button:hover {
+  background:var(--home-raised, #122330);
+  color:var(--home-ink, #edf4fa);
+  border-color:var(--home-border, #243746);
+}
+.app.home-refresh .app-header .header-account-actions button:nth-child(2) {
+  color:#d99a9a;
+}
+.app.home-refresh.home-theme-light .app-header {
+  background:#f4f7fa !important;
+  color:#172c43 !important;
+}
+.app.home-refresh.home-theme-light .app-header .header-content p {
+  color:#62758a;
+}
+.app.home-refresh.home-theme-light .app-header .header-account-actions {
+  border-color:#dbe4ec;
+}
+@media(max-width:600px) {
+  .app.home-refresh .app-header { padding:18px 18px 14px; }
+  .app.home-refresh .app-header .header-content { gap:7px 10px; }
+  .app.home-refresh .app-header .header-content h1 { font-size:23px; }
+  .app.home-refresh .app-header .header-content p:nth-of-type(1) { font-size:12px; }
+  .app.home-refresh .app-header .header-content p:nth-of-type(2) { font-size:12px; }
+  .app.home-refresh .app-header .header-content p:nth-of-type(3) { font-size:11px !important; }
+  .app.home-refresh .app-header .header-content .header-account-actions { gap:3px; padding-top:7px; }
+  .app.home-refresh .app-header .header-account-actions button { padding:6px 7px; font-size:11px; }
+}
