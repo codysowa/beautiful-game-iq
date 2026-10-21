@@ -226,6 +226,10 @@ function App() {
   const [actualSeasonLineups, setActualSeasonLineups] = useState<(LineupItem & { game_id: string })[]>([])
   const [positionSegments, setPositionSegments] = useState<PositionSegment[]>([])
 
+  const [homeTheme, setHomeTheme] = useState<'light' | 'dark'>(() => {
+    try { return window.localStorage.getItem('bgiq-home-theme') === 'light' ? 'light' : 'dark' } catch { return 'dark' }
+  })
+
   const [screen, setScreen] = useState<
     'home' | 'roster' | 'new-game' | 'lineup' | 'attendance' | 'live-game' | 'games' | 'team-rules' | 'coaches' | 'help'
   >('home')
@@ -2874,6 +2878,22 @@ function playerAtPosition(position: string) {
     return (
       <>
         <section className="welcome">
+          <div className="home-dashboard-topline">
+            <span className="home-dashboard-label">COACH WORKSPACE</span>
+            <button
+              type="button"
+              className="home-theme-toggle"
+              aria-label={`Switch to ${homeTheme === 'dark' ? 'light' : 'dark'} theme`}
+              onClick={() => setHomeTheme((current) => {
+                const next = current === 'dark' ? 'light' : 'dark'
+                try { window.localStorage.setItem('bgiq-home-theme', next) } catch { /* theme still works for this session */ }
+                return next
+              })}
+            >
+              <span className="home-theme-indicator" />
+              {homeTheme === 'dark' ? 'Dark mode' : 'Light mode'}
+            </button>
+          </div>
           <div className="home-team-identity">
             <p className="eyebrow">TEAM</p>
             <h2 className="home-team-name">{team?.name || 'Team'}</h2>
@@ -4639,7 +4659,7 @@ function renderLineup() {
   }
   return (
     <>
-      <div className={screen === 'lineup' ? 'app lineup-page' : 'app'}>
+      <div className={`app${screen === 'lineup' ? ' lineup-page' : ''}${screen === 'home' ? ` home-refresh home-theme-${homeTheme}` : ''}`}>
       {screen !== 'lineup' ? <header className="app-header">
         <div className="header-content">
           <h1>Beautiful Game IQ</h1>
