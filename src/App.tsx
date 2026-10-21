@@ -2871,6 +2871,9 @@ function playerAtPosition(position: string) {
     return (
       <>
         <section className="welcome">
+          <div className="home-dashboard-topline">
+            <span className="home-dashboard-label">COACH WORKSPACE</span>
+          </div>
           <div className="home-team-identity">
             <p className="eyebrow">TEAM</p>
             <h2 className="home-team-name">{team?.name || 'Team'}</h2>
@@ -4692,8 +4695,8 @@ function playerAtPosition(position: string) {
     }
   return (
     <>
-      <div className="app">
-      <header className="app-header">
+      <div className={`app${screen === 'lineup' ? ' lineup-page' : ''}${screen === 'home' ? ' home-refresh home-theme-dark' : ''}`}>
+      {screen !== 'lineup' ? <header className="app-header">
         <div className="header-content">
           <h1>Beautiful Game IQ</h1>
           <p>Know the game. Coach the moment.</p>
@@ -4723,7 +4726,9 @@ function playerAtPosition(position: string) {
             <Monetization userId={currentUserId} />
           </div>
         </div>
-      </header>
+      </header> : (
+        <button type="button" className="lineup-help-button" onClick={() => { setHelpReturnScreen('lineup'); setScreen('help'); setHelpStep(0) }}>Help</button>
+      )}
 
       {showNewTeamForm && (
         <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="new-team-title">
