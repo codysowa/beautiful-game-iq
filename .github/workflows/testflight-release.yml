@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   build-and-upload:
+    if: github.ref == 'refs/heads/dev/v2-backoffice-redesign-20261021'
     name: Build, sign, and upload iOS app
     runs-on: macos-15
     timeout-minutes: 60
