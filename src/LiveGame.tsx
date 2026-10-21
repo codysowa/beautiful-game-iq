@@ -967,7 +967,7 @@ export default function LiveGame({
 
   async function applyCurrentQuarterPlan() {
     if (!canManageGame) return
-    if (!currentQuarterAdvice) return
+    if (!currentQuarterAdvice || !currentQuarterAdvice.canApply) return
     const currentLineup = currentQuarterAdvice.suggestedLineup.map(({ player, position }) => ({
       player_id: player.id,
       quarter,
@@ -1013,7 +1013,7 @@ export default function LiveGame({
   }
 
   async function applyNextQuarterPlan() {
-    if (!nextQuarterAdvice || quarter >= 4) return
+    if (!nextQuarterAdvice || !nextQuarterAdvice.canApply || quarter >= 4) return
     const targetQuarter = quarter + 1
     const nextLineup = nextQuarterAdvice.suggestedLineup.map(({ player, position }) => ({
       player_id: player.id,
@@ -1933,8 +1933,8 @@ export default function LiveGame({
                   </div>
                 )}
 
-                <button onClick={applyNextQuarterPlan} disabled={saving} style={{ width: '100%', marginTop: 16, minHeight: 48, fontWeight: 700, borderRadius: 10, border: 'none', background: '#10b981', color: '#fff', cursor: 'pointer' }}>
-                  {saving ? 'SAVING...' : `APPLY Q${quarter + 1} PLAN`}
+                <button onClick={applyNextQuarterPlan} disabled={saving || !nextQuarterAdvice.canApply} style={{ width: '100%', marginTop: 16, minHeight: 48, fontWeight: 700, borderRadius: 10, border: 'none', background: nextQuarterAdvice.canApply ? '#10b981' : '#475569', color: '#fff', cursor: saving || !nextQuarterAdvice.canApply ? 'not-allowed' : 'pointer' }}>
+                  {saving ? 'SAVING...' : nextQuarterAdvice.canApply ? `APPLY Q${quarter + 1} PLAN` : 'NO RULE-COMPLIANT PLAN'}
                 </button>
               </>
             )}
@@ -2023,8 +2023,8 @@ export default function LiveGame({
                   </div>
                 )}
 
-                <button onClick={applyCurrentQuarterPlan} disabled={saving} style={{ width: '100%', marginTop: 16, minHeight: 48, fontWeight: 700, borderRadius: 10, border: 'none', background: '#10b981', color: '#fff', cursor: 'pointer' }}>
-                  {saving ? 'SAVING...' : `APPLY Q${quarter} PLAN`}
+                <button onClick={applyCurrentQuarterPlan} disabled={saving || !currentQuarterAdvice.canApply} style={{ width: '100%', marginTop: 16, minHeight: 48, fontWeight: 700, borderRadius: 10, border: 'none', background: currentQuarterAdvice.canApply ? '#10b981' : '#475569', color: '#fff', cursor: saving || !currentQuarterAdvice.canApply ? 'not-allowed' : 'pointer' }}>
+                  {saving ? 'SAVING...' : currentQuarterAdvice.canApply ? `APPLY Q${quarter} PLAN` : 'NO RULE-COMPLIANT PLAN'}
                 </button>
               </>
             )}
