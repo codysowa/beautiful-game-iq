@@ -1876,6 +1876,24 @@ input:focus, select:focus, textarea:focus {
 .live-game-page .live-game-pitch::before { content: ""; position: absolute; pointer-events: none; inset: 8px; border: 1px solid rgba(210,244,231,.35); border-radius: 5px; }
 .live-game-page .live-game-pitch > div { position: relative; z-index: 1; }
 .live-game-page .live-game-pitch button { color: #eaf7f3 !important; background: linear-gradient(145deg,#087d5c,#07543f) !important; border: 1px solid #32e1ad !important; border-radius: 10px !important; box-shadow: 0 4px 12px rgba(0,0,0,.22); }
+.live-game-page .live-game-pitch button.live-game-empty-slot {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0 !important;
+  color: #34d399 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none;
+}
+.live-game-page .live-game-pitch button.live-game-empty-slot:hover,
+.live-game-page .live-game-pitch button.live-game-empty-slot:active {
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
 .live-game-page .live-game-pitch button div:first-child { color: #8af4d2 !important; }
 .live-game-page .live-game-lineup-card > div:last-child button, .live-game-page .live-game-stats-card > div div, .live-game-page .live-game-events-card > div > div { background: #132431 !important; border-color: var(--lg-border) !important; color: var(--lg-text) !important; }
 .live-game-page .live-game-lineup-card > div:last-child button { border-style: dashed !important; }
