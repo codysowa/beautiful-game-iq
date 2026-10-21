@@ -1063,7 +1063,7 @@ export default function LiveGame({
     const displayName = lastName && lastName.toLowerCase() !== firstName.toLowerCase()
       ? `${firstName} ${lastName.charAt(0).toUpperCase()}.`
       : firstName
-    const isCaptain = captainIds.includes(player.id)
+    const isCaptain = captainIds.some((captainId) => String(captainId) === String(player.id))
 
     return (
       <button
@@ -1150,9 +1150,10 @@ export default function LiveGame({
             {isCaptain && (
               <span aria-label="Captain" title="Captain" style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: 13, height: 13, marginLeft: 3, borderRadius: 4,
+                width: 15, height: 15, marginLeft: 4, borderRadius: 5,
                 background: '#fbbf24', color: '#422006', border: '1px solid #fef3c7',
-                fontSize: 9, lineHeight: 1, fontWeight: 900, verticalAlign: 'middle',
+                fontSize: 10, lineHeight: 1, fontWeight: 900, verticalAlign: 'middle',
+                boxShadow: '0 0 0 2px rgba(251,191,36,.2)',
               }}>C</span>
             )}
           </span>
@@ -1501,7 +1502,7 @@ export default function LiveGame({
         )}
       </section>      
 
-      {canManageGame && (selectedPosition || selectedBenchPlayerId) && (
+      {canManageGame && selectedPosition && (
         <div onClick={() => { setSelectedPosition(''); setSelectedBenchPlayerId('') }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: '#0f172a', border: '1px solid #334155', color: '#f8fafc', width: '100%', maxWidth: 700, padding: '20px 20px calc(20px + env(safe-area-inset-bottom))', borderRadius: '20px 20px 0 0', boxSizing: 'border-box', boxShadow: '0 -10px 25px rgba(0,0,0,0.5)' }}>
             {selectedBenchPlayerId ? (
