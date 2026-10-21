@@ -4277,9 +4277,9 @@ function playerAtPosition(position: string) {
               <div style={{ position: 'absolute', bottom: '12px', left: '34%', right: '34%', height: '28px', border: '2px solid rgba(255, 255, 255, 0.35)', borderBottom: 'none', pointerEvents: 'none' }} />
 
               {/* Pitch Header Badge & Formation Switcher */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 2, padding: '0 6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '10px', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 2, padding: '0 6px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 900, color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '1px', background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '12px', border: '1px solid rgba(52,211,153,0.3)' }}>
-                  ✈ ATTACKING • Q{selectedQuarter}
+                  ATTACKING · Q{selectedQuarter}
                 </span>
                 <select
                   aria-label="Select formation"
@@ -4299,7 +4299,7 @@ function playerAtPosition(position: string) {
                       return [...(goalkeeper && nextPositions.includes('Goalkeeper') ? [{ ...goalkeeper, position: 'Goalkeeper' }] : []), ...fieldPlayers.slice(0, slots.length).map((item, index) => ({ ...item, position: slots[index] }))]
                     })
                   }}
-                  style={{ background: 'rgba(9,13,18,0.85)', color: '#34d399', border: '1.5px solid #10b981', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
+                  style={{ background: 'rgba(9,13,18,0.85)', color: '#34d399', border: '1.5px solid #10b981', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', width: 'auto', minWidth: '76px', maxWidth: '112px', flex: '0 0 auto' }}
                 >
                   {activeFormations.map((formKey) => (
                     <option key={formKey} value={formKey}>{formKey.toUpperCase()}</option>
