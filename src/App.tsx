@@ -4024,10 +4024,7 @@ function renderLineup() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '14px', width: '100%', boxSizing: 'border-box' }}>
             <button
               type="button"
-              onClick={async () => {
-                if (canManageGame) {
-                  await saveLineup()
-                }
+              onClick={() => {
                 setScreen('home')
               }}
               style={{ background: '#1f2937', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
