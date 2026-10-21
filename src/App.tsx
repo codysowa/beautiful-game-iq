@@ -4726,9 +4726,9 @@ function playerAtPosition(position: string) {
             <Monetization userId={currentUserId} />
           </div>
         </div>
-      </header> : (
+      </header> : screen === 'lineup' ? (
         <button type="button" className="lineup-help-button" onClick={() => { setHelpReturnScreen('lineup'); setScreen('help'); setHelpStep(0) }}>Help</button>
-      )}
+      ) : null}
 
       {showNewTeamForm && (
         <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="new-team-title">
