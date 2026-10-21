@@ -1145,9 +1145,9 @@ export default function LiveGame({
                 : '0 5px 12px rgba(16,185,129,.32)',
           }}
         >
-          <span style={{ fontSize: 12, fontWeight: 900, lineHeight: 1, position: 'relative' }}>
+          <span style={{ fontSize: 12, fontWeight: 900, lineHeight: 1, position: 'relative', display: 'flex', alignItems: 'center', gap: 3 }}>
             #{player.jersey_number ?? '-'}
-
+            {isCaptain && <span aria-label="Captain" title="Captain" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 13, height: 13, borderRadius: '50%', background: '#fbbf24', color: '#422006', fontSize: 9, fontWeight: 950, lineHeight: 1 }}>C</span>}
           </span>
           <span style={{ fontSize: 8, fontWeight: 800, marginTop: 2, textTransform: 'uppercase' }}>
             {positionShort[position] || position}
@@ -1414,6 +1414,7 @@ export default function LiveGame({
                         : (
                           <button
                             type="button"
+                            className="live-game-empty-slot"
                             onClick={() => handleFieldPlayerTap(position)}
                             onDragOver={(event) => {
                               if (canManageGame && gameStatus === 'Live') {
