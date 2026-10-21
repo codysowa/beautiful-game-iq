@@ -1875,7 +1875,7 @@ input:focus, select:focus, textarea:focus {
 .live-game-page .live-game-pitch { position: relative; overflow: hidden; background: repeating-linear-gradient(to bottom,#0d4a34 0 32px,#0b402f 32px 64px) !important; border: 2px solid #2acb98 !important; border-radius: 13px !important; padding: 14px 8px !important; min-height: 300px; }
 .live-game-page .live-game-pitch::before { content: ""; position: absolute; pointer-events: none; inset: 8px; border: 1px solid rgba(210,244,231,.35); border-radius: 5px; }
 .live-game-page .live-game-pitch > div { position: relative; z-index: 1; }
-.live-game-page .live-game-pitch button { color: #eaf7f3 !important; background: linear-gradient(145deg,#087d5c,#07543f) !important; border: 1px solid #32e1ad !important; border-radius: 10px !important; box-shadow: 0 4px 12px rgba(0,0,0,.22); }
+.live-game-page .live-game-pitch button:not(.live-game-empty-slot) { color: #eaf7f3 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
 .live-game-page .live-game-pitch button.live-game-empty-slot {
   width: 100% !important;
   min-width: 0 !important;
