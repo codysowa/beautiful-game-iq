@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './App.css'
 import App from './App'
+import AdminAnalytics from './AdminAnalytics'
+import './admin.css'
 import Auth from './Auth'
 import InviteOnboarding from './InviteOnboarding'
 import { supabase } from './supabase'
@@ -75,7 +77,7 @@ function Root() {
 
   if (loading) {
     return (
-      <div style={{ padding: '40px' }}>
+      <div style={{ minHeight: '100vh', padding: '40px 24px', boxSizing: 'border-box', background: '#080d12', color: '#e8f0f7', fontFamily: 'Inter, system-ui, sans-serif' }}>
         Loading...
       </div>
     )
@@ -87,6 +89,10 @@ function Root() {
 
   if (passwordRecovery) {
     return <Auth passwordRecovery={passwordRecovery} />
+  }
+
+  if (window.location.pathname === '/admin/analytics' || window.location.pathname === '/admin/analytics/') {
+    return <AdminAnalytics />
   }
 
   const displayName = session.user.user_metadata?.display_name
