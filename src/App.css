@@ -3260,8 +3260,10 @@ body {
     -webkit-print-color-adjust: exact !important;
   }
 
-  body * {
-    visibility: hidden !important;
+  /* Remove the live app from print layout entirely. Visibility:hidden still
+     reserves its full page height, which creates an extra blank page in iOS. */
+  body *:not(.rotation-export-window):not(.rotation-export-window *):not(:has(.rotation-export-window)) {
+    display: none !important;
   }
 
   .rotation-export-window,
