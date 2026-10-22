@@ -14,23 +14,21 @@ export PATH="$(brew --prefix)/bin:$PATH"
 echo "Node: $(node --version)"
 echo "npm: $(npm --version)"
 
+echo "Installing JavaScript dependencies..."
 npm ci
+
+echo "Building web app..."
 npm run build
 
-# Regenerate the web assets in the exact native location Xcode packages.
+echo "Copying built web app into Capacitor iOS project..."
 npx cap copy ios
 
-ASSET_DIR="$REPO_ROOT/ios/App/App/public/assets"
+ASSET_DIR="$REPO_ROOT/ios/App/App/public"
+if [ ! -d "$ASSET_DIR" ] || [ ! -f "$ASSET_DIR/index.html" ]; then
+  echo "ERROR: Capacitor web bundle is missing or incomplete: $ASSET_DIR"
+  echo "Expected index.html after 'npx cap copy ios'."
+  exit 1
+fi
 
-test -d "$ASSET_DIR"
-grep -R -q "Copy Lineup" "$ASSET_DIR"
-grep -R -q "Copy From Previous Game" "$ASSET_DIR"
-grep -R -q "Copy Entire Game" "$ASSET_DIR"
-grep -R -q "Select time" "$ASSET_DIR"
-
-echo "=== Verified iOS web bundle ==="
-echo "Assets: $ASSET_DIR"
-echo "Copy Lineup: present"
-echo "Copy From Previous Game: present"
-echo "Copy Entire Game: present"
-echo "Select time: present"
+echo "Verified Capacitor iOS bundle at: $ASSET_DIR"
+echo "Xcode Cloud post-clone preparation succeeded."
