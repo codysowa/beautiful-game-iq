@@ -3260,10 +3260,30 @@ body {
     -webkit-print-color-adjust: exact !important;
   }
 
-  /* Remove the live app from print layout entirely. Visibility:hidden still
-     reserves its full page height, which creates an extra blank page in iOS. */
+  @page {
+    size: auto;
+    margin: 8mm;
+  }
+
+  /* Hide every non-export element, including siblings, but keep the target's
+     ancestor chain available so the exported rotation sheet can render. */
   body *:not(.rotation-export-window):not(.rotation-export-window *):not(:has(.rotation-export-window)) {
     display: none !important;
+  }
+
+  /* App-shell ancestors can otherwise retain viewport/min-height sizing and
+     create an empty second printed page even when the sheet itself fits. */
+  body:has(.rotation-export-window),
+  body *:has(.rotation-export-window) {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
   }
 
   .rotation-export-window,
