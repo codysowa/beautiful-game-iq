@@ -20,13 +20,17 @@ npm run build
 # Regenerate the web assets in the exact native location Xcode packages.
 npx cap copy ios
 
-ASSET_DIR="$REPO_ROOT/ios/App/App/public"
-if [ ! -d "$ASSET_DIR" ] || [ ! -f "$ASSET_DIR/index.html" ]; then
-  echo "ERROR: Capacitor web bundle is missing from $ASSET_DIR"
-  exit 1
-fi
+ASSET_DIR="$REPO_ROOT/ios/App/App/public/assets"
+
+test -d "$ASSET_DIR"
+grep -R -q "Copy Lineup" "$ASSET_DIR"
+grep -R -q "Copy From Previous Game" "$ASSET_DIR"
+grep -R -q "Copy Entire Game" "$ASSET_DIR"
+grep -R -q "Select time" "$ASSET_DIR"
 
 echo "=== Verified iOS web bundle ==="
 echo "Assets: $ASSET_DIR"
-echo "index.html: present"
-echo "Capacitor copy: successful"
+echo "Copy Lineup: present"
+echo "Copy From Previous Game: present"
+echo "Copy Entire Game: present"
+echo "Select time: present"
