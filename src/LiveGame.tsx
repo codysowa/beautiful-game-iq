@@ -1577,6 +1577,11 @@ export default function LiveGame({
                       setSelectedBenchPlayerId(player.id)
                     }}
                     onDragEnd={() => setSelectedBenchPlayerId('')}
+                    onDragEnter={(event) => {
+                      if (canManageGame && gameStatus === 'Live') {
+                        event.preventDefault()
+                      }
+                    }}
                     onDragOver={(event) => {
                       if (canManageGame && gameStatus === 'Live') {
                         event.preventDefault()
@@ -1597,18 +1602,23 @@ export default function LiveGame({
                     style={{
                       padding: '12px 12px',
                       textAlign: 'left',
-                      minHeight: 64,
+                      minHeight: 72,
+                      width: '100%',
                       border: selectedBenchPlayerId === player.id ? '2px solid #34d399' : '1px solid #475569',
                       borderRadius: 10,
                       background: selectedBenchPlayerId === player.id ? 'rgba(16,185,129,.2)' : '#1e293b',
                       color: '#f8fafc',
-                      cursor: canManageGame && gameStatus === 'Live' ? 'pointer' : 'default',
+                      cursor: canManageGame && gameStatus === 'Live' ? 'grab' : 'default',
                       touchAction: 'manipulation',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
                       WebkitTapHighlightColor: 'transparent',
+                      position: 'relative',
+                      zIndex: selectedBenchPlayerId === player.id ? 3 : 1,
                     }}
                   >
                     <div style={{ fontWeight: 700, fontSize: 12 }}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</div>
-                    {gameStatus === 'Live' && <div style={{ fontSize: 11, marginTop: 4, color: selectedBenchPlayerId === player.id ? '#6ee7b7' : '#38bdf8', fontWeight: 700 }}>{selectedBenchPlayerId === player.id ? 'Selected · choose position above' : 'Tap to choose position'}</div>}
+                    {gameStatus === 'Live' && <div style={{ fontSize: 11, marginTop: 4, color: selectedBenchPlayerId === player.id ? '#6ee7b7' : '#94a3b8', fontWeight: 600 }}>{selectedBenchPlayerId === player.id ? 'Ready to move' : 'Drag to field · tap to select'}</div>}
                   </button>
                 ))}
                 {benchPlayers.length === 0 && <div style={{ color: '#94a3b8', fontSize: 12, padding: 8 }}>Drop a player here to bench them.</div>}
