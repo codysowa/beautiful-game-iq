@@ -3993,6 +3993,27 @@ function playerAtPosition(position: string) {
   
       const activeFormations = allowedFormations.length > 0 ? allowedFormations : Object.keys(formationRows)
 
+      async function saveAndShareMatchSheet() {
+        const game = selectedGame; if (!game) return
+        const clean = (v: unknown) => String(v ?? '').normalize('NFKD').replace(/[^\x20-\x7E]/g, '')
+        const esc = (v: unknown) => clean(v).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
+        const o: string[] = [];
+        const t = (x:number,y:number,z:number,v:unknown,c='0.93 0.97 0.95') => o.push('BT /F1 '+z+' Tf '+c+' rg 1 0 0 1 '+x+' '+y+' Tm ('+esc(v)+') Tj ET')
+        const r = (x:number,y:number,w:number,h:number,c:string,stroke?:string) => o.push(c+' rg '+(stroke?stroke+' RG 1 w ':'')+x+' '+y+' '+w+' '+h+' re '+(stroke?'B':'f'))
+        const l = (x:number,y:number,X:number,Y:number) => o.push('0.2 0.5 0.37 RG 0.7 w '+x+' '+y+' m '+X+' '+Y+' l S')
+        r(0,0,612,792,'0.035 0.055 0.075'); t(32,758,20,'BEAUTIFUL GAME IQ','0.96 0.99 0.98'); t(32,738,10,'MATCH SHEET | '+(game.opponent||opponent||'Opponent TBD')+' | '+(game.game_date||'Date not set'),'0.42 0.91 0.72'); l(32,726,580,726)
+        const rows=formationRows[optimizationFormation]||[]; const getQ=(q:number)=>q===selectedQuarter?lineup:allGameLineups.filter(a=>a.quarter===q)
+        for(const c of [{q:1,x:32,y:426},{q:2,x:316,y:426},{q:3,x:32,y:190},{q:4,x:316,y:190}]) {
+          r(c.x,c.y,264,222,'0.055 0.19 0.13','0.12 0.65 0.45'); t(c.x+12,c.y+204,11,'QUARTER '+c.q,'0.28 0.91 0.66'); const fx=c.x+12,fy=c.y+16,fw=240,fh=176; r(fx,fy,fw,fh,'0.025 0.14 0.095','0.18 0.46 0.34'); l(fx,fy+fh/2,fx+fw,fy+fh/2)
+          const a=getQ(c.q), by=new Map(a.map(v=>[v.position,v])); const rr=rows.length?rows:[a.map(v=>v.position)]; const rh=(fh-8)/Math.max(1,rr.length)
+          rr.forEach((row,ri)=>row.forEach((pos,ci)=>{const item=by.get(pos);const p=item?players.find(v=>v.id===item.player_id):null;const x=fx+fw/(row.length+1)*(ci+1),y=fy+fh-12-rh*(ri+0.5),fill=pos==='Goalkeeper'?'0.96 0.61 0.10':p?'0.12 0.78 0.55':'0.12 0.20 0.22';const k=5; o.push(fill+' rg 0.5 0.9 0.7 RG 0.8 w '+(x-k)+' '+(y-k)+' '+(2*k)+' '+(2*k)+' re B');t(x-7,y-2,5.5,pos==='Goalkeeper'?'GK':p?.jersey_number!=null?'#'+p.jersey_number:positionShort(pos),'0.02 0.12 0.09');const n=p?getPlayerDisplayName(p):'—';t(Math.max(fx+1,Math.min(x-n.length*2.2,fx+fw-n.length*4.4-1)),y-12,5.5,n)}))
+          t(c.x+10,c.y+4,6,a.length+' players assigned','0.72 0.88 0.80')
+        }
+        t(32,170,10,'PLAYING TIME','0.28 0.91 0.66'); players.forEach((p,i)=>{const n=[1,2,3,4].filter(q=>getQ(q).some(a=>a.player_id===p.id)).length;t(32+(i%2)*282,151-Math.floor(i/2)*13,7.2,'#'+(p.jersey_number??'-')+' '+getPlayerDisplayName(p)+'  '+n+'/4 quarters',n<(teamRules?.target_quarters_played??3)?'0.96 0.58 0.58':'0.80 0.94 0.87')})
+        const stream=o.join('\n');const ob=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>','<< /Length '+new TextEncoder().encode(stream).length+' >>\nstream\n'+stream+'\nendstream'];let pdf='%PDF-1.4\n';const off=[0];ob.forEach((v,i)=>{off.push(new TextEncoder().encode(pdf).length);pdf+=(i+1)+' 0 obj\n'+v+'\nendobj\n'});const x=new TextEncoder().encode(pdf).length;pdf+='xref\n0 '+(ob.length+1)+'\n0000000000 65535 f \n';for(let i=1;i<=ob.length;i++)pdf+=String(off[i]).padStart(10,'0')+' 00000 n \n';pdf+='trailer\n<< /Size '+(ob.length+1)+' /Root 1 0 R >>\nstartxref\n'+x+'\n%%EOF';
+        const filename='BGIQ-Match-Sheet-'+clean(game.game_date||'match').replace(/\s+/g,'-')+'.pdf';const file=new File([new Blob([pdf],{type:'application/pdf'})],filename,{type:'application/pdf'});
+        try { if(typeof navigator.share==='function'&&typeof navigator.canShare==='function'&&navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'Beautiful Game IQ Match Sheet'}); else {const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();window.setTimeout(()=>URL.revokeObjectURL(url),30000)} } catch(e) {if(e instanceof Error&&e.name==='AbortError')return;console.error(e);alert('Could not share the match sheet PDF. Please try again.')}
+      }
      return (
         <div style={{ background: '#090d12', color: '#e5e7eb', minHeight: '100vh', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
           
@@ -4606,7 +4627,7 @@ function playerAtPosition(position: string) {
             </div>
   
             <div className="rotation-export-actions">
-              <button type="button" onClick={() => window.print()} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
+              <button type="button" onClick={() => { void saveAndShareMatchSheet() }} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
                 Save & Share Match Sheet · PDF
               </button>
             </div>
