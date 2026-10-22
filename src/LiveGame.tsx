@@ -572,6 +572,7 @@ export default function LiveGame({
     }
 
     const maxBenchQuarters = teamRules?.max_bench_quarters ?? 2
+    const targetQuartersPlayed = teamRules?.target_quarters_played ?? 3
     const playerAttendance = attendance[playerId]
     const wasAvailable = (targetQuarter: number) => {
       if (!playerAttendance) return true
@@ -584,18 +585,30 @@ export default function LiveGame({
     }
 
     let priorBenchQuarters = 0
+    let priorPlayedQuarters = 0
     for (let priorQuarter = 1; priorQuarter < quarter; priorQuarter += 1) {
       if (!wasAvailable(priorQuarter)) continue
+
+      // In a live game, only persisted live lineups prove who actually played.
+      // A missing actual quarter is unknown, not proof that this player sat;
+      // planned lineups must never be used to manufacture a bench count.
       const actualQuarterLineup = actualLiveLineups.filter((item) => item.quarter === priorQuarter)
-      const quarterLineup = actualQuarterLineup.length > 0
-        ? actualQuarterLineup
-        : lineups.filter((item) => item.quarter === priorQuarter)
-      if (!quarterLineup.some((item) => item.player_id === playerId)) priorBenchQuarters += 1
+      if (actualQuarterLineup.length === 0) continue
+
+      if (actualQuarterLineup.some((item) => item.player_id === playerId)) priorPlayedQuarters += 1
+      else priorBenchQuarters += 1
     }
 
     if (priorBenchQuarters >= maxBenchQuarters) {
-      alert(`${playerName(playerId)} has already sat ${priorBenchQuarters} quarter(s). The team limit is ${maxBenchQuarters}; this move would exceed the playing-time rule, so the player will stay on the field.`)
+      alert(`${playerName(playerId)} has already sat ${priorBenchQuarters} quarter(s). The maximum is ${maxBenchQuarters}; this move is blocked.`)
       return false
+    }
+
+    // Target playing time is advisory, not a hard limit. Warn, but allow the coach
+    // to proceed after acknowledging the projected shortfall.
+    const projectedPlayedQuarters = priorPlayedQuarters + (activeLineup.some((item) => item.player_id === playerId) ? 1 : 0)
+    if (projectedPlayedQuarters < targetQuartersPlayed) {
+      alert(`Playing-time warning: ${playerName(playerId)} is projected to play ${projectedPlayedQuarters} quarter(s), below the target of ${targetQuartersPlayed}. You can continue with this substitution.`)
     }
     return true
   }
