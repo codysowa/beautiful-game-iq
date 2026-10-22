@@ -565,51 +565,48 @@ export default function LiveGame({
     return player ? `#${player.jersey_number ?? ''} ${player.first_name || player.name.split(' ')[0]}` : '-'
   }
 
+  function canMovePlayerToBench(playerId: string) {
+    if (optimizerLoading) {
+      alert('Rotation rules are still loading. Please try the substitution again in a moment.')
+      return false
+    }
+
+    const maxBenchQuarters = teamRules?.max_bench_quarters ?? 2
+    const playerAttendance = attendance[playerId]
+    const wasAvailable = (targetQuarter: number) => {
+      if (!playerAttendance) return true
+      if (Array.isArray(playerAttendance.available_quarters)) return playerAttendance.available_quarters.includes(targetQuarter)
+      if (playerAttendance.status === 'Absent') return false
+      if (playerAttendance.status === 'Present') return true
+      if (targetQuarter < (playerAttendance.arrival_quarter || 2)) return false
+      if (playerAttendance.departure_quarter !== null && targetQuarter > playerAttendance.departure_quarter) return false
+      return true
+    }
+
+    let priorBenchQuarters = 0
+    for (let priorQuarter = 1; priorQuarter < quarter; priorQuarter += 1) {
+      if (!wasAvailable(priorQuarter)) continue
+      const actualQuarterLineup = actualLiveLineups.filter((item) => item.quarter === priorQuarter)
+      const quarterLineup = actualQuarterLineup.length > 0
+        ? actualQuarterLineup
+        : lineups.filter((item) => item.quarter === priorQuarter)
+      if (!quarterLineup.some((item) => item.player_id === playerId)) priorBenchQuarters += 1
+    }
+
+    if (priorBenchQuarters >= maxBenchQuarters) {
+      alert(`${playerName(playerId)} has already sat ${priorBenchQuarters} quarter(s). The team limit is ${maxBenchQuarters}; this move would exceed the playing-time rule, so the player will stay on the field.`)
+      return false
+    }
+    return true
+  }
+
   function assignPlayerToPosition(playerId: string, position: string) {
     if (!canManageGame || gameStatus !== 'Live') return
 
     const source = activeLineup.find((item) => item.player_id === playerId)
 
-    // Dropping a field player on the bench removes that player from this quarter's
-    // active lineup. Dropping a bench player on the field inserts them into the slot.
     if (position === 'Bench') {
-      if (!source) return
-
-      // Manual substitutions must obey the same maximum-bench rule as the optimizer.
-      // Count prior quarters where this player was available but not on the field,
-      // preferring actual live lineups and falling back to the planned lineup only
-      // when no actual lineup was saved for that quarter.
-      if (optimizerLoading) {
-        alert('Rotation rules are still loading. Please try the substitution again in a moment.')
-        return
-      }
-
-      const maxBenchQuarters = teamRules?.max_bench_quarters ?? 2
-      const playerAttendance = attendance[playerId]
-      const wasAvailable = (targetQuarter: number) => {
-        if (!playerAttendance) return true
-        if (Array.isArray(playerAttendance.available_quarters)) return playerAttendance.available_quarters.includes(targetQuarter)
-        if (playerAttendance.status === 'Absent') return false
-        if (playerAttendance.status === 'Present') return true
-        if (targetQuarter < (playerAttendance.arrival_quarter || 2)) return false
-        if (playerAttendance.departure_quarter !== null && targetQuarter > playerAttendance.departure_quarter) return false
-        return true
-      }
-      let priorBenchQuarters = 0
-      for (let priorQuarter = 1; priorQuarter < quarter; priorQuarter += 1) {
-        if (!wasAvailable(priorQuarter)) continue
-        const actualQuarterLineup = actualLiveLineups.filter((item) => item.quarter === priorQuarter)
-        const quarterLineup = actualQuarterLineup.length > 0
-          ? actualQuarterLineup
-          : lineups.filter((item) => item.quarter === priorQuarter)
-        if (!quarterLineup.some((item) => item.player_id === playerId)) priorBenchQuarters += 1
-      }
-
-      if (priorBenchQuarters >= maxBenchQuarters) {
-        alert(`${playerName(playerId)} has already sat ${priorBenchQuarters} quarter(s). The team limit is ${maxBenchQuarters}; this move would exceed the playing-time rule, so the player will stay on the field.`)
-        return
-      }
-
+      if (!source || !canMovePlayerToBench(playerId)) return
       const nextLineup = activeLineup.filter((item) => item.player_id !== playerId)
       setLiveLineup(nextLineup)
       void persistLiveLineup(nextLineup)
@@ -620,8 +617,11 @@ export default function LiveGame({
     }
 
     const occupant = activeLineup.find((item) => item.position === position)
-    let nextLineup: Lineup[]
+    // Replacing a field player with a bench player also benches the current
+    // occupant, so apply the same quarter limit as an explicit bench move.
+    if (!source && occupant && !canMovePlayerToBench(occupant.player_id)) return
 
+    let nextLineup: Lineup[]
     if (source) {
       nextLineup = activeLineup.map((item) => {
         if (item.player_id === playerId) return { ...item, position }
@@ -1595,19 +1595,20 @@ export default function LiveGame({
                     onClick={() => { setSelectedMovePosition(''); if (canManageGame && gameStatus === 'Live') setSelectedBenchPlayerId(player.id) }}
                     disabled={!canManageGame || gameStatus !== 'Live'}
                     style={{
-                      padding: '8px 10px',
+                      padding: '12px 12px',
                       textAlign: 'left',
-                      minHeight: 52,
-                      border: '1px dashed #475569',
+                      minHeight: 64,
+                      border: selectedBenchPlayerId === player.id ? '2px solid #34d399' : '1px solid #475569',
                       borderRadius: 10,
-                      background: '#1e293b',
+                      background: selectedBenchPlayerId === player.id ? 'rgba(16,185,129,.2)' : '#1e293b',
                       color: '#f8fafc',
-                      cursor: canManageGame && gameStatus === 'Live' ? 'grab' : 'default',
+                      cursor: canManageGame && gameStatus === 'Live' ? 'pointer' : 'default',
                       touchAction: 'manipulation',
+                      WebkitTapHighlightColor: 'transparent',
                     }}
                   >
                     <div style={{ fontWeight: 700, fontSize: 12 }}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</div>
-                    {gameStatus === 'Live' && <div style={{ fontSize: 10, marginTop: 2, color: '#38bdf8', fontWeight: 600 }}>Drag to field · tap to move</div>}
+                    {gameStatus === 'Live' && <div style={{ fontSize: 11, marginTop: 4, color: selectedBenchPlayerId === player.id ? '#6ee7b7' : '#38bdf8', fontWeight: 700 }}>{selectedBenchPlayerId === player.id ? 'Selected · choose position above' : 'Tap to choose position'}</div>}
                   </button>
                 ))}
                 {benchPlayers.length === 0 && <div style={{ color: '#94a3b8', fontSize: 12, padding: 8 }}>Drop a player here to bench them.</div>}
