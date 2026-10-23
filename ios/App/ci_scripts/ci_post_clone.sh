@@ -18,7 +18,8 @@ npm ci
 npm run build
 
 # Regenerate the web assets in the exact native location Xcode packages.
-npx cap copy ios
+# Install/register native Capacitor plugins (including the printer) and copy the built web bundle.
+npx cap sync ios
 
 ASSET_DIR="$REPO_ROOT/ios/App/App/public/assets"
 
