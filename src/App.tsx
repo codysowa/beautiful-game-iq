@@ -4716,7 +4716,7 @@ function playerAtPosition(position: string) {
             </div>
   
             <div className="rotation-export-actions">
-              <button type="button" onClick={() => { void saveAndShareMatchSheet().catch((error) => { console.error('Save & Share Match Sheet failed:', error); alert('Could not create or share the match sheet. Please try again.') }) }}} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
+              <button type="button" onClick={() => { void saveAndShareMatchSheet().catch((error) => { console.error('Save & Share Match Sheet failed:', error); alert('Could not create or share the match sheet. Please try again.') }) }} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
                 Save & Share Match Sheet · PDF
               </button>
             </div>
