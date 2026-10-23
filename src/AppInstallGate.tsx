@@ -13,8 +13,8 @@ const features = [
     number: '01',
     title: 'Organize Your Team',
     description: 'Keep your roster, player numbers, positions, and team settings together.',
-    image: '/Roster.png',
-    alt: 'Beautiful Game IQ roster screen showing player management',
+    image: '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_50%20PM.png',
+    alt: 'Beautiful Game IQ player management and coaching preferences screen',
   },
   {
     number: '02',
