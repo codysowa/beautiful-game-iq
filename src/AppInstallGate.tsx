@@ -1,49 +1,18 @@
 import './AppInstallGate.css'
 import appIcon from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png'
-
 import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
-const CURRENT_LINEUP_SCREENSHOT = '/lineup%20builder.png'
-const CURRENT_AVAILABILITY_SCREENSHOT = '/attendence.png'
-const CURRENT_ANALYTICS_SCREENSHOT = '/analytics.png'
+const LINEUP = '/v2-full-game-lineup.jpg'
+const AVAILABILITY = '/v2-matchday-availability.jpg'
+const LIVE_GAME = '/v2-live-game-control.jpg'
+const ANALYTICS = '/v2-season-analytics.jpg'
 
 const features = [
-  {
-    number: '01',
-    title: 'Organize Your Team',
-    description: 'Keep your roster, player numbers, positions, and team settings together.',
-    image: '/Roster.png',
-    alt: 'Beautiful Game IQ roster and player management screen',
-  },
-  {
-    number: '02',
-    title: 'Build Better Lineups',
-    description: 'Build tactical formations on an interactive pitch and plan all four quarters.',
-    image: CURRENT_LINEUP_SCREENSHOT,
-    alt: 'Beautiful Game IQ lineup builder and whole-game planning screen',
-  },
-  {
-    number: '03',
-    title: 'Manage Playing Time',
-    description: 'Plan rotations, track availability, and make playing time easier to balance.',
-    image: CURRENT_AVAILABILITY_SCREENSHOT,
-    alt: 'Beautiful Game IQ quarter-by-quarter player availability screen',
-  },
-  {
-    number: '04',
-    title: 'Control Game Day',
-    description: 'Track match events and adjust your lineup while the game is happening.',
-    image: '/live%20game.png',
-    alt: 'Beautiful Game IQ live game control screen',
-  },
-  {
-    number: '05',
-    title: 'Understand Your Season',
-    description: 'Review player and team performance with season analytics.',
-    image: CURRENT_ANALYTICS_SCREENSHOT,
-    alt: 'Beautiful Game IQ season analytics screen',
-  },
+  { number: '01', title: 'Build the Full-Game Lineup', description: 'Plan your formation and substitutions across the entire match.', image: LINEUP, alt: 'Beautiful Game IQ full-game lineup screen' },
+  { number: '02', title: 'Manage Matchday Availability', description: 'See player availability and make informed rotation decisions.', image: AVAILABILITY, alt: 'Beautiful Game IQ matchday availability screen' },
+  { number: '03', title: 'Control the Live Game', description: 'Follow match events and make adjustments as the game unfolds.', image: LIVE_GAME, alt: 'Beautiful Game IQ live game control screen' },
+  { number: '04', title: 'Deep Season Analytics', description: 'Understand player and team performance over the season.', image: ANALYTICS, alt: 'Beautiful Game IQ season analytics screen' },
 ]
 
 function AppStoreButton() {
@@ -60,14 +29,12 @@ function AppStoreButton() {
 export default function AppInstallGate() {
   const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
   const [imageErrors, setImageErrors] = useState<string[]>([])
-
   const hideImage = (src: string) => setImageErrors((current) => [...current, src])
 
   return (
     <main className="install-gate">
       <div className="install-gate-glow install-gate-glow-one" aria-hidden="true" />
       <div className="install-gate-glow install-gate-glow-two" aria-hidden="true" />
-
       <header className="install-gate-header">
         <a className="install-gate-brand" href="/" aria-label="Beautiful Game IQ home">
           <span className="install-gate-mark"><img src={appIcon} alt="" /></span>
@@ -80,42 +47,26 @@ export default function AppInstallGate() {
         <div className="install-gate-hero-copy">
           <p className="install-gate-eyebrow"><span /> KNOW THE GAME. COACH THE MOMENT.</p>
           <h1>Your coaching tools belong <em>on the touchline.</em></h1>
-          <p className="install-gate-intro">
-            Plan your lineup. Balance playing time. Make smarter game-day decisions.
-            Beautiful Game IQ brings your youth soccer coaching toolkit together in one mobile app.
-          </p>
+          <p className="install-gate-intro">Plan your lineup. Balance playing time. Make smarter game-day decisions. Beautiful Game IQ brings your youth soccer coaching toolkit together in one mobile app.</p>
           <div className="install-gate-cta-row">
-            {isAndroid ? (
-              <div className="install-gate-android-note">
-                <strong>Android app coming soon</strong>
-                <span>We're working on bringing Beautiful Game IQ to Android. The iPhone app is available now.</span>
-              </div>
-            ) : (
-              <AppStoreButton />
-            )}
+            {isAndroid ? <div className="install-gate-android-note"><strong>Android app coming soon</strong><span>We're working on bringing Beautiful Game IQ to Android. The iPhone app is available now.</span></div> : <AppStoreButton />}
             <span className="install-gate-cta-caption">Built for youth soccer coaches. Ready for game day.</span>
           </div>
           <div className="install-gate-proof-row">
-            <span><i>✓</i> Roster & team management</span>
-            <span><i>✓</i> Four-quarter lineups</span>
-            <span><i>✓</i> Live game control</span>
+            <span><i>✓</i> Four-quarter lineups</span><span><i>✓</i> Matchday availability</span><span><i>✓</i> Live game control</span>
           </div>
         </div>
-
         <div className="install-gate-hero-visual" aria-label="Preview of Beautiful Game IQ coaching tools">
           <div className="install-gate-orbit install-gate-orbit-one" />
           <div className="install-gate-phone install-gate-phone-back">
-            <div className="install-gate-phone-top"><span /><span>LIVE MATCH</span><span>•••</span></div>
-            {!imageErrors.includes('/live%20game.png') && <img src="/live%20game.png" alt="Beautiful Game IQ live game control" onError={() => hideImage('/live%20game.png')} />}
+            <div className="install-gate-phone-top"><span /><span>LIVE GAME CONTROL</span><span>•••</span></div>
+            {!imageErrors.includes(LIVE_GAME) && <img src={LIVE_GAME} alt="Beautiful Game IQ live game control" onError={() => hideImage(LIVE_GAME)} />}
           </div>
           <div className="install-gate-phone install-gate-phone-front">
-            <div className="install-gate-phone-top"><span /><span>LINEUP BUILDER</span><span>•••</span></div>
-            {!imageErrors.includes('/lineup%20builder.png') && <img src="/lineup%20builder.png" alt="Beautiful Game IQ lineup builder" onError={() => hideImage('/lineup%20builder.png')} />}
+            <div className="install-gate-phone-top"><span /><span>FULL-GAME LINEUP</span><span>•••</span></div>
+            {!imageErrors.includes(LINEUP) && <img src={LINEUP} alt="Beautiful Game IQ full-game lineup" onError={() => hideImage(LINEUP)} />}
           </div>
-          <div className="install-gate-visual-label">
-            <span className="install-gate-live-dot" />
-            <span><strong>Plan. Coach. Adjust.</strong><small>Everything you need for game day.</small></span>
-          </div>
+          <div className="install-gate-visual-label"><span className="install-gate-live-dot" /><span><strong>Plan. Coach. Adjust.</strong><small>Everything you need for game day.</small></span></div>
         </div>
       </section>
 
@@ -123,22 +74,16 @@ export default function AppInstallGate() {
         <div className="install-gate-section-heading">
           <p className="install-gate-eyebrow">MADE FOR THE MOMENTS THAT MATTER</p>
           <h2>Less managing. <em>More coaching.</em></h2>
-          <p>From your first lineup to the final whistle, keep the details organized so you can focus on your players.</p>
+          <p>From lineup planning to the final whistle, keep the details organized so you can focus on your players.</p>
         </div>
         <div className="install-gate-feature-grid">
           {features.map((feature) => (
             <article className="install-gate-feature-card" key={feature.number}>
               <div className="install-gate-feature-image">
-                {!imageErrors.includes(feature.image) ? (
-                  <img src={feature.image} alt={feature.alt} loading="lazy" onError={() => hideImage(feature.image)} />
-                ) : (
-                  <div className="install-gate-feature-fallback"><span>{feature.number}</span><strong>Beautiful Game IQ</strong></div>
-                )}
+                {!imageErrors.includes(feature.image) ? <img src={feature.image} alt={feature.alt} loading="lazy" onError={() => hideImage(feature.image)} /> : <div className="install-gate-feature-fallback"><span>{feature.number}</span><strong>Beautiful Game IQ</strong></div>}
               </div>
               <div className="install-gate-feature-copy">
-                <span className="install-gate-feature-number">{feature.number}</span>
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
+                <span className="install-gate-feature-number">{feature.number}</span><h3>{feature.title}</h3><p>{feature.description}</p>
               </div>
             </article>
           ))}
@@ -146,29 +91,13 @@ export default function AppInstallGate() {
       </section>
 
       <section className="install-gate-bottom-cta">
-        <div>
-          <p className="install-gate-eyebrow">YOUR TEAM. YOUR TACTICS. YOUR GAME.</p>
-          <h2>Make game day <em>your advantage.</em></h2>
-          <p>Get Beautiful Game IQ on your iPhone and take your coaching toolkit to the sideline.</p>
-        </div>
-        {isAndroid ? (
-          <div className="install-gate-android-note">
-            <strong>Android app coming soon</strong>
-            <span>Beautiful Game IQ is currently available on iPhone.</span>
-          </div>
-        ) : (
-          <AppStoreButton />
-        )}
+        <div><p className="install-gate-eyebrow">YOUR TEAM. YOUR TACTICS. YOUR GAME.</p><h2>Make game day <em>your advantage.</em></h2><p>Get Beautiful Game IQ on your iPhone and take your coaching toolkit to the sideline.</p></div>
+        {isAndroid ? <div className="install-gate-android-note"><strong>Android app coming soon</strong><span>Beautiful Game IQ is currently available on iPhone.</span></div> : <AppStoreButton />}
       </section>
 
       <footer className="install-gate-footer">
-        <a className="install-gate-footer-brand" href="/">Beautiful Game <b>IQ</b></a>
-        <span>PLAN. COACH. ADJUST. <strong>WIN TOGETHER.</strong></span>
-        <nav aria-label="Legal and support">
-          <a href="/privacy.html">Privacy</a>
-          <a href="/terms.html">Terms</a>
-          <a href="/support.html">Support</a>
-        </nav>
+        <a className="install-gate-footer-brand" href="/">Beautiful Game <b>IQ</b></a><span>PLAN. COACH. ADJUST. <strong>WIN TOGETHER.</strong></span>
+        <nav aria-label="Legal and support"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/support.html">Support</a></nav>
       </footer>
     </main>
   )
