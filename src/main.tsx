@@ -5,6 +5,7 @@ import './App.css'
 import App from './App'
 import AdminAnalytics from './AdminAnalytics'
 import './admin.css'
+import AppInstallGate from './AppInstallGate'
 import Auth from './Auth'
 import InviteOnboarding from './InviteOnboarding'
 import { supabase } from './supabase'
@@ -27,8 +28,8 @@ function Root() {
         try {
           const parsed = new URL(url)
           if (parsed.protocol === 'beautifulgameiq:' || parsed.host === 'auth') {
-            const hash = parsed.hash.startsWith('#') ? parsed.hash.slice(1) : parsed.hash
-            const params = new URLSearchParams(hash || parsed.search.replace(/^\?/, ''))
+            const hash = parsed.hash.startsWith('#') ? parsed.hash.slice(1) : parsed.search.replace(/^\?/, '')
+            const params = new URLSearchParams(hash)
             const accessToken = params.get('access_token')
             const refreshToken = params.get('refresh_token')
 
@@ -83,22 +84,38 @@ function Root() {
     )
   }
 
-  if (!session) {
-    return <Auth passwordRecovery={passwordRecovery} />
-  }
+  const isNativeApp = Capacitor.isNativePlatform()
+  const isAdminAnalyticsPath =
+    window.location.pathname === '/admin/analytics' ||
+    window.location.pathname === '/admin/analytics/'
+  const isPasswordRecoveryLink =
+    passwordRecovery ||
+    new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type') === 'recovery'
 
-  if (passwordRecovery) {
-    return <Auth passwordRecovery={passwordRecovery} />
-  }
-
-  if (window.location.pathname === '/admin/analytics' || window.location.pathname === '/admin/analytics/') {
+  // Keep the private admin dashboard, password recovery, and invitation onboarding
+  // available in a browser. All normal coaching access is native-app only.
+  if (isAdminAnalyticsPath && session && !isPasswordRecoveryLink) {
     return <AdminAnalytics />
   }
 
-  const displayName = session.user.user_metadata?.display_name
+  if (isPasswordRecoveryLink) {
+    return <Auth passwordRecovery />
+  }
 
-  if (!displayName) {
+  const displayName = session?.user.user_metadata?.display_name
+
+  // Invited coaches may finish initial account setup from their invitation link.
+  // After setup, the browser is sent to the app-install screen on reload.
+  if (session && !displayName) {
     return <InviteOnboarding />
+  }
+
+  if (!isNativeApp && !isAdminAnalyticsPath) {
+    return <AppInstallGate />
+  }
+
+  if (!session) {
+    return <Auth />
   }
 
   return <App />
