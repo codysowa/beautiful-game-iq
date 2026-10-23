@@ -53,6 +53,7 @@ export type RotationAdvice = {
   suggestedLineup: { position: string; player: Player }[]
   warnings: string[]
   message: string
+  canApply: boolean
 }
 
 export type WholeGamePlan = {
@@ -164,14 +165,18 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
   const recentGoalScorers = new Set(input.recentGoalScorerIds || [])
 
   if (available.length === 0) {
-    return { priority: [], gk: null, suggestedLineup: [], warnings: [], message: 'No players are available for this quarter.' }
+    return { priority: [], gk: null, suggestedLineup: [], warnings: ['No players are available for this quarter.'], message: 'No players are available for this quarter.', canApply: false }
   }
 
   const priorPlayerStats = (playerId: string) => {
     const prior = history.filter((item) => item.player_id === playerId && item.quarter < input.quarter)
     const played = new Set(prior.map((item) => item.quarter)).size
-    const plannedPriorQuarters = history.filter((item) => item.quarter < input.quarter).reduce((set, item) => set.add(item.quarter), new Set<number>())
-    const bench = Math.max(0, plannedPriorQuarters.size - played)
+    const priorQuarters = [...new Set(history.filter((item) => item.quarter < input.quarter).map((item) => item.quarter))]
+    // A quarter only counts as a bench quarter when the player was available.
+    const bench = priorQuarters.filter((quarter) =>
+      playerAvailableForQuarter(input.attendance, playerId, quarter) &&
+      !prior.some((item) => item.quarter === quarter)
+    ).length
     const gk = prior.filter((item) => item.position === 'Goalkeeper').length
     const last = [...prior].sort((a, b) => b.quarter - a.quarter)[0]
     return { played, bench, gk, lastPosition: last?.position || null }
@@ -190,6 +195,7 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
     let streak = 0
     for (let quarter = input.quarter - 1; quarter >= 1; quarter -= 1) {
       if (!quarterHasLineup(quarter)) break
+      if (!playerAvailableForQuarter(input.attendance, playerId, quarter)) break
       if (playerQuarterAssignment(playerId, quarter)) break
       streak += 1
     }
@@ -219,12 +225,13 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
 
   const priority = [...available].sort((a, b) => priorityScore(b) - priorityScore(a)).slice(0, Math.min(3, available.length))
   const warnings: string[] = []
-  input.players.forEach((player) => {
-    const streak = benchStreakBefore(player.id)
-    if (streak >= 2 && playerAvailableForQuarter(input.attendance, player.id, input.quarter)) {
-      warnings.push(`#${player.jersey_number ?? '-'} ${player.name} has ${streak} consecutive bench quarters.`)
-    }
-  })
+  const maxBench = input.teamRules?.max_bench_quarters ?? 2
+  // These players must be selected now: leaving them out would exceed the bench limit
+  // or create a third consecutive bench quarter.
+  const mandatoryPlayers = available.filter((player) =>
+    priorPlayerStats(player.id).bench >= maxBench || benchStreakBefore(player.id) >= 2
+  )
+  const mandatoryPlayerIds = new Set(mandatoryPlayers.map((player) => player.id))
 
   const suggestedLineup: { position: string; player: Player }[] = []
   const used = new Set<string>()
@@ -280,12 +287,13 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
       recentGoalScorers.has(player.id) &&
       role === 'STR'
 
-    if (pullBackRecentScorerBlocked) {
+    if (pullBackRecentScorerBlocked && !mandatoryPlayerIds.has(player.id)) {
       return null
     }
 
     const coachFitScore = rating * 55
-    return coachFitScore + situationRoleBonus(role) + situationPriorityBonus(player) + needGoalAdjustment + needGoalScorerBonus + pullBackRoleAdjustment + priorityBonus[player.usage_priority || 'Regular'] + toleranceBonus[player.bench_tolerance || 'Normal'] + targetNeed + lastPositionBonus + lastRoleBonus + benchFairnessBonus + consecutiveBenchBonus + doubleBenchBonus + maxBenchProtectionBonus - stats.played * 15
+    const mandatoryBonus = mandatoryPlayerIds.has(player.id) ? 1000000 : 0
+    return mandatoryBonus + coachFitScore + situationRoleBonus(role) + situationPriorityBonus(player) + needGoalAdjustment + needGoalScorerBonus + pullBackRoleAdjustment + priorityBonus[player.usage_priority || 'Regular'] + toleranceBonus[player.bench_tolerance || 'Normal'] + targetNeed + lastPositionBonus + lastRoleBonus + benchFairnessBonus + consecutiveBenchBonus + doubleBenchBonus + maxBenchProtectionBonus - stats.played * 15
   }
 
   const chooseBest = (position: string) => available
@@ -302,24 +310,72 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
 
   const formationPositions = optimizationFormations[input.formation] || optimizationFormations['3-1-2']
 
-  const positionOrder = [...formationPositions].sort((a, b) => {
-    const roleRank = (position: string) => {
-      const role = roleForPosition(position)
-      if (input.gameSituation === 'Need Goal') {
-        return role === 'STR' ? 0 : role === 'MID' ? 1 : role === 'DEF' ? 2 : 3
-      }
-      if (input.gameSituation === 'Pull Back') {
-        return role === 'GK' ? 0 : role === 'DEF' ? 1 : role === 'MID' ? 2 : 3
-      }
-      if (input.gameSituation === 'Protect Lead') {
-        return role === 'GK' ? 0 : role === 'DEF' ? 1 : role === 'MID' ? 2 : 3
-      }
+  const roleRank = (position: string) => {
+    const role = roleForPosition(position)
+    if (input.gameSituation === 'Need Goal') {
+      return role === 'STR' ? 0 : role === 'MID' ? 1 : role === 'DEF' ? 2 : 3
+    }
+    if (input.gameSituation === 'Pull Back' || input.gameSituation === 'Protect Lead') {
       return role === 'GK' ? 0 : role === 'DEF' ? 1 : role === 'MID' ? 2 : 3
     }
-    return roleRank(a) - roleRank(b)
-  })
+    return role === 'GK' ? 0 : role === 'DEF' ? 1 : role === 'MID' ? 2 : 3
+  }
+  const positionOrder = [...formationPositions].sort((a, b) => roleRank(a) - roleRank(b))
+  const maxGk = input.teamRules?.max_gk_quarters ?? 2
+  const canAssignMandatory = (player: Player, position: string) =>
+    !(player.avoid_positions || []).includes(roleForPosition(position)) &&
+    !(player.avoid_positions || []).includes(position) &&
+    (position !== 'Goalkeeper' || priorPlayerStats(player.id).gk < maxGk) &&
+    candidateScore(player, position) !== null
+
+  if (mandatoryPlayers.length > formationPositions.length) {
+    return {
+      priority, gk: null, suggestedLineup: [],
+      warnings: [`Cannot create a rule-compliant Q${input.quarter} lineup: ${mandatoryPlayers.length} players must play to satisfy bench rules, but the ${input.formation} formation has only ${formationPositions.length} positions.`],
+      message: 'No rule-compliant lineup is possible with the current team rules.',
+      canApply: false,
+    }
+  }
+
+  const forcedPlayers = [...mandatoryPlayers].sort((a, b) =>
+    formationPositions.filter((position) => canAssignMandatory(a, position)).length -
+    formationPositions.filter((position) => canAssignMandatory(b, position)).length
+  )
+  const forcedAssignments: { player: Player; position: string }[] = []
+  const assignedForcedPositions = new Set<string>()
+  const assignMandatory = (index: number): boolean => {
+    if (index >= forcedPlayers.length) return true
+    const player = forcedPlayers[index]
+    const options = positionOrder.filter((position) =>
+      !assignedForcedPositions.has(position) && canAssignMandatory(player, position)
+    )
+    for (const position of options) {
+      assignedForcedPositions.add(position)
+      forcedAssignments.push({ player, position })
+      if (assignMandatory(index + 1)) return true
+      forcedAssignments.pop()
+      assignedForcedPositions.delete(position)
+    }
+    return false
+  }
+
+  if (!forcedPlayers.every((player) => formationPositions.some((position) => canAssignMandatory(player, position))) ||
+      !assignMandatory(0)) {
+    return {
+      priority, gk: null, suggestedLineup: [],
+      warnings: ['Cannot create a rule-compliant lineup: the players who must play cannot be assigned to distinct positions without breaking goalkeeper or position restrictions.'],
+      message: 'No rule-compliant lineup is possible with the current team rules.',
+      canApply: false,
+    }
+  }
+
+  for (const assignment of forcedAssignments) {
+    suggestedLineup.push(assignment)
+    used.add(assignment.player.id)
+  }
 
   for (const position of positionOrder) {
+    if (suggestedLineup.some((item) => item.position === position)) continue
     const player = chooseBest(position)
     if (player) {
       suggestedLineup.push({ position, player })
@@ -342,11 +398,9 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
 
     const fallbackCandidates = available
       .filter((player) => !used.has(player.id))
-      .filter(
-        (player) =>
-          position !== 'Goalkeeper' ||
-          priorPlayerStats(player.id).gk < maxGk,
-      )
+      .filter((player) => !(player.avoid_positions || []).includes(role))
+      .filter((player) => !(player.avoid_positions || []).includes(position))
+      .filter((player) => position !== 'Goalkeeper' || priorPlayerStats(player.id).gk < maxGk)
       .map((player) => ({
         player,
         score: candidateScore(player, position),
@@ -365,14 +419,6 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
     const fallback = preferred || fallbackCandidates[0]
 
     if (fallback) {
-      if (
-        (fallback.player.avoid_positions || []).includes(role) ||
-        (fallback.player.avoid_positions || []).includes(position)
-      ) {
-        warnings.push(
-          `Q${input.quarter}: ${fallback.player.name} was used in ${position} as a last resort to preserve the ${input.formation} formation.`,
-        )
-      }
       suggestedLineup.push({ position, player: fallback.player })
       used.add(fallback.player.id)
     }
@@ -383,15 +429,16 @@ export function getRotationAdvice(input: OptimizerInput): RotationAdvice {
   )
 
   const gk = suggestedLineup.find((item) => item.position === 'Goalkeeper')?.player || null
-  const maxBench = input.teamRules?.max_bench_quarters ?? 2
-  const overBenchPlayers = available.filter((player) => priorPlayerStats(player.id).bench >= maxBench)
-  if (overBenchPlayers.length > 0) warnings.push(`${overBenchPlayers.length} available player${overBenchPlayers.length === 1 ? '' : 's'} already have ${maxBench}+ bench quarters.`)
-
-  const slotCount = (optimizationFormations[input.formation] || optimizationFormations['3-1-2']).length
+  const slotCount = formationPositions.length
+  const allMandatoryAssigned = mandatoryPlayers.every((player) => used.has(player.id))
+  const canApply = allMandatoryAssigned && (suggestedLineup.length === slotCount || available.length < slotCount)
+  if (!canApply) {
+    warnings.push('No rule-compliant lineup could be completed without breaking position, goalkeeper, or bench rules. Adjust availability or coach restrictions and optimize again.')
+  }
   const message = available.length < slotCount
-    ? `Only ${available.length} players are available. Suggestion fills as many positions as possible while respecting coach input and team rules.`
+    ? `Only ${available.length} players are available. The plan fills as many positions as possible while respecting hard team rules.`
     : 'Suggestion balances coach knowledge, rotation fairness, bench streaks, attendance, GK limits, team rules, and position history.'
-  return { priority, gk, suggestedLineup, warnings, message }
+  return { priority, gk, suggestedLineup, warnings, message, canApply }
 }
 
 export function optimizeWholeGame(input: OptimizerInput): WholeGamePlan {
