@@ -120,23 +120,39 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
       <div className="auth-card">
         <div className="auth-brand">
           <div className="auth-emblem" aria-label="Beautiful Game IQ soccer mark">
-            <svg viewBox="0 0 64 64" role="img" aria-hidden="true">
+            <svg viewBox="0 0 512 512" role="img" aria-label="Beautiful Game IQ soccer strategy app icon" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="bgiq-mark-bg" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#153d35" />
-                  <stop offset="100%" stopColor="#071b19" />
+                <linearGradient id="bgiq-icon-bg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#0b1d2d" />
+                  <stop offset="100%" stopColor="#02080e" />
                 </linearGradient>
-                <linearGradient id="bgiq-mark-accent" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#4af0b1" />
-                  <stop offset="100%" stopColor="#00a875" />
+                <linearGradient id="bgiq-icon-green" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#79e65e" />
+                  <stop offset="100%" stopColor="#35c94c" />
                 </linearGradient>
               </defs>
-              <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#bgiq-mark-bg)" stroke="#35dba0" strokeWidth="1.5" />
-              <path d="M9 19H55M9 45H55M19 9V55M45 9V55" stroke="#b2f7db" strokeOpacity=".13" />
-              <circle cx="32" cy="32" r="17" fill="none" stroke="#4af0b1" strokeOpacity=".75" strokeWidth="1.5" />
-              <path d="m32 21 8 6-3 10h-10l-3-10z" fill="url(#bgiq-mark-accent)" stroke="#d6fff0" strokeWidth="1.2" strokeLinejoin="round" />
-              <path d="m32 21-1-7m9 13 7-3m-10 13 4 7m-14-7-7 5m-3-15-6-2" stroke="#4af0b1" strokeWidth="2" strokeLinecap="round" />
-              <text x="32" y="56" textAnchor="middle" fontSize="6.5" fontWeight="900" fill="#e8fff6" letterSpacing="1">BGIQ</text>
+              <rect width="512" height="512" rx="76" fill="url(#bgiq-icon-bg)" />
+              <rect x="1" y="1" width="510" height="510" rx="75" fill="none" stroke="#20384a" strokeWidth="2" />
+              <g fill="none" stroke="url(#bgiq-icon-green)" strokeWidth="17" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M126 133l24-24m-24 0 24 24" />
+                <path d="M354 151l24-24m-24 0 24 24" />
+                <path d="M111 207c0-25 9-45 26-61" />
+                <path d="M118 151l19-5-2 20" />
+                <path d="M326 256h49" />
+                <path d="M354 239l21 17-21 17" />
+                <circle cx="111" cy="302" r="24" />
+                <circle cx="402" cy="258" r="24" />
+                <path d="M157 321l17 12m21 13 17 8m22 9 17 3m24 0 17-5m21-10 16-12" strokeDasharray="17 20" />
+                <path d="M338 344l20-18-1 24" />
+              </g>
+              <g transform="translate(256 204)">
+                <circle r="99" fill="#07111c" stroke="#f5f7f9" strokeWidth="10" />
+                <path d="M0-40 39-13 24 33H-24L-39-13Z" fill="#07111c" stroke="#f5f7f9" strokeWidth="7" strokeLinejoin="round" />
+                <path d="M0-40 3-87M39-13 85-31M24 33 55 74M-24 33-60 60M-39-13-82-41M-82-41-68-72M3-87 46-72M85-31 91 15M55 74 15 94M-60 60-84 20M-68-72-35-91M46-72 73-52" fill="none" stroke="#f5f7f9" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+              </g>
+              <text x="58" y="414" fontSize="112" fontWeight="900" letterSpacing="-7" fontFamily="Arial, Helvetica, sans-serif" fill="#f8fafc">BG</text>
+              <text x="254" y="414" fontSize="112" fontWeight="900" letterSpacing="-7" fontFamily="Arial, Helvetica, sans-serif" fill="url(#bgiq-icon-green)">IQ</text>
+              <text x="256" y="455" textAnchor="middle" fontSize="19" fontWeight="500" letterSpacing="8" fontFamily="Arial, Helvetica, sans-serif" fill="#f1f5f9">BEAUTIFUL GAME IQ</text>
             </svg>
           </div>
           <div className="auth-status"><span className="auth-status-dot" /> COACH COPILOT <span className="auth-status-divider">·</span> GAME DAY READY</div>
