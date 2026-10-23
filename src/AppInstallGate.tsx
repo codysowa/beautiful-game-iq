@@ -1,3 +1,5 @@
+import './AppInstallGate.css'
+
 import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
