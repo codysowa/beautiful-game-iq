@@ -4,31 +4,31 @@ import appIcon from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-5
 import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
-const CURRENT_LINEUP_SCREENSHOT = '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_40%20PM.png'
-const CURRENT_AVAILABILITY_SCREENSHOT = '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_30%20PM.png'
-const CURRENT_ANALYTICS_SCREENSHOT = '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_57%20PM.png'
+const CURRENT_LINEUP_SCREENSHOT = '/lineup%20builder.png'
+const CURRENT_AVAILABILITY_SCREENSHOT = '/attendence.png'
+const CURRENT_ANALYTICS_SCREENSHOT = '/analytics.png'
 
 const features = [
   {
     number: '01',
     title: 'Organize Your Team',
     description: 'Keep your roster, player numbers, positions, and team settings together.',
-    image: '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_50%20PM.png',
-    alt: 'Beautiful Game IQ player management and coaching preferences screen',
+    image: '/Roster.png',
+    alt: 'Beautiful Game IQ roster and player management screen',
   },
   {
     number: '02',
     title: 'Build Better Lineups',
     description: 'Build tactical formations on an interactive pitch and plan all four quarters.',
     image: CURRENT_LINEUP_SCREENSHOT,
-    alt: 'Current Beautiful Game IQ lineup builder and whole-game planning screen',
+    alt: 'Beautiful Game IQ lineup builder and whole-game planning screen',
   },
   {
     number: '03',
     title: 'Manage Playing Time',
     description: 'Plan rotations, track availability, and make playing time easier to balance.',
     image: CURRENT_AVAILABILITY_SCREENSHOT,
-    alt: 'Current Beautiful Game IQ quarter-by-quarter player availability screen',
+    alt: 'Beautiful Game IQ quarter-by-quarter player availability screen',
   },
   {
     number: '04',
@@ -42,7 +42,7 @@ const features = [
     title: 'Understand Your Season',
     description: 'Review player and team performance with season analytics.',
     image: CURRENT_ANALYTICS_SCREENSHOT,
-    alt: 'Current Beautiful Game IQ player analytics screen',
+    alt: 'Beautiful Game IQ season analytics screen',
   },
 ]
 
