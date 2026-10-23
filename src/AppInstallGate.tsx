@@ -85,7 +85,6 @@ export default function AppInstallGate() {
               <div className="install-gate-android-note">
                 <strong>Android app coming soon</strong>
                 <span>We're working on bringing Beautiful Game IQ to Android. The iPhone app is available now.</span>
-                <a href={APP_STORE_URL}>View the App Store listing</a>
               </div>
             ) : (
               <AppStoreButton />
@@ -149,7 +148,10 @@ export default function AppInstallGate() {
           <p>Get Beautiful Game IQ on your iPhone and take your coaching toolkit to the sideline.</p>
         </div>
         {isAndroid ? (
-          <a className="install-gate-secondary-button" href={APP_STORE_URL}>View App Store listing</a>
+          <div className="install-gate-android-note">
+            <strong>Android app coming soon</strong>
+            <span>Beautiful Game IQ is currently available on iPhone.</span>
+          </div>
         ) : (
           <AppStoreButton />
         )}
