@@ -10,22 +10,22 @@ const features = [
     number: '01',
     title: 'Organize Your Team',
     description: 'Keep your roster, player numbers, positions, and team settings together.',
-    image: '/ChatGPT%20Image%20Oct%2015,%202026,%2002_30_04%20PM.png',
-    alt: 'Beautiful Game IQ team roster screen',
+    image: '/Roster.png',
+    alt: 'Beautiful Game IQ roster screen showing player management',
   },
   {
     number: '02',
     title: 'Build Better Lineups',
     description: 'Build tactical formations on an interactive pitch and plan all four quarters.',
-    image: '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_43%20PM.png',
-    alt: 'Beautiful Game IQ lineup builder screen',
+    image: '/lineup%20builder.png',
+    alt: 'Beautiful Game IQ lineup builder showing positions and quarter-by-quarter planning',
   },
   {
     number: '03',
     title: 'Manage Playing Time',
     description: 'Plan rotations, track availability, and make playing time easier to balance.',
-    image: '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_30%20PM.png',
-    alt: 'Beautiful Game IQ player availability screen',
+    image: '/attendence.png',
+    alt: 'Beautiful Game IQ attendance and player availability controls',
   },
   {
     number: '04',
@@ -38,7 +38,7 @@ const features = [
     number: '05',
     title: 'Understand Your Season',
     description: 'Review player and team performance with season analytics.',
-    image: '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_54%20PM.png',
+    image: '/analytics.png',
     alt: 'Beautiful Game IQ season analytics screen',
   },
 ]
@@ -103,11 +103,11 @@ export default function AppInstallGate() {
           <div className="install-gate-orbit install-gate-orbit-one" />
           <div className="install-gate-phone install-gate-phone-back">
             <div className="install-gate-phone-top"><span /><span>LIVE MATCH</span><span>•••</span></div>
-            {!imageErrors.includes('/live%20game.png') && <img src="/live%20game.png" alt="Live game control" onError={() => hideImage('/live%20game.png')} />}
+            {!imageErrors.includes('/live%20game.png') && <img src="/live%20game.png" alt="Beautiful Game IQ live game control" onError={() => hideImage('/live%20game.png')} />}
           </div>
           <div className="install-gate-phone install-gate-phone-front">
             <div className="install-gate-phone-top"><span /><span>LINEUP BUILDER</span><span>•••</span></div>
-            {!imageErrors.includes('/lineup%20builder.png') && <img src="/lineup%20builder.png" alt="Lineup builder" onError={() => hideImage('/lineup%20builder.png')} />}
+            {!imageErrors.includes('/lineup%20builder.png') && <img src="/lineup%20builder.png" alt="Beautiful Game IQ lineup builder" onError={() => hideImage('/lineup%20builder.png')} />}
           </div>
           <div className="install-gate-visual-label">
             <span className="install-gate-live-dot" />
