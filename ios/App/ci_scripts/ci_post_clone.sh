@@ -25,8 +25,8 @@ echo "Building the web app..."
 npm run build
 
 echo "Preparing iOS test build from ios-native-prep (native printer plugin intentionally excluded)."
-echo "Copying web assets into the iOS Capacitor project..."
-npx cap copy ios
+echo "Syncing web assets and native plugin registration into the iOS Capacitor project..."
+npx cap sync ios
 
 ASSET_DIR="$REPO_ROOT/ios/App/App/public"
 if [ ! -f "$ASSET_DIR/index.html" ]; then
