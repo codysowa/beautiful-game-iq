@@ -1,4 +1,5 @@
 import './AppInstallGate.css'
+import appIcon from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png'
 
 import { useState } from 'react'
 
@@ -9,21 +10,21 @@ const features = [
     number: '01',
     title: 'Organize Your Team',
     description: 'Keep your roster, player numbers, positions, and team settings together.',
-    image: '/Roster.png',
+    image: '/ChatGPT%20Image%20Oct%2015,%202026,%2002_30_04%20PM.png',
     alt: 'Beautiful Game IQ team roster screen',
   },
   {
     number: '02',
     title: 'Build Better Lineups',
     description: 'Build tactical formations on an interactive pitch and plan all four quarters.',
-    image: '/lineup%20builder.png',
+    image: '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_43%20PM.png',
     alt: 'Beautiful Game IQ lineup builder screen',
   },
   {
     number: '03',
     title: 'Manage Playing Time',
     description: 'Plan rotations, track availability, and make playing time easier to balance.',
-    image: '/attendence.png',
+    image: '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_30%20PM.png',
     alt: 'Beautiful Game IQ player availability screen',
   },
   {
@@ -37,7 +38,7 @@ const features = [
     number: '05',
     title: 'Understand Your Season',
     description: 'Review player and team performance with season analytics.',
-    image: '/analytics.png',
+    image: '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_54%20PM.png',
     alt: 'Beautiful Game IQ season analytics screen',
   },
 ]
@@ -66,7 +67,7 @@ export default function AppInstallGate() {
 
       <header className="install-gate-header">
         <a className="install-gate-brand" href="/" aria-label="Beautiful Game IQ home">
-          <span className="install-gate-mark"><img src="/favicon.svg" alt="" /></span>
+          <span className="install-gate-mark"><img src={appIcon} alt="" /></span>
           <span className="install-gate-brand-name">Beautiful Game <b>IQ</b></span>
         </a>
         <span className="install-gate-header-note">THE SOCCER COACHING COPILOT</span>
