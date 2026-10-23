@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
@@ -3999,10 +4000,10 @@ function playerAtPosition(position: string) {
         // Desktop browsers can print the full designed match sheet. The native iOS
         // WebView does not reliably implement window.print(), so create a real PDF
         // file there and pass it to the system share sheet when supported.
-        const nativeCapacitor = Boolean(
-          (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } })
-            .Capacitor?.isNativePlatform?.()
-        )
+        // Use Capacitor's imported API rather than window.Capacitor.
+        // The global can be absent in production WebViews, incorrectly sending
+        // iOS users down the window.print() path where taps appear to do nothing.
+        const nativeCapacitor = Capacitor.isNativePlatform()
         if (!nativeCapacitor && typeof window.print === 'function') {
           window.print()
           return
@@ -4713,7 +4714,12 @@ function playerAtPosition(position: string) {
             </div>
   
             <div className="rotation-export-actions">
-              <button type="button" onClick={() => { void saveAndShareMatchSheet() }} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
+              <button type="button" onClick={() => {
+                  void saveAndShareMatchSheet().catch((error) => {
+                    console.error('Save & Share Match Sheet failed:', error)
+                    alert('Could not create or share the match sheet. Please try again.')
+                  })
+                }} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
                 Save & Share Match Sheet · PDF
               </button>
             </div>
