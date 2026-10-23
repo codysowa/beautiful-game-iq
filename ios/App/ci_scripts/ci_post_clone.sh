@@ -24,6 +24,7 @@ npm ci
 echo "Building the web app..."
 npm run build
 
+echo "Preparing iOS test build from ios-native-prep (native printer plugin intentionally excluded)."
 echo "Copying web assets into the iOS Capacitor project..."
 npx cap copy ios
 
