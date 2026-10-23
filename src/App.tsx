@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+import { Printer } from '@capgo/capacitor-printer'
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
@@ -4607,7 +4609,18 @@ function playerAtPosition(position: string) {
             </div>
   
             <div className="rotation-export-actions">
-              <button type="button" onClick={() => window.print()} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
+              <button type="button" onClick={async () => {
+                try {
+                  if (Capacitor.isNativePlatform()) {
+                    await Printer.printWebView({ name: 'BGIQ Match Sheet' })
+                  } else {
+                    window.print()
+                  }
+                } catch (error) {
+                  console.error('Save & Share Match Sheet failed:', error)
+                  alert('Could not open the match sheet export. Please try again.')
+                }
+              }} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
                 Save & Share Match Sheet · PDF
               </button>
             </div>
