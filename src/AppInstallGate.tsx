@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core'
-
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
 
 export default function AppInstallGate() {
