@@ -110,7 +110,7 @@ export default function AppInstallGate() {
           </div>
           <div className="install-gate-phone install-gate-phone-front">
             <div className="install-gate-phone-top"><span /><span>LINEUP BUILDER</span><span>•••</span></div>
-            {!imageErrors.includes(CURRENT_LINEUP_SCREENSHOT) && <img src={CURRENT_LINEUP_SCREENSHOT} alt="Current Beautiful Game IQ lineup builder" onError={() => hideImage(CURRENT_LINEUP_SCREENSHOT)} />}
+            {!imageErrors.includes('/lineup%20builder.png') && <img src="/lineup%20builder.png" alt="Beautiful Game IQ lineup builder" onError={() => hideImage('/lineup%20builder.png')} />}
           </div>
           <div className="install-gate-visual-label">
             <span className="install-gate-live-dot" />
