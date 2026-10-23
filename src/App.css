@@ -759,6 +759,19 @@ textarea {
   margin-bottom: 25px;
 }
 
+.auth-emblem {
+  margin-bottom: 12px;
+}
+
+.auth-emblem img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 18%;
+}
+
 .auth-kicker {
   margin-bottom: 9px;
   color: #57d69a;
