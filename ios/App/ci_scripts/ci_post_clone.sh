@@ -24,8 +24,8 @@ npm ci
 echo "Building the web app..."
 npm run build
 
-echo "Preparing iOS test build with native printer plugin enabled."
-echo "Syncing web assets and native plugin registration into the iOS Capacitor project..."
+echo "Preparing iOS test build with existing native plugins."
+echo "Syncing web assets and existing native plugin registration into the iOS Capacitor project..."
 npx cap sync ios
 
 ASSET_DIR="$REPO_ROOT/ios/App/App/public"
