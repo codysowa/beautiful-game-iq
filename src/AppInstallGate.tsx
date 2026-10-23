@@ -4,6 +4,9 @@ import appIcon from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-5
 import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
+const CURRENT_LINEUP_SCREENSHOT = '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_40%20PM.png'
+const CURRENT_AVAILABILITY_SCREENSHOT = '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_30%20PM.png'
+const CURRENT_ANALYTICS_SCREENSHOT = '/ChatGPT%20Image%20Oct%2015,%202026,%2002_29_57%20PM.png'
 
 const features = [
   {
@@ -17,15 +20,15 @@ const features = [
     number: '02',
     title: 'Build Better Lineups',
     description: 'Build tactical formations on an interactive pitch and plan all four quarters.',
-    image: '/lineup%20builder.png',
-    alt: 'Beautiful Game IQ lineup builder showing positions and quarter-by-quarter planning',
+    image: CURRENT_LINEUP_SCREENSHOT,
+    alt: 'Current Beautiful Game IQ lineup builder and whole-game planning screen',
   },
   {
     number: '03',
     title: 'Manage Playing Time',
     description: 'Plan rotations, track availability, and make playing time easier to balance.',
-    image: '/attendence.png',
-    alt: 'Beautiful Game IQ attendance and player availability controls',
+    image: CURRENT_AVAILABILITY_SCREENSHOT,
+    alt: 'Current Beautiful Game IQ quarter-by-quarter player availability screen',
   },
   {
     number: '04',
@@ -38,8 +41,8 @@ const features = [
     number: '05',
     title: 'Understand Your Season',
     description: 'Review player and team performance with season analytics.',
-    image: '/analytics.png',
-    alt: 'Beautiful Game IQ season analytics screen',
+    image: CURRENT_ANALYTICS_SCREENSHOT,
+    alt: 'Current Beautiful Game IQ player analytics screen',
   },
 ]
 
@@ -107,7 +110,7 @@ export default function AppInstallGate() {
           </div>
           <div className="install-gate-phone install-gate-phone-front">
             <div className="install-gate-phone-top"><span /><span>LINEUP BUILDER</span><span>•••</span></div>
-            {!imageErrors.includes('/lineup%20builder.png') && <img src="/lineup%20builder.png" alt="Beautiful Game IQ lineup builder" onError={() => hideImage('/lineup%20builder.png')} />}
+            {!imageErrors.includes(CURRENT_LINEUP_SCREENSHOT) && <img src={CURRENT_LINEUP_SCREENSHOT} alt="Current Beautiful Game IQ lineup builder" onError={() => hideImage(CURRENT_LINEUP_SCREENSHOT)} />}
           </div>
           <div className="install-gate-visual-label">
             <span className="install-gate-live-dot" />
