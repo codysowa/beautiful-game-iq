@@ -26,7 +26,6 @@
 	"packageClassList": [
 		"AdMobPlugin",
 		"AppPlugin",
-		"PurchasesPlugin",
-		"PrinterPlugin"
+		"PurchasesPlugin"
 	]
 }
