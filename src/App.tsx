@@ -4021,7 +4021,6 @@ function playerAtPosition(position: string) {
         }
 
         const clone = source.cloneNode(true) as HTMLElement
-        clone.querySelectorAll('.rotation-export-actions').forEach((node) => node.remove())
         clone.style.width = `${width}px`
         clone.style.maxWidth = 'none'
         clone.style.height = `${height}px`
@@ -4045,6 +4044,7 @@ function playerAtPosition(position: string) {
           })
         }
         copyStyles(source, clone)
+        clone.querySelectorAll('.rotation-export-actions').forEach((node) => node.remove())
 
         const html = new XMLSerializer().serializeToString(clone)
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="0 0 ${width} ${height}"><foreignObject x="0" y="0" width="${width}" height="${height}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">${html}</div></foreignObject></svg>`
