@@ -1,3 +1,5 @@
+import html2canvas from 'html2canvas'
+import { Capacitor } from '@capacitor/core'
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
@@ -3990,7 +3992,68 @@ function playerAtPosition(position: string) {
       })
   
       const activeFormations = allowedFormations.length > 0 ? allowedFormations : Object.keys(formationRows)
-  
+
+      async function saveAndShareMatchSheet() {
+        const game = selectedGame
+        if (!game) return
+        const source = document.querySelector<HTMLElement>('.rotation-export-window')
+        if (!source) {
+          alert('Could not find the match sheet to capture. Please try again.')
+          return
+        }
+
+        const rect = source.getBoundingClientRect()
+        const width = Math.ceil(Math.max(rect.width, source.scrollWidth))
+        const height = Math.ceil(Math.max(rect.height, source.scrollHeight))
+        if (!width || !height) {
+          alert('The match sheet is not ready to capture. Please try again.')
+          return
+        }
+
+        try {
+          const scale = Math.min(2, 4096 / width, 4096 / height)
+          const canvas = await html2canvas(source, {
+            backgroundColor: null,
+            scale,
+            width,
+            height,
+            windowWidth: Math.max(document.documentElement.clientWidth, width),
+            windowHeight: Math.max(document.documentElement.clientHeight, height),
+            scrollX: 0,
+            scrollY: 0,
+            useCORS: true,
+            logging: false,
+            ignoreElements: (element) => element.classList?.contains('rotation-export-actions') ?? false,
+            onclone: (clonedDocument) => {
+              clonedDocument.querySelectorAll('.rotation-export-actions').forEach((node) => node.remove())
+            },
+          })
+          const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Could not create PNG')), 'image/png')
+          })
+          const safeDate = String(game.game_date || 'match').replace(/[^a-zA-Z0-9-]/g, '-')
+          const file = new File([blob], `BGIQ-Match-Sheet-${safeDate}.png`, { type: 'image/png' })
+
+          if (typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'Beautiful Game IQ Match Sheet' })
+          } else {
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = file.name
+            link.style.display = 'none'
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.setTimeout(() => URL.revokeObjectURL(url), 30000)
+          }
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') return
+          console.error('Could not capture/share match sheet', error)
+          alert('Could not capture or share the match sheet image. Please try again.')
+        }
+      }
+
       return (
         <div style={{ background: '#090d12', color: '#e5e7eb', minHeight: '100vh', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
           
@@ -4604,8 +4667,8 @@ function playerAtPosition(position: string) {
             </div>
   
             <div className="rotation-export-actions">
-              <button type="button" onClick={() => window.print()} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
-                Save & Share Match Sheet · PDF
+              <button type="button" onClick={saveAndShareMatchSheet} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
+                Save & Share Match Sheet · Image
               </button>
             </div>
           </div>
