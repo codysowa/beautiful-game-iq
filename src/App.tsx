@@ -3997,110 +3997,106 @@ function playerAtPosition(position: string) {
       async function saveAndShareMatchSheet() {
         const game = selectedGame
         if (!game) return
-        // Desktop browsers can print the full designed match sheet. The native iOS
-        // WebView does not reliably implement window.print(), so create a real PDF
-        // file there and pass it to the system share sheet when supported.
-        // Use Capacitor's imported API rather than window.Capacitor.
-        // The global can be absent in production WebViews, incorrectly sending
-        // iOS users down the window.print() path where taps appear to do nothing.
-        const nativeCapacitor = Capacitor.isNativePlatform()
-        if (!nativeCapacitor && typeof window.print === 'function') {
+
+        // Desktop uses the existing designed print stylesheet. On iOS, capture
+        // the actual rendered match-sheet element as a PNG rather than creating
+        // a separate text-only PDF or requiring another native plugin.
+        if (!Capacitor.isNativePlatform() && typeof window.print === 'function') {
           window.print()
           return
         }
 
-        const clean = (value: unknown) =>
-          String(value ?? '').normalize('NFKD').replace(/[^\x20-\x7E]/g, '')
-        const escapePdf = (value: unknown) => clean(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
+        const source = document.querySelector<HTMLElement>('.rotation-export-window')
+        if (!source) {
+          alert('Could not find the match sheet to capture. Please try again.')
+          return
+        }
 
-        const pdfLines: string[] = [
-          'BEAUTIFUL GAME IQ - MATCH SHEET',
-          `Opponent: ${clean(opponent || game.opponent || 'TBD')}`,
-          `Date: ${clean(game.game_date || 'Not set')}    Format: ${clean(game.format || currentFormat)}`,
-          '',
-        ]
-        const formationSlots = optimizationFormations[optimizationFormation] || []
-        for (const q of [1, 2, 3, 4]) {
-          const quarterLineup = q === selectedQuarter
-            ? lineup
-            : allGameLineups.filter((item) => item.quarter === q)
-          pdfLines.push(`QUARTER ${q}`)
-          const rendered = new Set<string>()
-          for (const position of formationSlots) {
-            const assignment = quarterLineup.find((item) => item.position === position)
-            const player = assignment ? players.find((p) => p.id === assignment.player_id) : null
-            pdfLines.push(`  ${positionShort(position)}: ${player ? `#${player.jersey_number ?? '-'} ${getPlayerDisplayName(player)}` : 'Open slot'}`)
-            rendered.add(position)
+        const rect = source.getBoundingClientRect()
+        const width = Math.ceil(Math.max(rect.width, source.scrollWidth))
+        const height = Math.ceil(Math.max(rect.height, source.scrollHeight))
+        if (!width || !height) {
+          alert('The match sheet is not ready to capture. Please try again.')
+          return
+        }
+
+        const clone = source.cloneNode(true) as HTMLElement
+        clone.querySelectorAll('.rotation-export-actions').forEach((node) => node.remove())
+        clone.style.width = `${width}px`
+        clone.style.maxWidth = 'none'
+        clone.style.height = `${height}px`
+        clone.style.maxHeight = 'none'
+        clone.style.margin = '0'
+        clone.style.overflow = 'visible'
+
+        // Inline computed styles on the clone so the capture preserves the
+        // app's real colors, layout, pitch graphics, and typography.
+        const copyStyles = (original: Element, copied: Element) => {
+          const computed = window.getComputedStyle(original)
+          const target = copied as HTMLElement
+          for (let i = 0; i < computed.length; i += 1) {
+            const property = computed.item(i)
+            target.style.setProperty(property, computed.getPropertyValue(property))
           }
-          for (const assignment of quarterLineup.filter((item) => !rendered.has(item.position))) {
-            const player = players.find((p) => p.id === assignment.player_id)
-            pdfLines.push(`  ${positionShort(assignment.position)}: ${player ? `#${player.jersey_number ?? '-'} ${getPlayerDisplayName(player)}` : 'Unknown player'}`)
-          }
-          pdfLines.push('')
-        }
-        pdfLines.push('PLAYING TIME')
-        for (const player of players) {
-          const playedQuarters = [1, 2, 3, 4].filter((q) => {
-            const quarterLineup = q === selectedQuarter ? lineup : allGameLineups.filter((item) => item.quarter === q)
-            return quarterLineup.some((item) => item.player_id === player.id)
+          const originals = Array.from(original.children)
+          const copies = Array.from(copied.children)
+          originals.forEach((child, index) => {
+            if (copies[index]) copyStyles(child, copies[index])
           })
-          pdfLines.push(`#${player.jersey_number ?? '-'} ${getPlayerDisplayName(player)}: ${playedQuarters.length}/4 quarters${playedQuarters.length ? ` (Q${playedQuarters.join(', Q')})` : ''}`)
         }
+        copyStyles(source, clone)
 
-        const pages: string[][] = []
-        for (let index = 0; index < pdfLines.length; index += 48) pages.push(pdfLines.slice(index, index + 48))
-        const pageIds = pages.map((_, index) => 3 + index * 2)
-        const fontId = 3 + pages.length * 2
-        const objects: string[] = []
-        objects[1] = '<< /Type /Catalog /Pages 2 0 R >>'
-        objects[2] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(' ')}] /Count ${pages.length} >>`
-        pages.forEach((pageLines, index) => {
-          const pageId = pageIds[index]
-          const streamId = pageId + 1
-          let stream = 'BT\n/F1 15 Tf\n50 750 Td\n(' + escapePdf(pageLines[0] || 'MATCH SHEET') + ') Tj\n/F1 9 Tf\n0 -24 Td\n'
-          pageLines.slice(1).forEach((line) => {
-            if (line) stream += '(' + escapePdf(line) + ') Tj\n'
-            stream += `0 -${line ? 13 : 8} Td\n`
-          })
-          stream += 'ET'
-          objects[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontId} 0 R >> >> /Contents ${streamId} 0 R >>`
-          objects[streamId] = `<< /Length ${new TextEncoder().encode(stream).length} >>\nstream\n${stream}\nendstream`
-        })
-        objects[fontId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
-        let pdf = '%PDF-1.4\n'
-        const offsets = [0]
-        for (let id = 1; id < objects.length; id += 1) {
-          offsets[id] = pdf.length
-          pdf += `${id} 0 obj\n${objects[id]}\nendobj\n`
-        }
-        const xrefOffset = pdf.length
-        pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`
-        for (let id = 1; id < objects.length; id += 1) pdf += `${String(offsets[id]).padStart(10, '0')} 00000 n \n`
-        pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`
+        const html = new XMLSerializer().serializeToString(clone)
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="0 0 ${width} ${height}"><foreignObject x="0" y="0" width="${width}" height="${height}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">${html}</div></foreignObject></svg>`
+        const svgUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
 
-        const fileName = `BGIQ-Match-Sheet-${clean(game.game_date || 'match').replace(/\s+/g, '-')}.pdf`
-        const file = new File([new Blob([pdf], { type: 'application/pdf' })], fileName, { type: 'application/pdf' })
         try {
+          const image = new Image()
+          image.src = svgUrl
+          await new Promise<void>((resolve, reject) => {
+            image.onload = () => resolve()
+            image.onerror = () => reject(new Error('Could not render match sheet capture'))
+          })
+
+          const canvas = document.createElement('canvas')
+          canvas.width = width * 2
+          canvas.height = height * 2
+          const context = canvas.getContext('2d')
+          if (!context) throw new Error('Canvas is unavailable')
+          context.scale(2, 2)
+          context.drawImage(image, 0, 0, width, height)
+
+          const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob((result) => {
+              if (result) resolve(result)
+              else reject(new Error('Could not create PNG'))
+            }, 'image/png')
+          })
+          const safeDate = String(game.game_date || 'match').replace(/[^a-zA-Z0-9-]/g, '-')
+          const fileName = `BGIQ-Match-Sheet-${safeDate}.png`
+          const file = new File([blob], fileName, { type: 'image/png' })
+
           if (typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
             await navigator.share({ files: [file], title: 'Beautiful Game IQ Match Sheet' })
           } else {
-            const url = URL.createObjectURL(file)
+            const pngUrl = URL.createObjectURL(blob)
             const link = document.createElement('a')
-            link.href = url
+            link.href = pngUrl
             link.download = fileName
             link.style.display = 'none'
             document.body.appendChild(link)
             link.click()
             link.remove()
-            window.setTimeout(() => URL.revokeObjectURL(url), 30000)
+            window.setTimeout(() => URL.revokeObjectURL(pngUrl), 30000)
           }
         } catch (error) {
           if (error instanceof Error && error.name === 'AbortError') return
-          console.error('Could not share match sheet PDF', error)
-          alert('Could not share the match sheet. Please try again.')
+          console.error('Could not capture/share match sheet', error)
+          alert('Could not capture or share the match sheet image. Please try again.')
+        } finally {
+          URL.revokeObjectURL(svgUrl)
         }
       }
-  
       return (
         <div style={{ background: '#090d12', color: '#e5e7eb', minHeight: '100vh', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
           
@@ -4720,7 +4716,7 @@ function playerAtPosition(position: string) {
                     alert('Could not create or share the match sheet. Please try again.')
                   })
                 }} style={{ width: '100%', background: '#10b981', color: '#022c22', border: '1px solid #34d399', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', marginTop: '16px' }}>
-                Save & Share Match Sheet · PDF
+                Save & Share Match Sheet · Image
               </button>
             </div>
           </div>
