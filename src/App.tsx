@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core'
+import html2canvas from 'html2canvas'
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
@@ -3997,15 +3998,6 @@ function playerAtPosition(position: string) {
       async function saveAndShareMatchSheet() {
         const game = selectedGame
         if (!game) return
-
-        // Desktop uses the existing designed print stylesheet. On iOS, capture
-        // the actual rendered match-sheet element as a PNG rather than creating
-        // a separate text-only PDF or requiring another native plugin.
-        if (!Capacitor.isNativePlatform() && typeof window.print === 'function') {
-          window.print()
-          return
-        }
-
         const source = document.querySelector<HTMLElement>('.rotation-export-window')
         if (!source) {
           alert('Could not find the match sheet to capture. Please try again.')
@@ -4020,83 +4012,50 @@ function playerAtPosition(position: string) {
           return
         }
 
-        const clone = source.cloneNode(true) as HTMLElement
-        clone.style.width = `${width}px`
-        clone.style.maxWidth = 'none'
-        clone.style.height = `${height}px`
-        clone.style.maxHeight = 'none'
-        clone.style.margin = '0'
-        clone.style.overflow = 'visible'
-
-        // Inline computed styles on the clone so the capture preserves the
-        // app's real colors, layout, pitch graphics, and typography.
-        const copyStyles = (original: Element, copied: Element) => {
-          const computed = window.getComputedStyle(original)
-          const target = copied as HTMLElement
-          for (let i = 0; i < computed.length; i += 1) {
-            const property = computed.item(i)
-            target.style.setProperty(property, computed.getPropertyValue(property))
-          }
-          const originals = Array.from(original.children)
-          const copies = Array.from(copied.children)
-          originals.forEach((child, index) => {
-            if (copies[index]) copyStyles(child, copies[index])
-          })
-        }
-        copyStyles(source, clone)
-        clone.querySelectorAll('.rotation-export-actions').forEach((node) => node.remove())
-
-        const html = new XMLSerializer().serializeToString(clone)
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="0 0 ${width} ${height}"><foreignObject x="0" y="0" width="${width}" height="${height}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">${html}</div></foreignObject></svg>`
-        const svgUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
-
         try {
-          const image = new Image()
-          image.src = svgUrl
-          await new Promise<void>((resolve, reject) => {
-            image.onload = () => resolve()
-            image.onerror = () => reject(new Error('Could not render match sheet capture'))
+          const scale = Math.min(2, 4096 / width, 4096 / height)
+          const canvas = await html2canvas(source, {
+            backgroundColor: null,
+            scale,
+            width,
+            height,
+            windowWidth: Math.max(document.documentElement.clientWidth, width),
+            windowHeight: Math.max(document.documentElement.clientHeight, height),
+            scrollX: 0,
+            scrollY: 0,
+            useCORS: true,
+            logging: false,
+            ignoreElements: (element) => element.classList?.contains('rotation-export-actions') ?? false,
+            onclone: (clonedDocument) => {
+              clonedDocument.querySelectorAll('.rotation-export-actions').forEach((node) => node.remove())
+            },
           })
-
-          const canvas = document.createElement('canvas')
-          canvas.width = width * 2
-          canvas.height = height * 2
-          const context = canvas.getContext('2d')
-          if (!context) throw new Error('Canvas is unavailable')
-          context.scale(2, 2)
-          context.drawImage(image, 0, 0, width, height)
-
           const blob = await new Promise<Blob>((resolve, reject) => {
-            canvas.toBlob((result) => {
-              if (result) resolve(result)
-              else reject(new Error('Could not create PNG'))
-            }, 'image/png')
+            canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Could not create PNG')), 'image/png')
           })
           const safeDate = String(game.game_date || 'match').replace(/[^a-zA-Z0-9-]/g, '-')
-          const fileName = `BGIQ-Match-Sheet-${safeDate}.png`
-          const file = new File([blob], fileName, { type: 'image/png' })
+          const file = new File([blob], `BGIQ-Match-Sheet-${safeDate}.png`, { type: 'image/png' })
 
           if (typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
             await navigator.share({ files: [file], title: 'Beautiful Game IQ Match Sheet' })
           } else {
-            const pngUrl = URL.createObjectURL(blob)
+            const url = URL.createObjectURL(blob)
             const link = document.createElement('a')
-            link.href = pngUrl
-            link.download = fileName
+            link.href = url
+            link.download = file.name
             link.style.display = 'none'
             document.body.appendChild(link)
             link.click()
             link.remove()
-            window.setTimeout(() => URL.revokeObjectURL(pngUrl), 30000)
+            window.setTimeout(() => URL.revokeObjectURL(url), 30000)
           }
         } catch (error) {
           if (error instanceof Error && error.name === 'AbortError') return
           console.error('Could not capture/share match sheet', error)
           alert('Could not capture or share the match sheet image. Please try again.')
-        } finally {
-          URL.revokeObjectURL(svgUrl)
         }
       }
+
       return (
         <div style={{ background: '#090d12', color: '#e5e7eb', minHeight: '100vh', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
           
