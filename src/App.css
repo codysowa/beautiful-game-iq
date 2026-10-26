@@ -759,6 +759,19 @@ textarea {
   margin-bottom: 25px;
 }
 
+.auth-emblem {
+  margin-bottom: 12px;
+}
+
+.auth-emblem img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 18%;
+}
+
 .auth-kicker {
   margin-bottom: 9px;
   color: #57d69a;
@@ -3260,30 +3273,8 @@ body {
     -webkit-print-color-adjust: exact !important;
   }
 
-  @page {
-    size: auto;
-    margin: 8mm;
-  }
-
-  /* Hide every non-export element, including siblings, but keep the target's
-     ancestor chain available so the exported rotation sheet can render. */
-  body *:not(.rotation-export-window):not(.rotation-export-window *):not(:has(.rotation-export-window)) {
-    display: none !important;
-  }
-
-  /* App-shell ancestors can otherwise retain viewport/min-height sizing and
-     create an empty second printed page even when the sheet itself fits. */
-  body:has(.rotation-export-window),
-  body *:has(.rotation-export-window) {
-    min-height: 0 !important;
-    height: auto !important;
-    max-height: none !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    overflow: visible !important;
-    background: transparent !important;
+  body * {
+    visibility: hidden !important;
   }
 
   .rotation-export-window,

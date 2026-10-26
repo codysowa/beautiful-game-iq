@@ -119,6 +119,10 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
+          <div className="auth-emblem" aria-label="Beautiful Game IQ soccer mark">
+            <img src="/bgiq-app-icon.png" alt="Beautiful Game IQ soccer strategy app icon" />
+          </div>
+          <div className="auth-status"><span className="auth-status-dot" /> COACH COPILOT <span className="auth-status-divider">·</span> GAME DAY READY</div>
           <div className="auth-kicker">BEAUTIFUL GAME IQ</div>
 
           <h1>

@@ -1,40 +1,34 @@
 #!/bin/sh
-set -eu
+set -e
 
 REPO_ROOT="${CI_PRIMARY_REPOSITORY_PATH:-$PWD}"
 cd "$REPO_ROOT"
 
-# Xcode Cloud's macOS images may already provide Node. If not, install it
-# and fail with a clear diagnostic if the package manager is unavailable.
 if ! command -v node >/dev/null 2>&1; then
-  if ! command -v brew >/dev/null 2>&1; then
-    echo "ERROR: Node.js and Homebrew are both unavailable in this Xcode Cloud environment."
-    exit 1
-  fi
+  echo "Node.js not found; installing with Homebrew..."
   brew install node
 fi
 
+export PATH="$(brew --prefix)/bin:$PATH"
+
 echo "Node: $(node --version)"
 echo "npm: $(npm --version)"
-echo "Repository: $REPO_ROOT"
 
-echo "Installing dependencies from package-lock.json..."
 npm ci
-
-echo "Building the web app..."
 npm run build
 
-echo "Preparing iOS test build with existing native plugins."
-echo "Syncing web assets and existing native plugin registration into the iOS Capacitor project..."
-npx cap sync ios
+# Copy the built web bundle into the location packaged by the native iOS app.
+# Do not use cap sync here: native plugin registration is intentionally handled
+# separately, and UI-copy assertions break whenever labels change in the redesign.
+npx cap copy ios
 
-ASSET_DIR="$REPO_ROOT/ios/App/App/public"
-if [ ! -f "$ASSET_DIR/index.html" ]; then
-  echo "ERROR: Capacitor output missing index.html at $ASSET_DIR"
-  echo "Contents of ios/App/App, if present:"
-  ls -la "$REPO_ROOT/ios/App/App" || true
-  exit 1
-fi
+IOS_PUBLIC_DIR="$REPO_ROOT/ios/App/App/public"
+ASSET_DIR="$IOS_PUBLIC_DIR/assets"
 
-echo "Verified Capacitor entry point: $ASSET_DIR/index.html"
-echo "Xcode Cloud post-clone preparation succeeded."
+test -s "$IOS_PUBLIC_DIR/index.html"
+test -d "$ASSET_DIR"
+find "$ASSET_DIR" -maxdepth 1 -type f -name '*.js' | grep -q .
+
+echo "=== Verified iOS web bundle ==="
+echo "Index: $IOS_PUBLIC_DIR/index.html"
+echo "JavaScript assets: present"

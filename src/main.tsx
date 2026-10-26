@@ -77,7 +77,7 @@ function Root() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', padding: '40px 24px', boxSizing: 'border-box', background: '#080d12', color: '#e8f0f7', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <div style={{ padding: '40px' }}>
         Loading...
       </div>
     )

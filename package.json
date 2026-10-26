@@ -1,7 +1,7 @@
 {
   "name": "beautiful-game-iq",
   "private": true,
-  "version": "2.0.1",
+  "version": "1.0.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,7 +19,8 @@
     "@revenuecat/purchases-capacitor": "^13.6.0",
     "@supabase/supabase-js": "^2.115.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "html2canvas": "^1.4.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",
