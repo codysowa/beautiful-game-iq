@@ -1,5 +1,4 @@
 import { Capacitor } from '@capacitor/core'
-import { Printer } from '@capgo/capacitor-printer'
 import html2canvas from 'html2canvas'
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
