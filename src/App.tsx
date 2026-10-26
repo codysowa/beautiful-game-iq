@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core'
-import html2canvas from 'html2canvas'
+import { Printer } from '@capgo/capacitor-printer'
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
@@ -3998,61 +3998,19 @@ function playerAtPosition(position: string) {
       async function saveAndShareMatchSheet() {
         const game = selectedGame
         if (!game) return
-        const source = document.querySelector<HTMLElement>('.rotation-export-window')
-        if (!source) {
-          alert('Could not find the match sheet to capture. Please try again.')
-          return
-        }
 
-        const rect = source.getBoundingClientRect()
-        const width = Math.ceil(Math.max(rect.width, source.scrollWidth))
-        const height = Math.ceil(Math.max(rect.height, source.scrollHeight))
-        if (!width || !height) {
-          alert('The match sheet is not ready to capture. Please try again.')
-          return
-        }
-
+        // Native iOS uses UIPrintInteractionController through the Capacitor
+        // printer plugin, preserving the actual designed HTML match sheet.
+        const jobName = `BGIQ Match Sheet ${game.game_date || 'Match'}`
         try {
-          const scale = Math.min(2, 4096 / width, 4096 / height)
-          const canvas = await html2canvas(source, {
-            backgroundColor: null,
-            scale,
-            width,
-            height,
-            windowWidth: Math.max(document.documentElement.clientWidth, width),
-            windowHeight: Math.max(document.documentElement.clientHeight, height),
-            scrollX: 0,
-            scrollY: 0,
-            useCORS: true,
-            logging: false,
-            ignoreElements: (element) => element.classList?.contains('rotation-export-actions') ?? false,
-            onclone: (clonedDocument) => {
-              clonedDocument.querySelectorAll('.rotation-export-actions').forEach((node) => node.remove())
-            },
-          })
-          const blob = await new Promise<Blob>((resolve, reject) => {
-            canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Could not create PNG')), 'image/png')
-          })
-          const safeDate = String(game.game_date || 'match').replace(/[^a-zA-Z0-9-]/g, '-')
-          const file = new File([blob], `BGIQ-Match-Sheet-${safeDate}.png`, { type: 'image/png' })
-
-          if (typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'Beautiful Game IQ Match Sheet' })
+          if (Capacitor.isNativePlatform()) {
+            await Printer.printWebView({ name: jobName })
           } else {
-            const url = URL.createObjectURL(blob)
-            const link = document.createElement('a')
-            link.href = url
-            link.download = file.name
-            link.style.display = 'none'
-            document.body.appendChild(link)
-            link.click()
-            link.remove()
-            window.setTimeout(() => URL.revokeObjectURL(url), 30000)
+            window.print()
           }
         } catch (error) {
-          if (error instanceof Error && error.name === 'AbortError') return
-          console.error('Could not capture/share match sheet', error)
-          alert('Could not capture or share the match sheet image. Please try again.')
+          console.error('Could not print/share match sheet', error)
+          alert('Could not open the match sheet export. Please try again.')
         }
       }
 
