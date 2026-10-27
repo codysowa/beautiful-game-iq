@@ -6,7 +6,7 @@ import App from './App'
 import AdminAnalytics from './AdminAnalytics'
 import './admin.css'
 import Auth from './Auth'
-import LandingPage from './LandingPage'
+import AppInstallGate from './AppInstallGate'
 import InviteOnboarding from './InviteOnboarding'
 import { supabase } from './supabase'
 import { Capacitor } from '@capacitor/core'
@@ -84,24 +84,30 @@ function Root() {
     )
   }
 
-  if (!session) {
-    const path = '/' + window.location.pathname.split('/').filter(Boolean).join('/')
-    if (path === '/' && !passwordRecovery) return <LandingPage />
-    return <Auth passwordRecovery={passwordRecovery} />
-  }
-
   if (passwordRecovery) {
     return <Auth passwordRecovery={passwordRecovery} />
   }
 
-  if (window.location.pathname === '/admin/analytics' || window.location.pathname === '/admin/analytics/') {
-    return <AdminAnalytics />
+  if (session && !session.user.user_metadata?.display_name) {
+    return <InviteOnboarding />
   }
 
-  const displayName = session.user.user_metadata?.display_name
+  const isAdminAnalyticsPath =
+    window.location.pathname === '/admin/analytics' ||
+    window.location.pathname === '/admin/analytics/'
 
-  if (!displayName) {
-    return <InviteOnboarding />
+  // Public website visitors see the existing marketing/install page. Keep
+  // coaching tools behind the native app, while preserving admin and recovery routes.
+  if (!Capacitor.isNativePlatform() && !isAdminAnalyticsPath) {
+    return <AppInstallGate />
+  }
+
+  if (!session) {
+    return <Auth />
+  }
+
+  if (isAdminAnalyticsPath) {
+    return <AdminAnalytics />
   }
 
   return <App />
