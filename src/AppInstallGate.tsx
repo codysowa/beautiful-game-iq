@@ -67,14 +67,13 @@ export default function AppInstallGate() {
             <span><i>✓</i> Live game control</span>
           </div>
         </div>
-        <div className="install-gate-hero-visual" aria-label="Beautiful Game IQ app highlights: lineups, live match control, and player availability">
-          <div className="install-gate-showcase-orbit" aria-hidden="true">
-            <div className="install-gate-showcase-card install-gate-showcase-card-back install-gate-showcase-lineup"><img src={LINEUP} alt="" /></div>
-            <div className="install-gate-showcase-card install-gate-showcase-card-back install-gate-showcase-availability"><img src={AVAILABILITY} alt="" /></div>
-            <div className="install-gate-showcase-card install-gate-showcase-card-front"><img src={LIVE_GAME} alt="" fetchPriority="high" /></div>
-            <div className="install-gate-showcase-chip install-gate-showcase-chip-top">YOUR WHOLE GAME PLAN</div>
-            <div className="install-gate-showcase-chip install-gate-showcase-chip-bottom"><span>●</span> BUILT FOR MATCHDAY</div>
-          </div>
+        <div className="install-gate-hero-visual">
+          <img
+            className="install-gate-hero-artwork"
+            src="/screen.png"
+            alt="Beautiful Game IQ on three phones: lineup planning, live game control, and matchday availability"
+            fetchPriority="high"
+          />
         </div>
       </section>
 
