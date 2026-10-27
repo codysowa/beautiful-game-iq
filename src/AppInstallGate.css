@@ -180,3 +180,32 @@
 @media (prefers-reduced-motion: reduce) {
   .install-gate-store-button, .install-gate-feature-card { transition: none; }
 }
+
+/* Hero showcase: emphasize the three app screens, not the promo poster copy. */
+.install-gate-hero { grid-template-columns: minmax(0, 1fr) minmax(390px, .92fr); gap: clamp(20px, 3vw, 48px); padding-top: 42px; padding-bottom: 46px; }
+.install-gate-hero-visual { overflow: visible; }
+.install-gate-showcase-orbit { max-width: 610px; height: clamp(490px, 43vw, 620px); }
+.install-gate-showcase-card { border-radius: 27px; border: 2px solid rgba(72,242,141,.72); background: #061319; }
+.install-gate-showcase-card img { width: 145%; height: 145%; max-width: none; object-fit: cover; object-position: center 66%; }
+.install-gate-showcase-card-front { top: 7%; left: 31%; width: 40%; height: 85%; transform: rotate(2deg); border-radius: 30px; }
+.install-gate-showcase-card-back { top: 17%; width: 39%; height: 68%; }
+.install-gate-showcase-lineup { left: 3%; transform: rotate(-9deg) translateY(14px); }
+.install-gate-showcase-availability { right: 2%; transform: rotate(8deg) translateY(22px); }
+.install-gate-showcase-lineup img { transform: translate(-15%, -12%); }
+.install-gate-showcase-availability img { transform: translate(-15%, -12%); }
+.install-gate-showcase-card-front img { transform: translate(-15%, -12%); }
+.install-gate-showcase-chip-top { top: 2%; left: 0; }
+.install-gate-showcase-chip-bottom { right: -1%; bottom: 2%; }
+@media (max-width: 900px) {
+  .install-gate-hero { grid-template-columns: minmax(0, 1fr) minmax(300px, .85fr); gap: 20px; }
+  .install-gate-showcase-orbit { height: 490px; }
+}
+@media (max-width: 620px) {
+  .install-gate-hero { display: flex; flex-direction: column; align-items: stretch; gap: 20px; padding-top: 34px; }
+  .install-gate-hero-visual { order: 2; width: 100%; }
+  .install-gate-showcase-orbit { width: min(100%, 440px); height: 440px; }
+  .install-gate-showcase-card-front { left: 31%; width: 40%; }
+  .install-gate-showcase-card-back { width: 39%; height: 66%; }
+  .install-gate-showcase-chip-top { left: 0; }
+  .install-gate-showcase-chip-bottom { right: 0; }
+}
