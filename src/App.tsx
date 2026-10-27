@@ -4701,15 +4701,8 @@ function playerAtPosition(position: string) {
                 <div style={{ color: '#cbd5e1', fontSize: '11px', lineHeight: 1.5, maxWidth: '420px' }}>Plan quarter-by-quarter lineups, keep player rotations organized, and stay focused on coaching.</div>
                 <div style={{ color: '#6ee7b7', fontSize: '11px', fontWeight: 800, marginTop: '9px' }}>beautifulgameiq.com</div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 260px', minWidth: 0, background: '#fff', borderRadius: '10px', padding: '10px 12px', color: '#111827', boxSizing: 'border-box' }}>
-                <img src="/bgiq-download-qr.svg" alt="QR code to beautifulgameiq.com" style={{ display: 'block', width: '76px', height: '76px', flex: '0 0 76px', imageRendering: 'pixelated' }} />
-                <div style={{ minWidth: 0, fontSize: '10px', lineHeight: 1.5 }}>
-                  <div style={{ fontSize: '11px', fontWeight: 900, marginBottom: '4px' }}>GET BEAUTIFUL GAME IQ</div>
-                  <div style={{ fontWeight: 800 }}>Website</div>
-                  <div style={{ overflowWrap: 'anywhere' }}>beautifulgameiq.com</div>
-                  <div style={{ fontWeight: 800, marginTop: '3px' }}>iPhone / iPad App Store</div>
-                  <div style={{ overflowWrap: 'anywhere' }}>apps.apple.com/us/app/beautiful-game-iq/id6814654300</div>
-                </div>
+              <div style={{ flex: '1 1 100%', minWidth: 0, marginTop: '8px' }}>
+                <div style={{ color: '#6ee7b7', fontSize: '12px', fontWeight: 900, letterSpacing: '0.2px' }}>beautifulgameiq.com</div>
               </div>
             </div>
 
