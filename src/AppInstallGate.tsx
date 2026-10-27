@@ -3,7 +3,7 @@ import appIcon from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-5
 import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
-const SCREENSHOT_BASE = 'https://raw.githubusercontent.com/codysowa/beautiful-game-iq/staging/close-web-coaching-access/public'
+const SCREENSHOT_BASE = 'https://raw.githubusercontent.com/codysowa/beautiful-game-iq/staging%2Fclose-web-coaching-access/public'
 const LINEUP = `${SCREENSHOT_BASE}/v2-full-game-lineup.jpg`
 const AVAILABILITY = `${SCREENSHOT_BASE}/v2-matchday-availability.jpg`
 const LIVE_GAME = `${SCREENSHOT_BASE}/v2-live-game-control.jpg`
