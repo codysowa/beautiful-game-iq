@@ -277,3 +277,32 @@
   .install-gate-hero-visual { order: 2; width: 100%; }
   .install-gate-hero-artwork { width: 100%; max-width: 520px; margin: 0 auto; }
 }
+
+
+/* Blend the supplied hero artwork into the page rather than presenting it as a hard-edged pasted rectangle. */
+.install-gate-hero-visual {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+.install-gate-hero-visual::before {
+  content: "";
+  position: absolute;
+  inset: 4% 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(12, 75, 64, .30) 0%, rgba(8, 40, 39, .18) 45%, transparent 74%);
+  filter: blur(24px);
+}
+.install-gate-hero-artwork {
+  -webkit-mask-image: radial-gradient(ellipse 78% 74% at 52% 52%, #000 53%, rgba(0,0,0,.94) 68%, rgba(0,0,0,.52) 83%, transparent 100%);
+  mask-image: radial-gradient(ellipse 78% 74% at 52% 52%, #000 53%, rgba(0,0,0,.94) 68%, rgba(0,0,0,.52) 83%, transparent 100%);
+  filter: drop-shadow(0 20px 34px rgba(0, 0, 0, .16));
+}
+@media (max-width: 620px) {
+  .install-gate-hero-artwork {
+    -webkit-mask-image: radial-gradient(ellipse 86% 78% at 52% 50%, #000 62%, rgba(0,0,0,.88) 78%, transparent 100%);
+    mask-image: radial-gradient(ellipse 86% 78% at 52% 50%, #000 62%, rgba(0,0,0,.88) 78%, transparent 100%);
+  }
+}
