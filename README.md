@@ -24,3 +24,14 @@ It is designed for real youth soccer coaching—not complicated analytics for an
 ## Bug reports
 
 The app includes Report a Bug. Reports are addressed to the team owner and include useful diagnostic context so issues can be reproduced and fixed quickly.
+
+## Website design state — preserve these decisions
+
+The public marketing/install homepage is implemented in `src/AppInstallGate.tsx` and `src/AppInstallGate.css`. Treat the current deployed layout as the approved baseline; do not replace or redesign the lower sections when making a targeted hero change.
+
+- **Hero:** dark teal/black background, left-side headline and copy, green App Store CTA, short benefit checklist, and the single `/screen.png` three-phone stadium hero artwork on the right. Keep the image blended into the background with the existing soft-edge treatment; do not substitute analytics screenshots or build overlapping phone cards in CSS.
+- **Feature section:** retain the “Less managing. More coaching.” heading and all four full feature-art cards below the hero.
+- **Feature artwork:** the four existing assets in `public/` are referenced by `src/AppInstallGate.tsx`. Preserve their full image content. Do not force a fixed aspect ratio or use `object-fit: cover` on the feature-card artwork, because that crops the screenshots. Keep the natural image proportions / no-crop behavior that was fixed in commit `43fd662`.
+- **CTA destinations:** the App Store buttons should continue to link to the existing App Store listing. The Android message is intentional until an Android release exists.
+- **When editing:** make the smallest targeted change possible, preserve both hero and feature section, run `npm run build` before deploying, and verify the deployed page at desktop and mobile sizes. Avoid reverting the lower section when changing the hero.
+
