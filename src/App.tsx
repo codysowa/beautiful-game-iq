@@ -4690,18 +4690,9 @@ function playerAtPosition(position: string) {
   
             <div
               className="rotation-export-branding"
-              style={{ display: 'none', alignItems: 'center', justifyContent: 'space-between', gap: '18px', flexWrap: 'wrap', marginTop: '18px', padding: '16px', background: 'linear-gradient(135deg, #0b211b 0%, #101923 100%)', border: '1px solid #245a47', borderRadius: '14px', color: '#e5e7eb', boxSizing: 'border-box', breakInside: 'avoid' }}
+              style={{ display: 'none', marginTop: '14px', color: '#6ee7b7', fontSize: '12px', fontWeight: 900, letterSpacing: '0.2px' }}
             >
-              <div style={{ flex: '1 1 220px', minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginBottom: '8px' }}>
-                  <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '34px', height: '34px', borderRadius: '9px', background: '#10b981', color: '#03251b', fontWeight: 1000, fontSize: '17px', letterSpacing: '-1px' }}>BG</span>
-                  <span style={{ fontSize: '16px', fontWeight: 950, letterSpacing: '-0.3px', color: '#fff' }}>Beautiful Game IQ</span>
-                </div>
-                <div style={{ color: '#a7f3d0', fontSize: '12px', fontWeight: 800, marginBottom: '5px' }}>Fair playing time. Smarter rotations.</div>
-                <div style={{ color: '#cbd5e1', fontSize: '11px', lineHeight: 1.5, maxWidth: '420px' }}>Plan quarter-by-quarter lineups, keep player rotations organized, and stay focused on coaching.</div>
-
-              </div>
-              <div style={{ flex: '1 1 100%', minWidth: 0, marginTop: '14px', color: '#6ee7b7', fontSize: '12px', fontWeight: 900, letterSpacing: '0.2px' }}>www.beautifulgameiq.com</div>
+              www.beautifulgameiq.com
             </div>
 
             <div className="rotation-export-actions">
