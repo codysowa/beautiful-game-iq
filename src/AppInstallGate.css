@@ -306,3 +306,42 @@
     mask-image: radial-gradient(ellipse 86% 78% at 52% 50%, #000 62%, rgba(0,0,0,.88) 78%, transparent 100%);
   }
 }
+
+
+/* Final hero polish: feather all four edges into the page's dark stadium palette. */
+.install-gate-hero-visual {
+  position: relative;
+  isolation: isolate;
+}
+.install-gate-hero-visual::before {
+  inset: -3% -5%;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 54% 50%, rgba(15, 105, 79, .24) 0%, rgba(8, 48, 43, .18) 48%, transparent 74%);
+  filter: blur(34px);
+}
+.install-gate-hero-artwork {
+  position: relative;
+  z-index: 1;
+  border-radius: 22px;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  mask-composite: intersect;
+  filter: saturate(1.04) drop-shadow(0 18px 38px rgba(0, 0, 0, .18));
+}
+@media (max-width: 620px) {
+  .install-gate-hero-artwork {
+    border-radius: 16px;
+    -webkit-mask-image:
+      linear-gradient(to right, transparent 0%, #000 3%, #000 97%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, #000 4%, #000 96%, transparent 100%);
+    mask-image:
+      linear-gradient(to right, transparent 0%, #000 3%, #000 97%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, #000 4%, #000 96%, transparent 100%);
+  }
+}
