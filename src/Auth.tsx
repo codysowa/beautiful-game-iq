@@ -11,6 +11,7 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [confirmationPending, setConfirmationPending] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -43,10 +44,15 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
     }
 
     if (mode === 'signup') {
-      const { error } = await supabase.auth.signUp({
+      const emailRedirectTo = Capacitor.isNativePlatform()
+        ? 'beautifulgameiq://auth'
+        : 'https://beautiful-game-iq.pages.dev/'
+
+      const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
+          emailRedirectTo,
           data: {
             display_name: displayName.trim(),
           },
@@ -55,10 +61,12 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
 
       if (error) {
         setError(error.message)
+      } else if (data.session) {
+        setConfirmationPending(false)
+        setMessage('Your account is ready. You can start coaching.')
       } else {
-        setMessage(
-          "Account created. Check your inbox for a confirmation email. If you don't see it, check your spam or junk folder."
-        )
+        setConfirmationPending(true)
+        setMessage('Your account details were accepted. Confirm your email to finish setup. If it does not arrive in a few minutes, you can resend it here.')
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
@@ -72,6 +80,41 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
     }
 
     setLoading(false)
+  }
+
+  async function handleResendConfirmation() {
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) {
+      setError('Enter the email address you used to sign up.')
+      return
+    }
+
+    setLoading(true)
+    setMessage('')
+    setError('')
+
+    const emailRedirectTo = Capacitor.isNativePlatform()
+      ? 'beautifulgameiq://auth'
+      : 'https://beautiful-game-iq.pages.dev/'
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: trimmedEmail,
+        options: { emailRedirectTo },
+      })
+
+      if (error) {
+        setError(error.message)
+      } else {
+        setConfirmationPending(true)
+        setMessage('If this address has a pending confirmation, a new email has been requested. Check your inbox; check spam or junk only if it is missing.')
+      }
+    } catch {
+      setError('We could not request a confirmation email right now. Please try again in a moment.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleForgotPassword() {
@@ -179,7 +222,7 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
                   : 'Your password'
               }
               autoComplete={
-                mode === 'reset' ? 'new-password' : 'current-password'
+                mode === 'reset' || mode === 'signup' ? 'new-password' : 'current-password'
               }
               required
               minLength={6}
@@ -208,8 +251,19 @@ export default function Auth({ passwordRecovery = false }: { passwordRecovery?: 
           </button>
         )}
 
-        {message && <div className="auth-message">{message}</div>}
-        {error && <div className="auth-error">{error}</div>}
+        {message && <div className="auth-message" role="status">{message}</div>}
+        {error && <div className="auth-error" role="alert">{error}</div>}
+
+        {mode === 'signup' && confirmationPending && (
+          <button
+            type="button"
+            className="auth-switch"
+            onClick={handleResendConfirmation}
+            disabled={loading || !email.trim()}
+          >
+            {loading ? 'PLEASE WAIT...' : 'Resend confirmation email'}
+          </button>
+        )}
 
         {mode !== 'reset' && (
           <button
