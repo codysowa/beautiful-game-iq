@@ -85,7 +85,11 @@ export default function AppInstallGate() {
         </div>
         <div className="install-gate-feature-grid">
           {features.map((feature) => (
-            <div className="install-gate-feature-card" key={feature.number}>
+            <article className="install-gate-feature-card" key={feature.number}>
+              <div className="install-gate-feature-card-heading">
+                <span>{feature.number}</span>
+                <h3>{feature.title}</h3>
+              </div>
               {!imageErrors.includes(feature.image) ? (
                 <img src={feature.image} alt={feature.alt} loading="lazy" onError={() => hideImage(feature.image)} />
               ) : (
@@ -94,7 +98,7 @@ export default function AppInstallGate() {
                   <strong>{feature.title}</strong>
                 </div>
               )}
-            </div>
+            </article>
           ))}
         </div>
       </section>
