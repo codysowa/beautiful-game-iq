@@ -3,10 +3,11 @@ import appIcon from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-5
 import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
-const LINEUP = '/v2-full-game-lineup.jpg'
-const AVAILABILITY = '/v2-matchday-availability.jpg'
-const LIVE_GAME = '/v2-live-game-control.jpg'
-const ANALYTICS = '/v2-season-analytics.jpg'
+const SCREENSHOT_BASE = 'https://raw.githubusercontent.com/codysowa/beautiful-game-iq/staging/close-web-coaching-access/public'
+const LINEUP = `${SCREENSHOT_BASE}/v2-full-game-lineup.jpg`
+const AVAILABILITY = `${SCREENSHOT_BASE}/v2-matchday-availability.jpg`
+const LIVE_GAME = `${SCREENSHOT_BASE}/v2-live-game-control.jpg`
+const ANALYTICS = `${SCREENSHOT_BASE}/v2-season-analytics.jpg`
 
 const features = [
   { number: '01', title: 'Build the Full-Game Lineup', description: 'Plan your formation and substitutions across the entire match.', image: LINEUP, alt: 'Beautiful Game IQ full-game lineup screen' },
