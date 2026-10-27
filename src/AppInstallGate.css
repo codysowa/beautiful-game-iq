@@ -89,8 +89,8 @@
 .install-gate-section-heading > p:last-child, .install-gate-bottom-cta > div > p:last-child { max-width: 610px; margin: 14px 0 0; color: #aebfc4; font-size: 15px; line-height: 1.7; }
 .install-gate-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .install-gate-feature-card { min-width: 0; overflow: hidden; border: 1px solid rgba(200,231,235,.13); border-radius: 18px; background: linear-gradient(155deg, rgba(22,46,54,.82), rgba(7,20,25,.9)); box-shadow: 0 12px 32px rgba(0,0,0,.12); }
-.install-gate-feature-image { height: 230px; display: grid; place-items: center; overflow: hidden; background: radial-gradient(ellipse, rgba(22,114,89,.24), transparent 70%), #09171c; border-bottom: 1px solid rgba(255,255,255,.08); }
-.install-gate-feature-image img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; padding: 12px; }
+.install-gate-feature-image { height: 360px; display: grid; place-items: center; overflow: hidden; background: radial-gradient(ellipse, rgba(22,114,89,.24), transparent 70%), #09171c; border-bottom: 1px solid rgba(255,255,255,.08); }
+.install-gate-feature-image img { display: block; width: auto !important; height: 100% !important; max-width: 100%; object-fit: contain !important; object-position: center; padding: 8px; box-sizing: border-box; }
 .install-gate-feature-fallback { display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; color: var(--ig-green); font-size: 14px; }
 .install-gate-feature-fallback span { font-size: 44px; font-weight: 900; opacity: .35; }
 .install-gate-feature-copy { position: relative; padding: 21px 22px 24px; }
