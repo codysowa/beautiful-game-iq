@@ -240,3 +240,40 @@
   .install-gate-showcase-availability { right: 5%; }
   .install-gate-showcase-chip { font-size: 9px; padding: 9px 11px; }
 }
+
+
+/* Stitch-exported hero artwork: use the single supplied graphic without rebuilding or cropping its phones. */
+.install-gate-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+}
+.install-gate-hero-visual {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  perspective: none;
+}
+.install-gate-hero-artwork {
+  display: block;
+  width: 100%;
+  max-width: 650px;
+  height: auto;
+  object-fit: contain;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+@media (max-width: 900px) {
+  .install-gate-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+  }
+  .install-gate-hero-artwork { max-width: 100%; }
+}
+@media (max-width: 620px) {
+  .install-gate-hero { display: flex; flex-direction: column; align-items: stretch; }
+  .install-gate-hero-visual { order: 2; width: 100%; }
+  .install-gate-hero-artwork { width: 100%; max-width: 520px; margin: 0 auto; }
+}
