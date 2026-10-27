@@ -6,6 +6,7 @@ import App from './App'
 import AdminAnalytics from './AdminAnalytics'
 import './admin.css'
 import Auth from './Auth'
+import LandingPage from './LandingPage'
 import InviteOnboarding from './InviteOnboarding'
 import { supabase } from './supabase'
 import { Capacitor } from '@capacitor/core'
@@ -84,6 +85,8 @@ function Root() {
   }
 
   if (!session) {
+    const path = window.location.pathname.replace(/\\/+$/, '') || '/'
+    if (path === '/' && !passwordRecovery) return <LandingPage />
     return <Auth passwordRecovery={passwordRecovery} />
   }
 
