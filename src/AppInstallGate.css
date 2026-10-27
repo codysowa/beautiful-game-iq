@@ -100,16 +100,20 @@
 .install-gate-feature-card {
   min-width: 0;
   overflow: hidden;
-  border: 0;
+  padding: 14px;
+  border: 1px solid rgba(56, 245, 151, .19);
   border-radius: 18px;
-  background: transparent;
-  box-shadow: none;
-  transition: transform .22s ease;
+  background: linear-gradient(155deg, rgba(10, 37, 34, .96), rgba(4, 19, 22, .96));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 14px 34px rgba(0,0,0,.14);
+  transition: transform .22s ease, border-color .22s ease;
 }
-.install-gate-feature-card:hover { transform: translateY(-3px); }
-.install-gate-feature-card > img { display: block; width: 100%; height: auto; object-fit: contain; border-radius: 18px; }
-.install-gate-feature-fallback { min-height: 240px; display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; padding: 20px; color: var(--ig-mint); text-align: center; }
-.install-gate-feature-fallback span { font-size: 36px; font-weight: 900; opacity: .35; }
+.install-gate-feature-card:hover { transform: translateY(-3px); border-color: rgba(56, 245, 151, .45); }
+.install-gate-feature-card-heading { display:flex; align-items:center; gap:9px; min-height:42px; margin-bottom:12px; }
+.install-gate-feature-card-heading > span { display:grid; place-items:center; width:28px; height:28px; flex:0 0 28px; border-radius:9px; background:rgba(42,232,133,.12); color:var(--ig-mint); font-size:10px; font-weight:900; }
+.install-gate-feature-card-heading h3 { margin:0; color:#effaf6; font-size:clamp(13px,1.15vw,16px); line-height:1.2; letter-spacing:-.02em; }
+.install-gate-feature-card > img { display:block; width:100%; height:auto; object-fit:contain; border:1px solid rgba(255,255,255,.08); border-radius:10px; background:#f1f5f7; }
+.install-gate-feature-fallback { min-height:220px; display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center; padding:20px; color:var(--ig-mint); text-align:center; }
+.install-gate-feature-fallback span { font-size:36px; font-weight:900; opacity:.35; }
 
 /* Bottom CTA Section */
 .install-gate-bottom-cta {
