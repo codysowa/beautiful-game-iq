@@ -4699,11 +4699,9 @@ function playerAtPosition(position: string) {
                 </div>
                 <div style={{ color: '#a7f3d0', fontSize: '12px', fontWeight: 800, marginBottom: '5px' }}>Fair playing time. Smarter rotations.</div>
                 <div style={{ color: '#cbd5e1', fontSize: '11px', lineHeight: 1.5, maxWidth: '420px' }}>Plan quarter-by-quarter lineups, keep player rotations organized, and stay focused on coaching.</div>
-                <div style={{ color: '#6ee7b7', fontSize: '11px', fontWeight: 800, marginTop: '9px' }}>beautifulgameiq.com</div>
+
               </div>
-              <div style={{ flex: '1 1 100%', minWidth: 0, marginTop: '8px' }}>
-                <div style={{ color: '#6ee7b7', fontSize: '12px', fontWeight: 900, letterSpacing: '0.2px' }}>beautifulgameiq.com</div>
-              </div>
+              <div style={{ flex: '1 1 100%', minWidth: 0, marginTop: '14px', color: '#6ee7b7', fontSize: '12px', fontWeight: 900, letterSpacing: '0.2px' }}>www.beautifulgameiq.com</div>
             </div>
 
             <div className="rotation-export-actions">
