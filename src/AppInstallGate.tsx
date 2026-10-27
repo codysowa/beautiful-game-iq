@@ -3,10 +3,10 @@ import appIcon from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-5
 import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
-const LINEUP = '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(4).jfif'
-const AVAILABILITY = '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(2).jfif'
-const LIVE_GAME = '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(1).jfif'
-const ANALYTICS = '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(3).jfif'
+const LINEUP = '/lineup%20builder.png'
+const AVAILABILITY = '/attendence.png'
+const LIVE_GAME = '/live%20game.png'
+const ANALYTICS = '/analytics.png'
 
 const features = [
   { number: '01', title: 'Complete Game Lineups', image: LINEUP, alt: 'Complete Game Lineups — four-quarter lineup planning' },
