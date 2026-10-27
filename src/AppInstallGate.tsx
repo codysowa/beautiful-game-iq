@@ -67,8 +67,9 @@ export default function AppInstallGate() {
             <span><i>✓</i> Live game control</span>
           </div>
         </div>
-
-
+        <div className="install-gate-hero-visual" aria-label="Beautiful Game IQ live match screen preview">
+          <img src={LIVE_GAME} alt="Beautiful Game IQ live game control screen showing the score, quarter controls, match events, and soccer formation" fetchPriority="high" />
+        </div>
       </section>
 
       <section className="install-gate-features">
