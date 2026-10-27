@@ -3,11 +3,11 @@ import appIcon from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-5
 import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
-const SCREENSHOT_BASE = 'https://raw.githubusercontent.com/codysowa/beautiful-game-iq/refs/heads/staging/close-web-coaching-access/public'
-const LINEUP = `${SCREENSHOT_BASE}/v2-full-game-lineup.jpg`
-const AVAILABILITY = `${SCREENSHOT_BASE}/v2-matchday-availability.jpg`
-const LIVE_GAME = `${SCREENSHOT_BASE}/v2-live-game-control.jpg`
-const ANALYTICS = `${SCREENSHOT_BASE}/v2-season-analytics.jpg`
+const SCREENSHOT_BASE = 'https://raw.githubusercontent.com/codysowa/beautiful-game-iq/staging/close-web-coaching-access/public'
+const LINEUP = `${SCREENSHOT_BASE}/lineup%20builder.png`
+const AVAILABILITY = `${SCREENSHOT_BASE}/attendence.png`
+const LIVE_GAME = `${SCREENSHOT_BASE}/live%20game.png`
+const ANALYTICS = `${SCREENSHOT_BASE}/analytics.png`
 
 const features = [
   { number: '01', title: 'Build the Full-Game Lineup', description: 'Plan your formation and substitutions across the entire match with automated quarter tracking.', image: LINEUP, alt: 'Beautiful Game IQ full-game lineup screen' },
@@ -69,10 +69,7 @@ export default function AppInstallGate() {
           </div>
         </div>
 
-        <div className="install-gate-hero-visual" aria-label="Beautiful Game IQ app screenshots">
-          {!imageErrors.includes(LINEUP) && <img className="install-gate-hero-shot install-gate-hero-shot-lineup" src={LINEUP} alt="Beautiful Game IQ full-game lineup screen" onError={() => hideImage(LINEUP)} />}
-          {!imageErrors.includes(LIVE_GAME) && <img className="install-gate-hero-shot install-gate-hero-shot-live" src={LIVE_GAME} alt="Beautiful Game IQ live game control screen" onError={() => hideImage(LIVE_GAME)} />}
-        </div>
+
       </section>
 
       <section className="install-gate-features">
