@@ -86,7 +86,7 @@ export default function AppInstallGate() {
               ) : (
                 <div className="install-gate-feature-fallback">
                   <span>{feature.number}</span>
-                  <strong>{feature.title}</strong>
+                  <strong>{feature.alt.split(' — ')[0]}</strong>
                 </div>
               )}
             </article>
