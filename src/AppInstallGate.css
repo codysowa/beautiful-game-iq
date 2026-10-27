@@ -108,7 +108,7 @@
   transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
 }
 .install-gate-feature-card:hover { transform: translateY(-4px); border-color: rgba(56, 245, 151, .52); box-shadow: 0 24px 48px rgba(0,0,0,.32); }
-.install-gate-feature-card > img { display: block; width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; background: #07151a; }
+.install-gate-feature-card > img { display: block; width: 100%; height: auto; aspect-ratio: auto; object-fit: contain; object-position: center top; background: #07151a; }
 .install-gate-feature-fallback { min-height: 260px; display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center; padding:20px; color:var(--ig-mint); text-align:center; }
 .install-gate-feature-fallback span { font-size:36px; font-weight:900; opacity:.35; }
 
