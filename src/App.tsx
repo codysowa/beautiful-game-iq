@@ -4015,7 +4015,8 @@ function playerAtPosition(position: string) {
 
         const rect = source.getBoundingClientRect()
         const width = Math.ceil(Math.max(rect.width, source.scrollWidth))
-        const height = Math.ceil(Math.max(rect.height, source.scrollHeight))
+        // The branding footer is display:none in the live app, so reserve its export height here.
+        const height = Math.ceil(Math.max(rect.height, source.scrollHeight) + 220)
         if (!width || !height) {
           alert('The match sheet is not ready to capture. Please try again.')
           return
