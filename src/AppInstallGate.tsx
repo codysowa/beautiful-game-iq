@@ -3,16 +3,11 @@ import appIcon from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-5
 import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
-const LINEUP = '/lineup%20builder.png'
-const AVAILABILITY = '/attendence.png'
-const LIVE_GAME = '/live%20game.png'
-const ANALYTICS = '/analytics.png'
-
 const features = [
-  { number: '01', title: 'Complete Game Lineups', image: LINEUP, alt: 'Complete Game Lineups — four-quarter lineup planning' },
-  { number: '02', title: 'Plan Smarter Matchdays', image: AVAILABILITY, alt: 'Plan Smarter Matchdays — player availability and formations' },
-  { number: '03', title: 'Live Game Control', image: LIVE_GAME, alt: 'Live Game Control — real-time match tracking' },
-  { number: '04', title: 'Deep Season Analytics', image: ANALYTICS, alt: 'Deep Season Analytics — team and player performance' },
+  { number: '01', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(1).jfif', alt: 'Complete Game Lineups — four-quarter lineup planning' },
+  { number: '02', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(2).jfif', alt: 'Plan Smarter Matchdays — player availability and formations' },
+  { number: '03', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(3).jfif', alt: 'Deep Season Analytics — team and player performance' },
+  { number: '04', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(4).jfif', alt: 'Live Game Control — real-time match tracking' },
 ]
 
 function AppStoreButton() {
@@ -86,10 +81,6 @@ export default function AppInstallGate() {
         <div className="install-gate-feature-grid">
           {features.map((feature) => (
             <article className="install-gate-feature-card" key={feature.number}>
-              <div className="install-gate-feature-card-heading">
-                <span>{feature.number}</span>
-                <h3>{feature.title}</h3>
-              </div>
               {!imageErrors.includes(feature.image) ? (
                 <img src={feature.image} alt={feature.alt} loading="lazy" onError={() => hideImage(feature.image)} />
               ) : (
