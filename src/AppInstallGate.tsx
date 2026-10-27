@@ -9,10 +9,10 @@ const LIVE_GAME = '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(1).jfif'
 const ANALYTICS = '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(3).jfif'
 
 const features = [
-  { number: '01', image: LINEUP, alt: 'Complete Game Lineups — four-quarter lineup planning' },
-  { number: '02', image: AVAILABILITY, alt: 'Plan Smarter Matchdays — player availability and formations' },
-  { number: '03', image: LIVE_GAME, alt: 'Live Game Control — real-time match tracking' },
-  { number: '04', image: ANALYTICS, alt: 'Deep Season Analytics — team and player performance' },
+  { number: '01', title: 'Complete Game Lineups', image: LINEUP, alt: 'Complete Game Lineups — four-quarter lineup planning' },
+  { number: '02', title: 'Plan Smarter Matchdays', image: AVAILABILITY, alt: 'Plan Smarter Matchdays — player availability and formations' },
+  { number: '03', title: 'Live Game Control', image: LIVE_GAME, alt: 'Live Game Control — real-time match tracking' },
+  { number: '04', title: 'Deep Season Analytics', image: ANALYTICS, alt: 'Deep Season Analytics — team and player performance' },
 ]
 
 function AppStoreButton() {
