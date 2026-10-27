@@ -43,10 +43,13 @@
 /* Hero Section */
 .install-gate-hero {
   width: min(1240px, 100%); min-height: 0; margin: 0 auto;
-  display: block;
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(320px, .8fr);
+  align-items: center; gap: clamp(32px, 5vw, 76px);
   padding: 54px 0 42px;
 }
 .install-gate-hero-copy { position: relative; z-index: 2; max-width: 760px; }
+.install-gate-hero-visual { min-width: 0; display: flex; align-items: center; justify-content: center; }
+.install-gate-hero-visual img { display: block; width: min(100%, 440px); max-height: 650px; object-fit: contain; border-radius: 20px; filter: drop-shadow(0 24px 45px rgba(0,0,0,.38)); }
 .install-gate-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; color: var(--ig-mint); font-size: 11px; font-weight: 850; letter-spacing: .17em; line-height: 1.5; }
 .install-gate-eyebrow > span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ig-mint); box-shadow: 0 0 15px rgba(66,238,165,.8); }
 
@@ -129,7 +132,8 @@
 }
 
 @media (max-width: 900px) {
-  .install-gate-hero { padding: 44px 0 36px; }
+  .install-gate-hero { grid-template-columns: minmax(0, 1fr) minmax(260px, .72fr); gap: 24px; padding: 44px 0 36px; }
+  .install-gate-hero-visual img { max-height: 540px; }
   .install-gate h1 { font-size: clamp(38px, 6vw, 56px); }
   .install-gate-bottom-cta { align-items: flex-start; flex-direction: column; }
 }
@@ -141,6 +145,8 @@
   .install-gate-brand-name { font-size: 17px; }
   .install-gate-header-note { max-width: 105px; font-size: 8px; text-align: right; line-height: 1.5; }
   .install-gate-hero { display: flex; flex-direction: column; align-items: stretch; gap: 22px; padding: 40px 0 32px; }
+  .install-gate-hero-visual { order: 2; }
+  .install-gate-hero-visual img { width: min(100%, 360px); max-height: none; }
   .install-gate h1 { max-width: 560px; font-size: clamp(38px, 11vw, 56px); }
   .install-gate-intro { margin: 18px 0 22px; font-size: 15px; }
   .install-gate-store-button { min-height: 58px; width: 100%; }
