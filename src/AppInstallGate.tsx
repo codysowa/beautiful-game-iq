@@ -4,10 +4,10 @@ import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
 const features = [
-  { number: '01', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(1).jfif', alt: 'Complete Game Lineups — four-quarter lineup planning' },
+  { number: '01', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(4).jfif', alt: 'Complete Game Lineups — four-quarter lineup planning' },
   { number: '02', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(2).jfif', alt: 'Plan Smarter Matchdays — player availability and formations' },
-  { number: '03', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(3).jfif', alt: 'Deep Season Analytics — team and player performance' },
-  { number: '04', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(4).jfif', alt: 'Live Game Control — real-time match tracking' },
+  { number: '03', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(3).jfif', alt: 'Live Game Control — real-time match tracking' },
+  { number: '04', image: '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(1).jfif', alt: 'Deep Season Analytics — team and player performance' },
 ]
 
 function AppStoreButton() {
