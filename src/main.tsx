@@ -85,7 +85,7 @@ function Root() {
   }
 
   if (!session) {
-    const path = window.location.pathname.replace(/\\/+$/, '') || '/'
+    const path = '/' + window.location.pathname.split('/').filter(Boolean).join('/')
     if (path === '/' && !passwordRecovery) return <LandingPage />
     return <Auth passwordRecovery={passwordRecovery} />
   }
