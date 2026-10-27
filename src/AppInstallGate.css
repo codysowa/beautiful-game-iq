@@ -42,9 +42,9 @@
 
 /* Hero Section */
 .install-gate-hero {
-  width: min(1240px, 100%); min-height: 600px; margin: 0 auto;
+  width: min(1240px, 100%); min-height: 0; margin: 0 auto;
   display: block;
-  padding: 54px 0 76px;
+  padding: 54px 0 42px;
 }
 .install-gate-hero-copy { position: relative; z-index: 2; max-width: 760px; }
 .install-gate-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; color: var(--ig-mint); font-size: 11px; font-weight: 850; letter-spacing: .17em; line-height: 1.5; }
@@ -86,14 +86,14 @@
 .install-gate-feature-card {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid rgba(190,225,230,.14);
+  border: 0;
   border-radius: 18px;
-  background: rgba(5,16,21,.42);
-  box-shadow: 0 14px 35px rgba(0,0,0,.18);
-  transition: transform .22s ease, border-color .22s ease;
+  background: transparent;
+  box-shadow: none;
+  transition: transform .22s ease;
 }
-.install-gate-feature-card:hover { transform: translateY(-4px); border-color: rgba(66,238,165,.35); }
-.install-gate-feature-card > img { display: block; width: 100%; height: auto; object-fit: contain; }
+.install-gate-feature-card:hover { transform: translateY(-3px); }
+.install-gate-feature-card > img { display: block; width: 100%; height: auto; object-fit: contain; border-radius: 18px; }
 .install-gate-feature-fallback { min-height: 240px; display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; padding: 20px; color: var(--ig-mint); text-align: center; }
 .install-gate-feature-fallback span { font-size: 36px; font-weight: 900; opacity: .35; }
 
@@ -129,7 +129,7 @@
 }
 
 @media (max-width: 900px) {
-  .install-gate-hero { padding: 44px 0 60px; }
+  .install-gate-hero { padding: 44px 0 36px; }
   .install-gate h1 { font-size: clamp(38px, 6vw, 56px); }
   .install-gate-bottom-cta { align-items: flex-start; flex-direction: column; }
 }
@@ -140,7 +140,7 @@
   .install-gate-mark { width: 42px; height: 42px; border-radius: 12px; }
   .install-gate-brand-name { font-size: 17px; }
   .install-gate-header-note { max-width: 105px; font-size: 8px; text-align: right; line-height: 1.5; }
-  .install-gate-hero { display: flex; flex-direction: column; align-items: stretch; gap: 22px; padding: 40px 0 48px; }
+  .install-gate-hero { display: flex; flex-direction: column; align-items: stretch; gap: 22px; padding: 40px 0 32px; }
   .install-gate h1 { max-width: 560px; font-size: clamp(38px, 11vw, 56px); }
   .install-gate-intro { margin: 18px 0 22px; font-size: 15px; }
   .install-gate-store-button { min-height: 58px; width: 100%; }

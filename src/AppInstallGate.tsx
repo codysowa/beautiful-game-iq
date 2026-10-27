@@ -3,17 +3,16 @@ import appIcon from '../ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-5
 import { useState } from 'react'
 
 const APP_STORE_URL = 'https://apps.apple.com/us/app/beautiful-game-iq/id6814654300'
-const SCREENSHOT_BASE = 'https://raw.githubusercontent.com/codysowa/beautiful-game-iq/staging/close-web-coaching-access/public'
-const LINEUP = `${SCREENSHOT_BASE}/lineup%20builder.png`
-const AVAILABILITY = `${SCREENSHOT_BASE}/attendence.png`
-const LIVE_GAME = `${SCREENSHOT_BASE}/live%20game.png`
-const ANALYTICS = `${SCREENSHOT_BASE}/analytics.png`
+const LINEUP = '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(4).jfif'
+const AVAILABILITY = '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(2).jfif'
+const LIVE_GAME = '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(1).jfif'
+const ANALYTICS = '/Gemini_Generated_Image_3kluzw3kluzw3klu%20(3).jfif'
 
 const features = [
-  { number: '01', title: 'Build the Full-Game Lineup', description: 'Plan your formation and substitutions across the entire match with automated quarter tracking.', image: LINEUP, alt: 'Beautiful Game IQ full-game lineup screen' },
-  { number: '02', title: 'Manage Matchday Availability', description: 'See player availability at a glance and make informed rotation and position decisions.', image: AVAILABILITY, alt: 'Beautiful Game IQ matchday availability screen' },
-  { number: '03', title: 'Control the Live Game', description: 'Follow match events, track goals, and make instant formation adjustments as the game unfolds.', image: LIVE_GAME, alt: 'Beautiful Game IQ live game control screen' },
-  { number: '04', title: 'Deep Season Analytics', description: 'Understand player playing time, position breakdowns, and team performance over the course of the season.', image: ANALYTICS, alt: 'Beautiful Game IQ season analytics screen' },
+  { number: '01', image: LINEUP, alt: 'Complete Game Lineups — four-quarter lineup planning' },
+  { number: '02', image: AVAILABILITY, alt: 'Plan Smarter Matchdays — player availability and formations' },
+  { number: '03', image: LIVE_GAME, alt: 'Live Game Control — real-time match tracking' },
+  { number: '04', image: ANALYTICS, alt: 'Deep Season Analytics — team and player performance' },
 ]
 
 function AppStoreButton() {
