@@ -74,32 +74,26 @@
 .install-gate-proof-row span { display: inline-flex; align-items: center; gap: 7px; }
 .install-gate-proof-row i { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(66,238,165,0.18); color: var(--ig-mint); font-size: 11px; font-style: normal; font-weight: 900; }
 
-/* Hero Visuals & Mockups */
-.install-gate-hero-visual { position: relative; min-height: 500px; perspective: 1200px; }
-.install-gate-orbit { position: absolute; border: 1px solid rgba(66,238,165,0.18); border-radius: 50%; pointer-events: none; }
-.install-gate-orbit-one { width: 420px; height: 420px; right: 5%; top: 4%; box-shadow: 0 0 100px rgba(0,168,125,0.1), inset 0 0 80px rgba(0,168,125,0.08); }
-
-.install-gate-phone {
-  position: absolute; width: min(55%, 295px); padding: 10px; border: 1px solid rgba(194,229,235,0.35);
-  border-radius: 34px; background: linear-gradient(145deg, #1e333d, #040c10 35%, #0e1e24);
-  box-shadow: 0 35px 80px rgba(0,0,0,0.6), inset 0 0 0 2px rgba(255,255,255,0.08);
+/* Hero screenshots: no decorative orbit or fake phone chrome */
+.install-gate-hero-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 2vw, 26px);
+  min-width: 0;
+  padding: 12px 0;
 }
-.install-gate-phone img { display: block; width: 100%; height: auto; max-height: 500px; object-fit: cover; object-position: top; border-radius: 24px; background: #061014; }
-.install-gate-phone-back { right: 3%; top: 0; transform: rotate(6deg); }
-.install-gate-phone-front { left: 2%; top: 92px; transform: rotate(-4deg); z-index: 2; box-shadow: 0 40px 90px rgba(0,0,0,0.7), inset 0 0 0 2px rgba(255,255,255,0.12); }
-.install-gate-phone-top { height: 26px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; color: #8aa3aa; font-size: 7px; font-weight: 800; letter-spacing: .12em; }
-.install-gate-phone-top span:first-child { width: 20px; height: 4px; border-radius: 4px; background: #2d444c; }
-.install-gate-phone-top span:last-child { font-size: 8px; letter-spacing: 0; }
-
-.install-gate-visual-label {
-  position: absolute; z-index: 3; right: 0; bottom: 4px; display: flex; align-items: center; gap: 12px;
-  padding: 14px 18px; border: 1px solid rgba(255,255,255,0.15); border-radius: 16px;
-  background: rgba(6, 18, 23, 0.9); box-shadow: 0 16px 45px rgba(0,0,0,0.35); backdrop-filter: blur(16px);
+.install-gate-hero-shot {
+  display: block;
+  width: min(46%, 270px);
+  max-height: 460px;
+  object-fit: contain;
+  border: 1px solid rgba(190,225,230,.18);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.38);
 }
-.install-gate-live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ig-mint); box-shadow: 0 0 14px rgba(66,238,165,0.85); }
-.install-gate-visual-label span:last-child { display: flex; flex-direction: column; gap: 3px; }
-.install-gate-visual-label strong { font-size: 13px; color: #ffffff; }
-.install-gate-visual-label small { color: #9bb0b6; font-size: 11px; }
+.install-gate-hero-shot-lineup { transform: translateY(24px); }
+.install-gate-hero-shot-live { transform: translateY(-18px); }
 
 /* Features Section */
 .install-gate-features { width: min(1240px, 100%); margin: 0 auto; padding: 68px 0 90px; border-top: 1px solid rgba(255,255,255,0.08); }
@@ -108,29 +102,21 @@
 .install-gate-section-heading h2, .install-gate-bottom-cta h2 { margin: 0; font-size: clamp(32px, 4vw, 48px); line-height: 1.08; letter-spacing: -.045em; }
 .install-gate-section-heading > p:last-child, .install-gate-bottom-cta > div > p:last-child { max-width: 610px; margin: 14px 0 0; color: #a9bcbf; font-size: 15px; line-height: 1.7; }
 
-/* Feature Cards Grid */
-.install-gate-feature-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
-.install-gate-feature-card { 
-  min-width: 0; overflow: hidden; border: 1px solid rgba(190, 225, 230, 0.12); border-radius: 20px; 
-  background: linear-gradient(155deg, rgba(18, 40, 48, 0.85), rgba(6, 17, 22, 0.95)); 
-  box-shadow: 0 14px 35px rgba(0,0,0,0.2); 
-  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+/* Feature screenshots stand on their own: the artwork already contains its headline and copy */
+.install-gate-feature-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.install-gate-feature-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(190,225,230,.14);
+  border-radius: 18px;
+  background: rgba(5,16,21,.42);
+  box-shadow: 0 14px 35px rgba(0,0,0,.18);
+  transition: transform .22s ease, border-color .22s ease;
 }
-.install-gate-feature-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(66, 238, 165, 0.35);
-  box-shadow: 0 20px 45px rgba(0,0,0,0.3);
-}
-
-.install-gate-feature-image { height: 340px; display: grid; place-items: center; overflow: hidden; background: radial-gradient(ellipse, rgba(18, 100, 78, 0.22), transparent 75%), #061217; border-bottom: 1px solid rgba(255,255,255,0.06); }
-.install-gate-feature-image img { display: block; width: auto !important; height: 100% !important; max-width: 100%; object-fit: contain !important; object-position: center; padding: 10px; box-sizing: border-box; }
-.install-gate-feature-fallback { display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; color: var(--ig-mint); font-size: 14px; }
-.install-gate-feature-fallback span { font-size: 44px; font-weight: 900; opacity: 0.35; }
-
-.install-gate-feature-copy { position: relative; padding: 22px 20px 24px; }
-.install-gate-feature-number { color: var(--ig-mint); font-size: 10px; font-weight: 850; letter-spacing: .14em; }
-.install-gate-feature-copy h3 { margin: 8px 0 8px; color: #f5fafb; font-size: 18px; letter-spacing: -.02em; }
-.install-gate-feature-copy p { margin: 0; color: #a5b8bd; font-size: 13px; line-height: 1.65; }
+.install-gate-feature-card:hover { transform: translateY(-4px); border-color: rgba(66,238,165,.35); }
+.install-gate-feature-card > img { display: block; width: 100%; height: auto; object-fit: contain; }
+.install-gate-feature-fallback { min-height: 240px; display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; padding: 20px; color: var(--ig-mint); text-align: center; }
+.install-gate-feature-fallback span { font-size: 36px; font-weight: 900; opacity: .35; }
 
 /* Bottom CTA Section */
 .install-gate-bottom-cta {
@@ -166,9 +152,7 @@
 @media (max-width: 900px) {
   .install-gate-hero { grid-template-columns: minmax(0, 1fr) minmax(0, .85fr); gap: 22px; padding: 44px 0 60px; }
   .install-gate h1 { font-size: clamp(38px, 6vw, 56px); }
-  .install-gate-hero-visual { min-height: 420px; }
-  .install-gate-phone { width: 58%; border-radius: 26px; }
-  .install-gate-phone img { border-radius: 18px; }
+  .install-gate-hero-shot { width: min(47%, 250px); }
   .install-gate-bottom-cta { align-items: flex-start; flex-direction: column; }
 }
 
@@ -183,25 +167,15 @@
   .install-gate-intro { margin: 18px 0 22px; font-size: 15px; }
   .install-gate-store-button { min-height: 58px; width: 100%; }
   .install-gate-proof-row { gap: 9px 14px; margin-top: 22px; font-size: 11px; }
-  .install-gate-hero-visual { width: 100%; min-height: 360px; margin: 0 auto; max-width: 440px; }
-  .install-gate-orbit-one { width: 280px; height: 280px; right: 8%; top: 5%; }
-  .install-gate-phone { width: 54%; padding: 7px; border-radius: 24px; }
-  .install-gate-phone img { border-radius: 17px; max-height: 350px; }
-  .install-gate-phone-back { right: 5%; top: 0; }
-  .install-gate-phone-front { left: 4%; top: 55px; }
-  .install-gate-visual-label { right: 0; bottom: 0; padding: 11px 13px; }
-  .install-gate-visual-label strong { font-size: 12px; }
-  .install-gate-visual-label small { font-size: 10px; }
+  .install-gate-hero-visual { width: 100%; margin: 0 auto; gap: 10px; }
+  .install-gate-hero-shot { width: calc(50% - 5px); max-height: 340px; border-radius: 13px; }
+  .install-gate-hero-shot-lineup { transform: translateY(12px); }
+  .install-gate-hero-shot-live { transform: translateY(-8px); }
   .install-gate-features { padding: 44px 0 52px; }
   .install-gate-section-heading { margin-bottom: 22px; }
   .install-gate-feature-grid { grid-template-columns: 1fr; gap: 14px; }
-  .install-gate-feature-card { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1fr); align-items: stretch; }
-  .install-gate-feature-image { height: auto; min-height: 150px; border-bottom: 0; border-right: 1px solid rgba(255,255,255,0.06); }
-  .install-gate-feature-image img { padding: 8px; }
-  .install-gate-feature-copy { padding: 16px 14px; }
-  .install-gate-feature-copy h3 { font-size: 16px; }
-  .install-gate-feature-copy p { font-size: 12px; line-height: 1.55; }
-  .install-gate-feature-number { font-size: 9px; }
+  .install-gate-feature-card { border-radius: 14px; }
+  .install-gate-feature-fallback { min-height: 180px; }
   .install-gate-bottom-cta { margin-bottom: 38px; padding: 24px 18px; border-radius: 18px; gap: 20px; }
   .install-gate-bottom-cta h2 { font-size: 30px; }
   .install-gate-footer { flex-wrap: wrap; justify-content: space-between; gap: 16px; padding: 22px 0 26px; }
