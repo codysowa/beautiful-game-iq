@@ -4038,6 +4038,10 @@ function playerAtPosition(position: string) {
               element.classList?.contains('rotation-export-actions') ?? false,
             onclone: (clonedDocument) => {
               clonedDocument.querySelectorAll('.rotation-export-actions').forEach((node) => node.remove())
+              // Keep marketing branding out of the live app UI, but include it in the captured export.
+              clonedDocument.querySelectorAll<HTMLElement>('.rotation-export-branding').forEach((node) => {
+                node.style.display = 'flex'
+              })
             },
           })
 
@@ -4685,7 +4689,7 @@ function playerAtPosition(position: string) {
   
             <div
               className="rotation-export-branding"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '18px', flexWrap: 'wrap', marginTop: '18px', padding: '16px', background: 'linear-gradient(135deg, #0b211b 0%, #101923 100%)', border: '1px solid #245a47', borderRadius: '14px', color: '#e5e7eb', boxSizing: 'border-box', breakInside: 'avoid' }}
+              style={{ display: 'none', alignItems: 'center', justifyContent: 'space-between', gap: '18px', flexWrap: 'wrap', marginTop: '18px', padding: '16px', background: 'linear-gradient(135deg, #0b211b 0%, #101923 100%)', border: '1px solid #245a47', borderRadius: '14px', color: '#e5e7eb', boxSizing: 'border-box', breakInside: 'avoid' }}
             >
               <div style={{ flex: '1 1 220px', minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginBottom: '8px' }}>
