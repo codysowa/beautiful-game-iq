@@ -95,24 +95,21 @@
 .install-gate-section-heading h2, .install-gate-bottom-cta h2 { margin: 0; font-size: clamp(32px, 4vw, 48px); line-height: 1.08; letter-spacing: -.045em; }
 .install-gate-section-heading > p:last-child, .install-gate-bottom-cta > div > p:last-child { max-width: 610px; margin: 14px 0 0; color: #a9bcbf; font-size: 15px; line-height: 1.7; }
 
-/* Feature screenshots stand on their own: the artwork already contains its headline and copy */
-.install-gate-feature-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; align-items: start; }
+/* Feature cards use the four finished artwork panels from public/ — no duplicate headings or UI chrome. */
+.install-gate-feature-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
 .install-gate-feature-card {
   min-width: 0;
   overflow: hidden;
-  padding: 14px;
-  border: 1px solid rgba(56, 245, 151, .19);
+  padding: 0;
+  border: 1px solid rgba(56, 245, 151, .22);
   border-radius: 18px;
-  background: linear-gradient(155deg, rgba(10, 37, 34, .96), rgba(4, 19, 22, .96));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 14px 34px rgba(0,0,0,.14);
-  transition: transform .22s ease, border-color .22s ease;
+  background: #061512;
+  box-shadow: 0 18px 40px rgba(0,0,0,.24);
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
 }
-.install-gate-feature-card:hover { transform: translateY(-3px); border-color: rgba(56, 245, 151, .45); }
-.install-gate-feature-card-heading { display:flex; align-items:center; gap:9px; min-height:42px; margin-bottom:12px; }
-.install-gate-feature-card-heading > span { display:grid; place-items:center; width:28px; height:28px; flex:0 0 28px; border-radius:9px; background:rgba(42,232,133,.12); color:var(--ig-mint); font-size:10px; font-weight:900; }
-.install-gate-feature-card-heading h3 { margin:0; color:#effaf6; font-size:clamp(13px,1.15vw,16px); line-height:1.2; letter-spacing:-.02em; }
-.install-gate-feature-card > img { display:block; width:100%; height:auto; object-fit:contain; border:1px solid rgba(255,255,255,.08); border-radius:10px; background:#f1f5f7; }
-.install-gate-feature-fallback { min-height:220px; display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center; padding:20px; color:var(--ig-mint); text-align:center; }
+.install-gate-feature-card:hover { transform: translateY(-4px); border-color: rgba(56, 245, 151, .52); box-shadow: 0 24px 48px rgba(0,0,0,.32); }
+.install-gate-feature-card > img { display: block; width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; background: #07151a; }
+.install-gate-feature-fallback { min-height: 260px; display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center; padding:20px; color:var(--ig-mint); text-align:center; }
 .install-gate-feature-fallback span { font-size:36px; font-weight:900; opacity:.35; }
 
 /* Bottom CTA Section */
