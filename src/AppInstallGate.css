@@ -209,3 +209,34 @@
   .install-gate-showcase-chip-top { left: 0; }
   .install-gate-showcase-chip-bottom { right: 0; }
 }
+
+
+/* Replace poster artwork with actual app screen assets in the hero phones. */
+.install-gate-hero { grid-template-columns: minmax(0, 1fr) minmax(390px, .92fr); gap: clamp(20px, 3vw, 48px); }
+.install-gate-showcase-orbit { width: 100%; max-width: 610px; height: clamp(470px, 42vw, 590px); }
+.install-gate-showcase-card {
+  position: absolute; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  border: 2px solid rgba(72,242,141,.75); border-radius: 25px;
+  background: #061319; box-shadow: 0 24px 60px rgba(0,0,0,.48), 0 0 24px rgba(44,240,151,.10);
+}
+.install-gate-showcase-card img { display: block; width: 100%; height: 100%; max-width: 100%; object-fit: contain; object-position: center; transform: none; }
+.install-gate-showcase-card-front { z-index: 3; top: 7%; left: 32%; width: 36%; height: 84%; aspect-ratio: auto; transform: rotate(1.5deg); border-radius: 28px; }
+.install-gate-showcase-card-back { z-index: 2; top: 17%; width: 34%; height: 67%; opacity: .98; }
+.install-gate-showcase-lineup { left: 5%; transform: rotate(-8deg) translateY(12px); }
+.install-gate-showcase-availability { right: 5%; transform: rotate(8deg) translateY(18px); }
+.install-gate-showcase-chip-top { top: 1%; left: 2%; }
+.install-gate-showcase-chip-bottom { right: 1%; bottom: 2%; }
+@media (max-width: 900px) {
+  .install-gate-hero { grid-template-columns: minmax(0, 1fr) minmax(280px, .85fr); gap: 20px; }
+  .install-gate-showcase-orbit { height: 480px; }
+}
+@media (max-width: 620px) {
+  .install-gate-hero { display: flex; flex-direction: column; align-items: stretch; gap: 20px; padding-top: 34px; }
+  .install-gate-hero-visual { order: 2; width: 100%; }
+  .install-gate-showcase-orbit { width: min(100%, 440px); height: 440px; margin: 0 auto; }
+  .install-gate-showcase-card-front { left: 32%; width: 36%; height: 84%; }
+  .install-gate-showcase-card-back { width: 34%; height: 66%; }
+  .install-gate-showcase-lineup { left: 5%; }
+  .install-gate-showcase-availability { right: 5%; }
+  .install-gate-showcase-chip { font-size: 9px; padding: 9px 11px; }
+}
