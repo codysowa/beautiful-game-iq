@@ -69,23 +69,9 @@ export default function AppInstallGate() {
           </div>
         </div>
 
-        <div className="install-gate-hero-visual" aria-label="Preview of Beautiful Game IQ coaching tools">
-          <div className="install-gate-orbit install-gate-orbit-one" />
-          <div className="install-gate-phone install-gate-phone-back">
-            <div className="install-gate-phone-top"><span /><span>LIVE GAME CONTROL</span><span>•••</span></div>
-            {!imageErrors.includes(LIVE_GAME) && <img src={LIVE_GAME} alt="Beautiful Game IQ live game control" onError={() => hideImage(LIVE_GAME)} />}
-          </div>
-          <div className="install-gate-phone install-gate-phone-front">
-            <div className="install-gate-phone-top"><span /><span>FULL-GAME LINEUP</span><span>•••</span></div>
-            {!imageErrors.includes(LINEUP) && <img src={LINEUP} alt="Beautiful Game IQ full-game lineup" onError={() => hideImage(LINEUP)} />}
-          </div>
-          <div className="install-gate-visual-label">
-            <span className="install-gate-live-dot" />
-            <span>
-              <strong>Plan. Coach. Adjust.</strong>
-              <small>Everything you need for matchday.</small>
-            </span>
-          </div>
+        <div className="install-gate-hero-visual" aria-label="Beautiful Game IQ app screenshots">
+          {!imageErrors.includes(LINEUP) && <img className="install-gate-hero-shot install-gate-hero-shot-lineup" src={LINEUP} alt="Beautiful Game IQ full-game lineup screen" onError={() => hideImage(LINEUP)} />}
+          {!imageErrors.includes(LIVE_GAME) && <img className="install-gate-hero-shot install-gate-hero-shot-live" src={LIVE_GAME} alt="Beautiful Game IQ live game control screen" onError={() => hideImage(LIVE_GAME)} />}
         </div>
       </section>
 
@@ -97,23 +83,16 @@ export default function AppInstallGate() {
         </div>
         <div className="install-gate-feature-grid">
           {features.map((feature) => (
-            <article className="install-gate-feature-card" key={feature.number}>
-              <div className="install-gate-feature-image">
-                {!imageErrors.includes(feature.image) ? (
-                  <img src={feature.image} alt={feature.alt} loading="lazy" onError={() => hideImage(feature.image)} />
-                ) : (
-                  <div className="install-gate-feature-fallback">
-                    <span>{feature.number}</span>
-                    <strong>Beautiful Game IQ</strong>
-                  </div>
-                )}
-              </div>
-              <div className="install-gate-feature-copy">
-                <span className="install-gate-feature-number">{feature.number}</span>
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
-              </div>
-            </article>
+            <div className="install-gate-feature-card" key={feature.number}>
+              {!imageErrors.includes(feature.image) ? (
+                <img src={feature.image} alt={feature.alt} loading="lazy" onError={() => hideImage(feature.image)} />
+              ) : (
+                <div className="install-gate-feature-fallback">
+                  <span>{feature.number}</span>
+                  <strong>{feature.title}</strong>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </section>
