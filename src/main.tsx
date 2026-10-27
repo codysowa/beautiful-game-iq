@@ -95,10 +95,11 @@ function Root() {
   const isAdminAnalyticsPath =
     window.location.pathname === '/admin/analytics' ||
     window.location.pathname === '/admin/analytics/'
+  const isLoginPath = window.location.pathname === '/login' || window.location.pathname === '/login/'
 
   // Public website visitors see the existing marketing/install page. Keep
-  // coaching tools behind the native app, while preserving admin and recovery routes.
-  if (!Capacitor.isNativePlatform() && !isAdminAnalyticsPath) {
+  // coaching tools behind the native app, while preserving admin, login, and recovery routes.
+  if (!Capacitor.isNativePlatform() && !isAdminAnalyticsPath && !isLoginPath) {
     return <AppInstallGate />
   }
 
