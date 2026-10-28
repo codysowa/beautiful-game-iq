@@ -1,0 +1,99 @@
+name: Android Release Bundle Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [android/google-play-prep]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.ts'
+      - '.github/workflows/android-release-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-android-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        env:
+          VITE_ADMOB_ANDROID_BANNER_ID: ${{ vars.ADMOB_ANDROID_BANNER_ID }}
+        run: npm run build
+
+      - name: Generate Android project
+        run: npx cap add android
+
+      - name: Configure Android AdMob application ID
+        env:
+          ADMOB_ANDROID_APP_ID: ${{ vars.ADMOB_ANDROID_APP_ID }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          app_id = os.environ.get('ADMOB_ANDROID_APP_ID', '').strip() or 'ca-app-pub-3940256099942544~3347511713'
+          manifest_path = Path('android/app/src/main/AndroidManifest.xml')
+          manifest = ET.parse(manifest_path)
+          root = manifest.getroot()
+          android_ns = '{http://schemas.android.com/apk/res/android}'
+          application = root.find('application')
+          if application is None:
+              raise SystemExit('Android manifest has no application element')
+          for item in application.findall('meta-data'):
+              if item.get(android_ns + 'name') == 'com.google.android.gms.ads.APPLICATION_ID':
+                  application.remove(item)
+          ET.SubElement(application, 'meta-data', {
+              android_ns + 'name': 'com.google.android.gms.ads.APPLICATION_ID',
+              android_ns + 'value': '@string/admob_app_id',
+          })
+          ET.register_namespace('android', 'http://schemas.android.com/apk/res/android')
+          manifest.write(manifest_path, encoding='utf-8', xml_declaration=True)
+
+          strings_path = Path('android/app/src/main/res/values/strings.xml')
+          strings_tree = ET.parse(strings_path)
+          resources = strings_tree.getroot()
+          for item in resources.findall('string'):
+              if item.get('name') == 'admob_app_id':
+                  resources.remove(item)
+          ET.SubElement(resources, 'string', {'name': 'admob_app_id'}).text = app_id
+          strings_tree.write(strings_path, encoding='utf-8', xml_declaration=True)
+          PY
+
+      - name: Sync Capacitor plugins and web assets
+        run: npx cap sync android
+
+      - name: Build release Android App Bundle
+        working-directory: android
+        run: ./gradlew bundleRelease
+
+      - name: Upload unsigned AAB for build validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: beautiful-game-iq-android-release-unsigned
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 7
