@@ -39,10 +39,51 @@ jobs:
         run: npm install
 
       - name: Build web app
+        env:
+          VITE_ADMOB_ANDROID_BANNER_ID: ${{ vars.ADMOB_ANDROID_BANNER_ID }}
         run: npm run build
 
       - name: Generate Android project
         run: npx cap add android
+
+      - name: Configure Android AdMob application ID
+        env:
+          ADMOB_ANDROID_APP_ID: ${{ vars.ADMOB_ANDROID_APP_ID }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          # Google-provided demo app ID keeps cloud builds safe before AdMob is configured.
+          app_id = os.environ.get('ADMOB_ANDROID_APP_ID', '').strip() or 'ca-app-pub-3940256099942544~3347511713'
+          manifest_path = Path('android/app/src/main/AndroidManifest.xml')
+          manifest = ET.parse(manifest_path)
+          root = manifest.getroot()
+          android_ns = '{http://schemas.android.com/apk/res/android}'
+          application = root.find('application')
+          if application is None:
+              raise SystemExit('Android manifest has no application element')
+          for item in application.findall('meta-data'):
+              if item.get(android_ns + 'name') == 'com.google.android.gms.ads.APPLICATION_ID':
+                  application.remove(item)
+          ET.SubElement(application, 'meta-data', {
+              android_ns + 'name': 'com.google.android.gms.ads.APPLICATION_ID',
+              android_ns + 'value': '@string/admob_app_id',
+          })
+          ET.register_namespace('android', 'http://schemas.android.com/apk/res/android')
+          manifest.write(manifest_path, encoding='utf-8', xml_declaration=True)
+
+          strings_path = Path('android/app/src/main/res/values/strings.xml')
+          strings_tree = ET.parse(strings_path)
+          resources = strings_tree.getroot()
+          for item in resources.findall('string'):
+              if item.get('name') == 'admob_app_id':
+                  resources.remove(item)
+          ET.SubElement(resources, 'string', {'name': 'admob_app_id'}).text = app_id
+          strings_tree.write(strings_path, encoding='utf-8', xml_declaration=True)
+          print('Configured AdMob application ID for Android build.')
+          PY
 
       - name: Sync Capacitor plugins and web assets
         run: npx cap sync android
