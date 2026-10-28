@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, registerPlugin } from '@capacitor/core'
 import html2canvas from 'html2canvas'
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
@@ -213,6 +213,14 @@ function generateJoinCode() {
   return Array.from(values, (value) => chars[value % chars.length]).join('')
 }
 
+type NativeReviewPlugin = { requestReview: () => Promise<void> }
+const NativeReview = registerPlugin<NativeReviewPlugin>('App')
+
+const REVIEW_LAST_REQUEST_KEY = 'bgiq_review_last_request'
+const REVIEW_REQUEST_COUNT_KEY = 'bgiq_review_request_count'
+const REVIEW_COOLDOWN_MS = 90 * 24 * 60 * 60 * 1000
+const REVIEW_MAX_REQUESTS = 3
+
 function App() {
   const [team, setTeam] = useState<Team | null>(null)
   const [teams, setTeams] = useState<Team[]>([])
@@ -246,6 +254,22 @@ function App() {
   const [selectedMovePlayerId, setSelectedMovePlayerId] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(true)
+
+  async function requestReviewAtCoachingMilestone() {
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return
+    try {
+      const lastRequest = Number(localStorage.getItem(REVIEW_LAST_REQUEST_KEY) || 0)
+      const requestCount = Number(localStorage.getItem(REVIEW_REQUEST_COUNT_KEY) || 0)
+      const now = Date.now()
+      if (requestCount >= REVIEW_MAX_REQUESTS || (lastRequest > 0 && now - lastRequest < REVIEW_COOLDOWN_MS)) return
+      // Record before requesting because Apple may suppress the native sheet and exposes no result.
+      localStorage.setItem(REVIEW_LAST_REQUEST_KEY, String(now))
+      localStorage.setItem(REVIEW_REQUEST_COUNT_KEY, String(requestCount + 1))
+      await NativeReview.requestReview()
+    } catch (error) {
+      console.warn('Native review request unavailable', error)
+    }
+  }
 
   useEffect(() => {
     // /analytics is a direct link to the analytics section of the coach dashboard.
@@ -3846,6 +3870,7 @@ function playerAtPosition(position: string) {
         captainIds={[selectedGame.captain_1_id || captain1Id, selectedGame.captain_2_id || captain2Id].filter((id): id is string => Boolean(id)).map((id) => String(id).trim())}
         userRole={currentUserRole || 'viewer'}
         onBack={() => { setScreen('home'); void loadApp(selectedTeamId, false) }}
+        onGameCompleted={() => { void requestReviewAtCoachingMilestone() }}
       />
     )
   }
@@ -4085,6 +4110,7 @@ function playerAtPosition(position: string) {
               type="button"
               onClick={() => {
                 setScreen('home')
+                void requestReviewAtCoachingMilestone()
               }}
               style={{ background: '#1f2937', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
             >

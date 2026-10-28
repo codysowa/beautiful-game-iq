@@ -48,6 +48,7 @@ type Props = {
   lineups: Lineup[]
   captainIds: string[]
   onBack: () => void
+  onGameCompleted?: () => void
   userRole: 'owner' | 'coach' | 'viewer'
 }
 
@@ -94,6 +95,7 @@ export default function LiveGame({
   lineups,
   captainIds,
   onBack,
+  onGameCompleted,
   userRole,
 }: Props) {
   const canManageGame = userRole === 'owner' || userRole === 'coach'
@@ -423,6 +425,7 @@ export default function LiveGame({
 
     setGameStatus(nextStatus)
     setSaving(false)
+    if (nextStatus === 'Completed') onGameCompleted?.()
   }
 
   async function persistLiveLineup(nextLineup: Lineup[], targetQuarter = quarter, syncTracking = true) {

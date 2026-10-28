@@ -1,5 +1,6 @@
 import Foundation
 import Capacitor
+import StoreKit
 
 @objc(AppPlugin)
 public class AppPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -12,7 +13,8 @@ public class AppPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "getLaunchUrl", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getState", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "minimizeApp", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "toggleBackButtonHandler", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "toggleBackButtonHandler", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestReview", returnType: CAPPluginReturnPromise)
     ]
     private var observers: [NSObjectProtocol] = []
 
@@ -120,6 +122,21 @@ public class AppPlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve([
             "value": Bundle.main.preferredLocalizations.first
         ])
+    }
+
+    @objc func requestReview(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            if #available(iOS 14.0, *) {
+                if let scene = self.bridge?.viewController?.view.window?.windowScene {
+                    SKStoreReviewController.requestReview(in: scene)
+                } else {
+                    SKStoreReviewController.requestReview()
+                }
+            } else {
+                SKStoreReviewController.requestReview()
+            }
+            call.resolve()
+        }
     }
 
     @objc func toggleBackButtonHandler(_ call: CAPPluginCall) {
