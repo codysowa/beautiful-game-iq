@@ -86,14 +86,74 @@ jobs:
       - name: Sync Capacitor plugins and web assets
         run: npx cap sync android
 
+      - name: Configure release signing when secrets are available
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "Signing secrets are not configured; building an unsigned validation bundle."
+            echo "ANDROID_SIGNING_CONFIGURED=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/upload-keystore.jks" >> "$GITHUB_ENV"
+          echo "ANDROID_SIGNING_CONFIGURED=true" >> "$GITHUB_ENV"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+
+          gradle_file = Path('android/app/build.gradle')
+          if not gradle_file.exists():
+              raise SystemExit('Expected android/app/build.gradle was not generated')
+          text = gradle_file.read_text()
+          signing_block = '''
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file(System.getenv("ANDROID_KEYSTORE_PATH"))
+                      storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                      keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+                  }
+              }
+          }
+          '''
+          # Add signingConfigs inside the existing android block, immediately after its opening.
+          marker = 'android {'
+          if marker not in text:
+              raise SystemExit('Could not find android block in app/build.gradle')
+          text = text.replace(marker, marker + signing_block[len('''
+          android {
+          '''):], 1)
+          # Attach the release build type to the signing config.
+          import re
+          pattern = r'buildTypes\s*\{\s*release\s*\{'
+          if not re.search(pattern, text):
+              raise SystemExit('Could not find release buildType in app/build.gradle')
+          text = re.sub(pattern, 'buildTypes {\n        release {\n            signingConfig signingConfigs.release', text, count=1)
+          gradle_file.write_text(text)
+          PY
+        shell: bash
+
       - name: Build release Android App Bundle
         working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew bundleRelease
 
-      - name: Upload unsigned AAB for build validation
+      - name: Upload release Android App Bundle
         uses: actions/upload-artifact@v4
         with:
-          name: beautiful-game-iq-android-release-unsigned
+          name: beautiful-game-iq-android-release
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 7
+
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload-keystore.jks"
