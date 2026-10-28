@@ -3307,3 +3307,10 @@ body {
     page-break-inside: avoid;
   }
 }
+
+/* Keep date and time values readable on the dark New Game screen. */
+.app.dark-app-shell .new-game-workspace .game-date-time-grid select {
+  color: #e5eef5 !important;
+  -webkit-text-fill-color: #e5eef5 !important;
+  background-color: #09141d !important;
+}
