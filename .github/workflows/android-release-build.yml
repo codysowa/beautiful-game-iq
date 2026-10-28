@@ -103,14 +103,16 @@ jobs:
           echo "ANDROID_SIGNING_CONFIGURED=true" >> "$GITHUB_ENV"
           python3 - <<'PY'
           from pathlib import Path
-          import os
+          import re
 
           gradle_file = Path('android/app/build.gradle')
           if not gradle_file.exists():
               raise SystemExit('Expected android/app/build.gradle was not generated')
           text = gradle_file.read_text()
-          signing_block = '''
-          android {
+          marker = 'android {'
+          if marker not in text:
+              raise SystemExit('Could not find android block in app/build.gradle')
+          signing_config = '''
               signingConfigs {
                   release {
                       storeFile file(System.getenv("ANDROID_KEYSTORE_PATH"))
@@ -119,17 +121,8 @@ jobs:
                       keyPassword System.getenv("ANDROID_KEY_PASSWORD")
                   }
               }
-          }
           '''
-          # Add signingConfigs inside the existing android block, immediately after its opening.
-          marker = 'android {'
-          if marker not in text:
-              raise SystemExit('Could not find android block in app/build.gradle')
-          text = text.replace(marker, marker + signing_block[len('''
-          android {
-          '''):], 1)
-          # Attach the release build type to the signing config.
-          import re
+          text = text.replace(marker, marker + signing_config, 1)
           pattern = r'buildTypes\s*\{\s*release\s*\{'
           if not re.search(pattern, text):
               raise SystemExit('Could not find release buildType in app/build.gradle')
