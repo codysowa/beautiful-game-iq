@@ -4015,8 +4015,8 @@ function playerAtPosition(position: string) {
 
         const rect = source.getBoundingClientRect()
         const width = Math.ceil(Math.max(rect.width, source.scrollWidth))
-        // The branding footer is display:none in the live app, so reserve its export height here.
-        const height = Math.ceil(Math.max(rect.height, source.scrollHeight) + 220)
+        // Reserve only enough room for the single-line website footer in the export.
+        const height = Math.ceil(Math.max(rect.height, source.scrollHeight) + 36)
         if (!width || !height) {
           alert('The match sheet is not ready to capture. Please try again.')
           return
@@ -4690,9 +4690,9 @@ function playerAtPosition(position: string) {
   
             <div
               className="rotation-export-branding"
-              style={{ display: 'none', marginTop: '14px', color: '#6ee7b7', fontSize: '12px', fontWeight: 900, letterSpacing: '0.2px' }}
+              style={{ display: 'none', marginTop: '8px', color: '#6ee7b7', fontSize: '12px', fontWeight: 900, letterSpacing: '0.2px' }}
             >
-              www.beautifulgameiq.com
+              beautifulgameiq.com
             </div>
 
             <div className="rotation-export-actions">
