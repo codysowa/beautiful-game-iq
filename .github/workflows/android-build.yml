@@ -92,6 +92,26 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug
 
+      - name: Smoke test APK in Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            adb install android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell monkey -p com.beautifulgameiq.app 1
+            sleep 15
+            adb logcat -d -t 2500 > emulator-logcat.txt
+            if grep -E 'FATAL EXCEPTION|Process: com.beautifulgameiq.app.*has died' emulator-logcat.txt; then
+              echo "App crashed during emulator smoke test."
+              exit 1
+            fi
+            echo "APK installed and launched in Android emulator without a detected crash."
+
       - name: Upload APK for device testing
         uses: actions/upload-artifact@v4
         with:
