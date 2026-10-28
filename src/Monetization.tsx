@@ -13,6 +13,8 @@ const PREMIUM_ENTITLEMENT = 'premium_no_ads'
 
 const revenueCatIosKey = import.meta.env.VITE_REVENUECAT_IOS_API_KEY || ''
 const admobIosBannerId = import.meta.env.VITE_ADMOB_IOS_BANNER_ID || ''
+const admobAndroidBannerId = import.meta.env.VITE_ADMOB_ANDROID_BANNER_ID || ''
+const admobAndroidTestBannerId = 'ca-app-pub-3940256099942544/9214589741'
 
 type Props = {
   userId: string
@@ -27,6 +29,8 @@ export default function Monetization({ userId }: Props) {
   const [message, setMessage] = useState('')
 
   const isNativeIos = Capacitor.getPlatform() === 'ios'
+  const isNativePlatform = Capacitor.isNativePlatform()
+  const androidBannerId = admobAndroidBannerId || admobAndroidTestBannerId
 
   async function refreshCustomerInfo() {
     if (!isNativeIos || !revenueCatIosKey) return false
@@ -38,7 +42,7 @@ export default function Monetization({ userId }: Props) {
   }
 
   async function setupAds() {
-    if (!isNativeIos || !admobIosBannerId) return
+    if (!isNativePlatform || (isNativeIos && !admobIosBannerId)) return
 
     await AdMob.initialize()
 
@@ -53,7 +57,7 @@ export default function Monetization({ userId }: Props) {
 
     if (!consentInfo.canRequestAds) return
 
-    if (!consentInfo.isConsentFormAvailable) {
+    if (isNativeIos && !consentInfo.isConsentFormAvailable) {
       const tracking = await AdMob.trackingAuthorizationStatus()
       if (tracking.status === 'notDetermined') {
         await AdMob.requestTrackingAuthorization()
@@ -61,15 +65,16 @@ export default function Monetization({ userId }: Props) {
     }
 
     await AdMob.showBanner({
-      adId: admobIosBannerId,
+      adId: isNativeIos ? admobIosBannerId : androidBannerId,
       adSize: BannerAdSize.ADAPTIVE_BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
       margin: 0,
+      isTesting: !isNativeIos && !admobAndroidBannerId,
     })
   }
 
   async function hideAds() {
-    if (!isNativeIos) return
+    if (!isNativePlatform) return
     try {
       await AdMob.removeBanner()
     } catch {
@@ -78,7 +83,7 @@ export default function Monetization({ userId }: Props) {
   }
 
   async function initialize() {
-    if (!isNativeIos) {
+    if (!isNativePlatform) {
       setReady(true)
       return
     }
@@ -86,7 +91,7 @@ export default function Monetization({ userId }: Props) {
     try {
       let activePremium = false
 
-      if (revenueCatIosKey) {
+      if (isNativeIos && revenueCatIosKey) {
         await Purchases.configure({
           apiKey: revenueCatIosKey,
           appUserID: userId || undefined,
@@ -120,19 +125,19 @@ export default function Monetization({ userId }: Props) {
 
     return () => {
       active = false
-      if (isNativeIos) void hideAds()
+      if (isNativePlatform) void hideAds()
     }
   }, [userId])
 
   useEffect(() => {
-    if (!isNativeIos || !ready) return
+    if (!isNativePlatform || !ready) return
 
     if (premium) {
       void hideAds()
     } else {
       void setupAds().catch((error) => console.error('Could not show ads:', error))
     }
-  }, [premium, ready])
+  }, [isNativePlatform, isNativeIos, premium, ready])
 
   useEffect(() => {
     if (!isNativeIos || !ready) return
