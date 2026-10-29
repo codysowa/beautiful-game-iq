@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.beautifulgameiq.app',
+  appId: 'com.beautifulgameiq.com',
   appName: 'Beautiful Game IQ',
   webDir: 'dist',
   bundledWebRuntime: false,
