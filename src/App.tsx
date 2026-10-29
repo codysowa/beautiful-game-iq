@@ -4046,32 +4046,46 @@ function playerAtPosition(position: string) {
         copyStyles(source, clone)
         clone.querySelectorAll('.rotation-export-actions').forEach((node) => node.remove())
 
-        const html = new XMLSerializer().serializeToString(clone)
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="0 0 ${width} ${height}"><foreignObject x="0" y="0" width="${width}" height="${height}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">${html}</div></foreignObject></svg>`
-        const svgUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
+        let svgUrl: string | null = null
 
         try {
-          const image = new Image()
-          image.src = svgUrl
-          await new Promise<void>((resolve, reject) => {
-            image.onload = () => resolve()
-            image.onerror = () => reject(new Error('Could not render match sheet capture'))
-          })
+          let blob: Blob
 
-          const canvas = document.createElement('canvas')
-          canvas.width = width * 2
-          canvas.height = height * 2
-          const context = canvas.getContext('2d')
-          if (!context) throw new Error('Canvas is unavailable')
-          context.scale(2, 2)
-          context.drawImage(image, 0, 0, width, height)
-
-          const blob = await new Promise<Blob>((resolve, reject) => {
-            canvas.toBlob((result) => {
-              if (result) resolve(result)
-              else reject(new Error('Could not create PNG'))
-            }, 'image/png')
-          })
+          if (Capacitor.getPlatform() === 'android') {
+            // Android WebView does not reliably render SVG foreignObject captures.
+            const { default: html2canvas } = await import('html2canvas')
+            const canvas = await html2canvas(source, {
+              backgroundColor: '#090d12',
+              scale: 2,
+              useCORS: true,
+              logging: false,
+              width,
+              height,
+            })
+            blob = await new Promise<Blob>((resolve, reject) => {
+              canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Could not create PNG')), 'image/png')
+            })
+          } else {
+            const html = new XMLSerializer().serializeToString(clone)
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="0 0 ${width} ${height}"><foreignObject x="0" y="0" width="${width}" height="${height}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">${html}</div></foreignObject></svg>`
+            svgUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
+            const image = new Image()
+            image.src = svgUrl
+            await new Promise<void>((resolve, reject) => {
+              image.onload = () => resolve()
+              image.onerror = () => reject(new Error('Could not render match sheet capture'))
+            })
+            const canvas = document.createElement('canvas')
+            canvas.width = width * 2
+            canvas.height = height * 2
+            const context = canvas.getContext('2d')
+            if (!context) throw new Error('Canvas is unavailable')
+            context.scale(2, 2)
+            context.drawImage(image, 0, 0, width, height)
+            blob = await new Promise<Blob>((resolve, reject) => {
+              canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Could not create PNG')), 'image/png')
+            })
+          }
           const safeDate = String(game.game_date || 'match').replace(/[^a-zA-Z0-9-]/g, '-')
           const fileName = `BGIQ-Match-Sheet-${safeDate}.png`
           const file = new File([blob], fileName, { type: 'image/png' })
@@ -4094,7 +4108,7 @@ function playerAtPosition(position: string) {
           console.error('Could not capture/share match sheet', error)
           alert('Could not capture or share the match sheet image. Please try again.')
         } finally {
-          URL.revokeObjectURL(svgUrl)
+          if (svgUrl) URL.revokeObjectURL(svgUrl)
         }
       }
       return (
@@ -4956,7 +4970,7 @@ function playerAtPosition(position: string) {
     </div>
 
       {!showNewUserOnboarding && (
-        <nav className="bottom-nav">
+        <nav className={`bottom-nav${Capacitor.getPlatform() === 'android' ? ' bottom-nav-android' : ''}`}>
           <button onClick={async () => { setArchivedViewTeam(null); await loadApp(); setScreen('home') }}>
             <span>Home</span>
           </button>
