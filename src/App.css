@@ -3307,3 +3307,11 @@ body {
     page-break-inside: avoid;
   }
 }
+
+
+/* Keep Android app navigation above the native AdMob banner. */
+@media (max-width: 760px) {
+  .bottom-nav-android {
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+  }
+}
