@@ -52,12 +52,12 @@ jobs:
           from pathlib import Path
           path = Path('android/app/build.gradle')
           content = path.read_text()
-          if 'versionCode 1' not in content:
-              raise SystemExit('Expected generated Android versionCode 1 not found; refusing unsafe replacement.')
-          content = content.replace('versionCode 1', 'versionCode 2', 1)
-          content = content.replace('versionName "1.0"', 'versionName "1.0.1"', 1)
+          if 'versionCode 3' not in content:
+              raise SystemExit('Expected generated Android versionCode 3 not found; refusing unsafe replacement.')
+          content = content.replace('versionCode 3', 'versionCode 2', 1)
+          content = content.replace('versionName "1.0"', 'versionName "1.0.2"', 1)
           path.write_text(content)
-          print('Set Android versionCode=2 and versionName=1.0.1')
+          print('Set Android versionCode=3 and versionName=1.0.2')
           PY
 
       - name: Generate branded Android launcher icons
