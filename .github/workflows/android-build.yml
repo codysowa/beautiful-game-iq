@@ -68,11 +68,21 @@ jobs:
           mark.thumbnail((284, 284), Image.Resampling.LANCZOS)
           foreground.alpha_composite(mark, ((432 - mark.width) // 2, (432 - mark.height) // 2))
           foreground.save(drawable / 'ic_launcher_foreground.png')
-          colors = Path('android/app/src/main/res/values/colors.xml')
-          colors.parent.mkdir(parents=True, exist_ok=True)
-          root = ET.Element('resources')
-          ET.SubElement(root, 'color', {'name': 'ic_launcher_background'}).text = '#07101B'
-          ET.ElementTree(root).write(colors, encoding='utf-8', xml_declaration=True)
+          colors = Path('android/app/src/main/res/values/ic_launcher_background.xml')
+          if colors.exists():
+              tree = ET.parse(colors)
+              root = tree.getroot()
+              color = root.find("color[@name='ic_launcher_background']")
+              if color is None:
+                  color = ET.SubElement(root, 'color', {'name': 'ic_launcher_background'})
+              color.text = '#07101B'
+              tree.write(colors, encoding='utf-8', xml_declaration=True)
+          else:
+              values = Path('android/app/src/main/res/values')
+              values.mkdir(parents=True, exist_ok=True)
+              root = ET.Element('resources')
+              ET.SubElement(root, 'color', {'name': 'ic_launcher_background'}).text = '#07101B'
+              ET.ElementTree(root).write(colors, encoding='utf-8', xml_declaration=True)
           adaptive = Path('android/app/src/main/res/mipmap-anydpi-v26')
           adaptive.mkdir(parents=True, exist_ok=True)
           (adaptive / 'ic_launcher.xml').write_text(
