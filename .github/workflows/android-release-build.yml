@@ -106,6 +106,33 @@ jobs:
               '    <foreground android:drawable="@drawable/ic_launcher_foreground" />\n'
               '</adaptive-icon>\n'
           )
+          # Android launchers may prefer the separate round icon resource.
+          for density, size in sizes.items():
+              folder = Path(f'android/app/src/main/res/mipmap-{density}')
+              source.resize((size, size), Image.Resampling.LANCZOS).save(folder / 'ic_launcher_round.png')
+          adaptive = Path('android/app/src/main/res/mipmap-anydpi-v26')
+          adaptive.mkdir(parents=True, exist_ok=True)
+          adaptive_xml = (
+              '<?xml version="1.0" encoding="utf-8"?>\\n'
+              '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\\n'
+              '    <background android:drawable="@color/ic_launcher_background" />\\n'
+              '    <foreground android:drawable="@drawable/ic_launcher_foreground" />\\n'
+              '</adaptive-icon>\\n'
+          )
+          (adaptive / 'ic_launcher.xml').write_text(adaptive_xml)
+          (adaptive / 'ic_launcher_round.xml').write_text(adaptive_xml)
+          # Explicitly point both launcher attributes at the generated branded resources.
+          manifest_path = Path('android/app/src/main/AndroidManifest.xml')
+          manifest_tree = ET.parse(manifest_path)
+          manifest_root = manifest_tree.getroot()
+          android_ns = '{http://schemas.android.com/apk/res/android}'
+          application = manifest_root.find('application')
+          if application is None:
+              raise SystemExit('Android manifest has no application element')
+          application.set(android_ns + 'icon', '@mipmap/ic_launcher')
+          application.set(android_ns + 'roundIcon', '@mipmap/ic_launcher_round')
+          ET.register_namespace('android', 'http://schemas.android.com/apk/res/android')
+          manifest_tree.write(manifest_path, encoding='utf-8', xml_declaration=True)
           print('Generated Beautiful Game IQ launcher icons.')
           PY
 
