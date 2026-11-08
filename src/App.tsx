@@ -961,6 +961,42 @@ function App() {
     alert('Game reset. It is back to Scheduled with a clean slate.')
   }
 
+  async function deleteGame(game: Game) {
+    if (!confirm(
+      `Delete the game vs. ${game.opponent}?\\n\\nThis permanently removes the game and its associated events, lineups, attendance, and position history. This cannot be undone.`
+    )) {
+      return
+    }
+
+    const gameId = game.id
+    const cleanupResults = await Promise.all([
+      supabase.from('game_events').delete().eq('game_id', gameId),
+      supabase.from('game_live_lineups').delete().eq('game_id', gameId),
+      supabase.from('game_lineups').delete().eq('game_id', gameId),
+      supabase.from('game_attendance').delete().eq('game_id', gameId),
+      supabase.from('game_position_segments').delete().eq('game_id', gameId),
+    ])
+
+    const cleanupError = cleanupResults.find((result) => result.error)?.error
+    if (cleanupError) {
+      console.error(cleanupError)
+      alert(`Could not delete all game records: ${cleanupError.message}. The game itself was not deleted.`)
+      return
+    }
+
+    const { error } = await supabase.from('games').delete().eq('id', gameId)
+    if (error) {
+      console.error(error)
+      alert(`Could not delete game: ${error.message}`)
+      await loadApp()
+      return
+    }
+
+    setGames((current) => current.filter((item) => item.id !== gameId))
+    setSelectedGame((current) => (current?.id === gameId ? null : current))
+    if (editingGameId === gameId) setEditingGameId(null)
+  }
+
   function startEditGame(game: Game) {
     setEditingGameId(game.id)
     setOpponent(game.opponent)
@@ -3780,6 +3816,16 @@ function playerAtPosition(position: string) {
               onClick={() => resetGame(game)}
             >
               Reset Game
+            </button>
+          )}
+
+          {currentUserRole !== 'viewer' && (
+            <button
+              className="secondary-button"
+              onClick={() => deleteGame(game)}
+              style={{ color: '#b91c1c', borderColor: '#fecaca' }}
+            >
+              Delete Game
             </button>
           )}
         </div>
