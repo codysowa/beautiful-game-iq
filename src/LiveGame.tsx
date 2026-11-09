@@ -1,14 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { App } from '@capacitor/app'
-import { registerPlugin } from '@capacitor/core'
 import { supabase } from './supabase'
 
-type LiveActivityPlugin = {
-  sync(options: { gameId: string; opponent: string; ourGoals: number; theirGoals: number; quarter: number }): Promise<{ available: boolean }>
-  end(options: { gameId: string }): Promise<void>
-}
-
-const LiveActivity = registerPlugin<LiveActivityPlugin>('LiveActivity')
 import {
   getRotationAdvice,
   optimizationFormations,
@@ -515,18 +508,6 @@ export default function LiveGame({
 
   const ourGoals = events.filter((event) => event.event_type === 'our_goal').length
   const theirGoals = events.filter((event) => event.event_type === 'their_goal').length
-
-  useEffect(() => {
-    if (gameStatus === 'Live') {
-      void LiveActivity.sync({ gameId, opponent, ourGoals, theirGoals, quarter }).catch((error) => {
-        console.error('Could not sync iOS Live Activity:', error)
-      })
-    } else if (gameStatus === 'Completed') {
-      void LiveActivity.end({ gameId }).catch((error) => {
-        console.error('Could not end iOS Live Activity:', error)
-      })
-    }
-  }, [gameId, gameStatus, opponent, ourGoals, theirGoals, quarter])
 
   useEffect(() => {
     const listener = App.addListener('appUrlOpen', async ({ url }) => {
