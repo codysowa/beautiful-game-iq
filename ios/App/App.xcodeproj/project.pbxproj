@@ -88,7 +88,7 @@
 				F10000000000000000000001 /* LiveActivityPlugin.swift */,
 				F10000000000000000000002 /* LiveActivityBridgeViewController.swift */,
 				F10000000000000000000003 /* LiveGameActivityAttributes.swift */,
-				G10000000000000000000001 /* Live Activity Extension */,
+				A10000000000000000000001 /* Live Activity Extension */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
@@ -102,7 +102,7 @@
 			sourceTree = "<group>";
 		};
 
-	G10000000000000000000001 /* Live Activity Extension */ = {isa = PBXGroup; children = (F10000000000000000000005 /* Info.plist */, F10000000000000000000006 /* LiveGameWidget.swift */, ); path = LiveActivityExtension; sourceTree = "<group>"; };
+	A10000000000000000000001 /* Live Activity Extension */ = {isa = PBXGroup; children = (F10000000000000000000005 /* Info.plist */, F10000000000000000000006 /* LiveGameWidget.swift */, ); path = LiveActivityExtension; sourceTree = "<group>"; };
 
 /* End PBXGroup section */
 
@@ -114,12 +114,12 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
-				C10000000000000000000001 /* Embed App Extensions */,
+				A50000000000000000000001 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				DEP000000000000000000001 /* PBXTargetDependency */,
+				A40000000000000000000001 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -130,19 +130,19 @@
 			productType = "com.apple.product-type.application";
 		};
 
-	T10000000000000000000001 /* LiveActivityExtension */ = {isa = PBXNativeTarget; buildConfigurationList = L10000000000000000000001 /* Build configuration list for PBXNativeTarget "LiveActivityExtension" */; buildPhases = (S10000000000000000000001 /* Sources */, F10000000000000000000008 /* Frameworks */, R10000000000000000000001 /* Resources */, ); buildRules = (); dependencies = (); name = LiveActivityExtension; productName = LiveActivityExtension; productReference = F10000000000000000000007 /* LiveActivityExtension.appex */; productType = "com.apple.product-type.app-extension"; };
+	A20000000000000000000001 /* LiveActivityExtension */ = {isa = PBXNativeTarget; buildConfigurationList = A90000000000000000000001 /* Build configuration list for PBXNativeTarget "LiveActivityExtension" */; buildPhases = (A60000000000000000000001 /* Sources */, F10000000000000000000008 /* Frameworks */, A70000000000000000000001 /* Resources */, ); buildRules = (); dependencies = (); name = LiveActivityExtension; productName = LiveActivityExtension; productReference = F10000000000000000000007 /* LiveActivityExtension.appex */; productType = "com.apple.product-type.app-extension"; };
 
 /* End PBXNativeTarget section */
 
 
 /* Begin PBXContainerItemProxy section */
-	P10000000000000000000001 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = 504EC2FC1FED79650016851F /* Project object */; proxyType = 1; remoteGlobalIDString = T10000000000000000000001; remoteInfo = LiveActivityExtension; };
+	A30000000000000000000001 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = 504EC2FC1FED79650016851F /* Project object */; proxyType = 1; remoteGlobalIDString = A20000000000000000000001; remoteInfo = LiveActivityExtension; };
 /* End PBXContainerItemProxy section */
 /* Begin PBXTargetDependency section */
-	DEP000000000000000000001 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = T10000000000000000000001 /* LiveActivityExtension */; targetProxy = P10000000000000000000001 /* PBXContainerItemProxy */; };
+	A40000000000000000000001 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A20000000000000000000001 /* LiveActivityExtension */; targetProxy = A30000000000000000000001 /* PBXContainerItemProxy */; };
 /* End PBXTargetDependency section */
 /* Begin PBXCopyFilesBuildPhase section */
-	C10000000000000000000001 /* Embed App Extensions */ = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = (B10000000000000000000006 /* LiveActivityExtension.appex in Embed App Extensions */, ); name = "Embed App Extensions"; runOnlyForDeploymentPostprocessing = 0; };
+	A50000000000000000000001 /* Embed App Extensions */ = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = (B10000000000000000000006 /* LiveActivityExtension.appex in Embed App Extensions */, ); name = "Embed App Extensions"; runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXProject section */
@@ -176,7 +176,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
-				T10000000000000000000001 /* LiveActivityExtension */,
+				A20000000000000000000001 /* LiveActivityExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -196,7 +196,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 
-	R10000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+	A70000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 
 /* End PBXResourcesBuildPhase section */
 
@@ -214,7 +214,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 
-	S10000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B10000000000000000000004 /* LiveGameWidget.swift in Sources */, B10000000000000000000005 /* LiveGameActivityAttributes.swift in Sources */, ); runOnlyForDeploymentPostprocessing = 0; };
+	A60000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B10000000000000000000004 /* LiveGameWidget.swift in Sources */, B10000000000000000000005 /* LiveGameActivityAttributes.swift in Sources */, ); runOnlyForDeploymentPostprocessing = 0; };
 
 /* End PBXSourcesBuildPhase section */
 
@@ -392,8 +392,8 @@
 			name = Release;
 		};
 
-	D10000000000000000000001 /* Debug LiveActivityExtension */ = {isa = XCBuildConfiguration; buildSettings = {APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 151; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = App/LiveActivityExtension/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.1; MARKETING_VERSION = 2.0.3; PRODUCT_BUNDLE_IDENTIFIER = com.beautifulgameiq.app.LiveActivity; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SWIFT_VERSION = 6.2; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Debug; };
-	D10000000000000000000002 /* Release LiveActivityExtension */ = {isa = XCBuildConfiguration; buildSettings = {APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 151; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = App/LiveActivityExtension/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.1; MARKETING_VERSION = 2.0.3; PRODUCT_BUNDLE_IDENTIFIER = com.beautifulgameiq.app.LiveActivity; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SWIFT_VERSION = 6.2; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Release; };
+	A80000000000000000000001 /* Debug LiveActivityExtension */ = {isa = XCBuildConfiguration; buildSettings = {APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 151; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = App/LiveActivityExtension/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.1; MARKETING_VERSION = 2.0.3; PRODUCT_BUNDLE_IDENTIFIER = com.beautifulgameiq.app.LiveActivity; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SWIFT_VERSION = 6.2; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Debug; };
+	A80000000000000000000002 /* Release LiveActivityExtension */ = {isa = XCBuildConfiguration; buildSettings = {APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 151; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = App/LiveActivityExtension/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.1; MARKETING_VERSION = 2.0.3; PRODUCT_BUNDLE_IDENTIFIER = com.beautifulgameiq.app.LiveActivity; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SWIFT_VERSION = 6.2; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Release; };
 
 /* End XCBuildConfiguration section */
 
@@ -417,7 +417,7 @@
 			defaultConfigurationName = Release;
 		};
 
-	L10000000000000000000001 /* Build configuration list for PBXNativeTarget "LiveActivityExtension" */ = {isa = XCConfigurationList; buildConfigurations = (D10000000000000000000001 /* Debug */, D10000000000000000000002 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+	A90000000000000000000001 /* Build configuration list for PBXNativeTarget "LiveActivityExtension" */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000001 /* Debug */, A80000000000000000000002 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 
 /* End XCConfigurationList section */
 
