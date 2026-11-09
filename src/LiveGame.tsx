@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { App } from '@capacitor/app'
+import { registerPlugin } from '@capacitor/core'
 import { supabase } from './supabase'
+
+type LiveActivityPlugin = {
+  sync(options: { gameId: string; opponent: string; ourGoals: number; theirGoals: number; quarter: number }): Promise<{ available: boolean }>
+  end(options: { gameId: string }): Promise<void>
+}
+
+const LiveActivity = registerPlugin<LiveActivityPlugin>('LiveActivity')
 import {
   getRotationAdvice,
   optimizationFormations,
@@ -506,6 +515,73 @@ export default function LiveGame({
 
   const ourGoals = events.filter((event) => event.event_type === 'our_goal').length
   const theirGoals = events.filter((event) => event.event_type === 'their_goal').length
+
+  useEffect(() => {
+    if (gameStatus === 'Live') {
+      void LiveActivity.sync({ gameId, opponent, ourGoals, theirGoals, quarter }).catch((error) => {
+        console.error('Could not sync iOS Live Activity:', error)
+      })
+    } else if (gameStatus === 'Completed') {
+      void LiveActivity.end({ gameId }).catch((error) => {
+        console.error('Could not end iOS Live Activity:', error)
+      })
+    }
+  }, [gameId, gameStatus, opponent, ourGoals, theirGoals, quarter])
+
+  useEffect(() => {
+    const listener = App.addListener('appUrlOpen', async ({ url }) => {
+      let parsed: URL
+      try {
+        parsed = new URL(url)
+      } catch {
+        return
+      }
+
+      if (parsed.protocol !== 'beautifulgameiq:' || parsed.hostname !== 'live-game') return
+      if (parsed.searchParams.get('gameId') !== gameId) return
+
+      const action = parsed.searchParams.get('action')
+      if (action === 'next_quarter') {
+        if (gameStatus === 'Live') setQuarter((current) => Math.min(4, current + 1))
+        return
+      }
+
+      const eventType = action === 'our_goal' || action === 'their_goal' || action === 'save' || action === 'our_shot'
+        ? action
+        : null
+      if (!eventType || gameStatus !== 'Live' || !canStatTrack || saving) return
+
+      setSaving(true)
+      try {
+        const goalkeeper = eventType === 'save'
+          ? activeLineup.find((item) => item.position === 'Goalkeeper')?.player_id || null
+          : null
+        const { data, error } = await supabase
+          .from('game_events')
+          .insert({
+            game_id: gameId,
+            quarter,
+            event_type: eventType,
+            player_id: goalkeeper,
+          })
+          .select()
+          .single()
+
+        if (error || !data) {
+          console.error('Lock Screen stat could not be recorded:', error)
+          return
+        }
+
+        setEvents((current) => [data as Event, ...current])
+      } finally {
+        setSaving(false)
+      }
+    })
+
+    return () => {
+      void listener.then((handle) => handle.remove())
+    }
+  }, [gameId, gameStatus, quarter, activeLineup, canStatTrack, saving])
 
   const currentLineup = useMemo(
     () => lineups.filter((item) => item.quarter === quarter),
