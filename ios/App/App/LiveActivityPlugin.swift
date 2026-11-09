@@ -40,11 +40,11 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         Task {
             do {
                 if let activity = Activity<LiveGameActivityAttributes>.activities.first(where: { $0.attributes.gameId == gameId }) {
-                    await activity.update(ActivityContent(state: state, staleDate: nil))
+                    await activity.update(using: state)
                 } else {
                     _ = try Activity.request(
                         attributes: attributes,
-                        content: ActivityContent(state: state, staleDate: nil),
+                        contentState: state,
                         pushType: nil
                     )
                 }
