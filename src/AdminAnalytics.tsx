@@ -4,20 +4,22 @@ import { supabase } from './supabase'
 type AnalyticsPayload = {
   generated_at: string
   metrics: Record<string, number>
+  recent_users: Array<{
+    email: string
+    created_at: string
+    last_sign_in_at: string | null
+    last_active_at: string | null
+    last_activity_type: string | null
+  }>
   recent_teams: Array<{ name: string; age_group: string | null; format: string; created_at: string }>
   recent_games: Array<{ opponent: string; game_date: string; status: string; created_at: string }>
 }
 
 const metricLabels: Array<[string, string]> = [
-  ['accounts', 'Registered accounts'],
-  ['teams', 'Teams created'],
-  ['games', 'Games created'],
-  ['game_events', 'Game events recorded'],
-  ['accounts_7d', 'New accounts · 7 days'],
-  ['accounts_30d', 'New accounts · 30 days'],
-  ['teams_7d', 'Teams created · 7 days'],
-  ['teams_30d', 'Teams created · 30 days'],
-  ['games_7d', 'Games created · 7 days'],
+  ['accounts', 'Registered accounts'], ['teams', 'Teams created'], ['games', 'Games created'],
+  ['game_events', 'Game events recorded'], ['accounts_7d', 'New accounts · 7 days'],
+  ['accounts_30d', 'New accounts · 30 days'], ['teams_7d', 'Teams created · 7 days'],
+  ['teams_30d', 'Teams created · 30 days'], ['games_7d', 'Games created · 7 days'],
   ['games_30d', 'Games created · 30 days'],
 ]
 
@@ -25,6 +27,12 @@ function dateTime(value: string) {
   return new Date(value).toLocaleString(undefined, {
     month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
   })
+}
+
+function activityLabel(value: string | null) {
+  if (value === 'app_open') return 'Opened app'
+  if (value === 'app_resumed') return 'Returned to app'
+  return '—'
 }
 
 export default function AdminAnalytics() {
@@ -88,6 +96,21 @@ export default function AdminAnalytics() {
           ))}
         </section>
 
+        <section className="admin-panel admin-users-panel">
+          <div className="admin-section-title"><h2>User activity</h2><span>{data.recent_users.length} accounts</span></div>
+          <div className="admin-list">
+            {data.recent_users.map((user) => (
+              <div className="admin-list-row" key={user.email}>
+                <div>
+                  <strong>{user.email}</strong>
+                  <span>Last app activity: {user.last_active_at ? dateTime(user.last_active_at) : 'Not recorded yet'} · {activityLabel(user.last_activity_type)}</span>
+                </div>
+                <time>{user.last_sign_in_at ? `Signed in ${dateTime(user.last_sign_in_at)}` : 'No sign-in recorded'}</time>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="admin-columns">
           <article className="admin-panel">
             <div className="admin-section-title"><h2>Recently created teams</h2><span>{data.recent_teams.length} shown</span></div>
@@ -113,8 +136,8 @@ export default function AdminAnalytics() {
         </section>
 
         <p className="admin-note">
-          Counts reflect records stored in Supabase, not Apple download totals. This dashboard does not yet measure app opens,
-          unique active coaches, sessions, or feature-level usage. Account totals may include internal testing and review accounts.
+          Last app activity is tracked from app opens and returns to the foreground. Authentication sign-in timestamps remain separate.
+          Historical activity before this update cannot be reconstructed from these records.
         </p>
       </>}
     </main>
