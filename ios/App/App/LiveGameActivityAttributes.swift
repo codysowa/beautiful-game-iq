@@ -1,13 +1,24 @@
 import ActivityKit
 import Foundation
 
-struct LiveGameActivityAttributes: ActivityAttributes {
+public struct LiveGameActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        var opponent: String
-        var ourGoals: Int
-        var theirGoals: Int
-        var quarter: Int
+        public var opponent: String
+        public var ourGoals: Int
+        public var theirGoals: Int
+        public var quarter: Int
+
+        public init(opponent: String, ourGoals: Int, theirGoals: Int, quarter: Int) {
+            self.opponent = opponent
+            self.ourGoals = ourGoals
+            self.theirGoals = theirGoals
+            self.quarter = quarter
+        }
     }
 
-    var gameId: String
+    public var gameId: String
+
+    public init(gameId: String) {
+        self.gameId = gameId
+    }
 }
