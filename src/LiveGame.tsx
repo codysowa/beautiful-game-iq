@@ -572,7 +572,27 @@ export default function LiveGame({
           return
         }
 
-        setEvents((current) => [data as Event, ...current])
+        if (eventType === 'our_goal') {
+          const { data: shotData, error: shotError } = await supabase
+            .from('game_events')
+            .insert({
+              game_id: gameId,
+              quarter,
+              event_type: 'our_shot',
+              related_goal_id: data.id,
+            })
+            .select()
+            .single()
+
+          if (shotError) {
+            console.error('Could not record the shot associated with the Lock Screen goal:', shotError)
+            setEvents((current) => [data as Event, ...current])
+          } else {
+            setEvents((current) => [shotData as Event, data as Event, ...current])
+          }
+        } else {
+          setEvents((current) => [data as Event, ...current])
+        }
       } finally {
         setSaving(false)
       }
