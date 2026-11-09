@@ -61,6 +61,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    @available(iOS 16.1, *)
     @MainActor
     private static func updateExistingActivity(
         gameId: String,
