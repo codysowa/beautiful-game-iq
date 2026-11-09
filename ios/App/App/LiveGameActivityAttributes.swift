@@ -1,6 +1,7 @@
 import ActivityKit
 import Foundation
 
+@available(iOS 16.1, *)
 public struct LiveGameActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         public var opponent: String
