@@ -1,6 +1,7 @@
 import ActivityKit
 import SwiftUI
 import WidgetKit
+import UIKit
 
 private func actionURL(_ action: String, gameId: String) -> URL {
     var components = URLComponents()
