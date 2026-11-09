@@ -3,7 +3,7 @@ import Foundation
 
 @available(iOS 16.1, *)
 public struct LiveGameActivityAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
+    public struct ContentState: Codable, Hashable, Sendable {
         public var opponent: String
         public var ourGoals: Int
         public var theirGoals: Int
