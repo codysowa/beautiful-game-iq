@@ -11,6 +11,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "end", returnType: CAPPluginReturnPromise)
     ]
 
+    @MainActor
     @objc func sync(_ call: CAPPluginCall) {
         guard #available(iOS 16.1, *) else {
             call.resolve(["available": false])
@@ -55,6 +56,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    @MainActor
     @objc func end(_ call: CAPPluginCall) {
         guard #available(iOS 16.1, *) else {
             call.resolve()
