@@ -37,7 +37,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         )
         let attributes = LiveGameActivityAttributes(gameId: gameId)
 
-        Task {
+        Task { @MainActor in
             do {
                 if let activity = Activity<LiveGameActivityAttributes>.activities.first(where: { $0.attributes.gameId == gameId }) {
                     await activity.update(using: state)
@@ -65,9 +65,9 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
 
-        Task {
+        Task { @MainActor in
             for activity in Activity<LiveGameActivityAttributes>.activities where activity.attributes.gameId == gameId {
-                await activity.end(nil, dismissalPolicy: .immediate)
+                await activity.end(using: nil, dismissalPolicy: .immediate)
             }
             call.resolve()
         }
