@@ -554,7 +554,7 @@ export default function LiveGame({
       setSaving(true)
       try {
         const goalkeeper = eventType === 'save'
-          ? activeLineup.find((item) => item.position === 'Goalkeeper')?.player_id || null
+          ? (liveLineup.find((item) => item.position === 'Goalkeeper') || lineups.find((item) => item.quarter === quarter && item.position === 'Goalkeeper'))?.player_id || null
           : null
         const { data, error } = await supabase
           .from('game_events')
@@ -601,7 +601,7 @@ export default function LiveGame({
     return () => {
       void listener.then((handle) => handle.remove())
     }
-  }, [gameId, gameStatus, quarter, activeLineup, canStatTrack, saving])
+  }, [gameId, gameStatus, quarter, liveLineup, lineups, canStatTrack, saving])
 
   const currentLineup = useMemo(
     () => lineups.filter((item) => item.quarter === quarter),
