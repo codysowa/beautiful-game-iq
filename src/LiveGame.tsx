@@ -552,6 +552,15 @@ export default function LiveGame({
         : null
       if (!eventType || gameStatus !== 'Live' || !canStatTrack || saving) return
 
+      // Lock Screen goal taps must collect scorer/assister in the app.
+      // Do not create an unattributed goal before the coach confirms the details.
+      if (eventType === 'our_goal') {
+        setGoalScorer('')
+        setGoalAssister('')
+        setShowGoal(true)
+        return
+      }
+
       setSaving(true)
       try {
         const goalkeeper = eventType === 'save'
