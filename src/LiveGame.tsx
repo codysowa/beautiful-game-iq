@@ -1104,11 +1104,10 @@ export default function LiveGame({
     if (!editingEvent || !canManageGame) return
 
     if (
-      ((editingEvent.event_type === 'save' ||
-        editingEvent.event_type === 'our_shot') &&
+      (editingEvent.event_type === 'save' || editingEvent.event_type === 'our_shot') &&
       !editEventScorer
     ) {
-      alert(editingEvent.event_type === 'our_goal' ? 'Select the goal scorer.' : 'Select the player.')
+      alert('Select the player.')
       return
     }
 
@@ -2444,18 +2443,20 @@ export default function LiveGame({
             <h2 style={{ marginTop: 0, fontSize: 18, color: '#f8fafc' }}>Our Goal - Q{quarter}</h2>
             <label style={{ fontSize: 13, color: '#cbd5e1', fontWeight: 600 }}>Scorer</label>
             <select value={goalScorer} onChange={(e) => setGoalScorer(e.target.value)} style={{ width: '100%', padding: 12, marginTop: 6, marginBottom: 12, fontSize: 15, borderRadius: 10, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc' }}>
-              <option value="">Select scorer</option>
+              <option value="own_goal">Own Goal (no player credit)</option>
               {players.map((player) => (
                 <option key={player.id} value={player.id}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</option>
               ))}
             </select>
-            <label style={{ display: 'block', fontSize: 13, color: '#cbd5e1', fontWeight: 600 }}>Assist (optional)</label>
-            <select value={goalAssister} onChange={(e) => setGoalAssister(e.target.value)} style={{ width: '100%', padding: 12, marginTop: 6, fontSize: 15, borderRadius: 10, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc' }}>
-              <option value="">No assist</option>
-              {players.filter((player) => player.id !== goalScorer).map((player) => (
-                <option key={player.id} value={player.id}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</option>
-              ))}
-            </select>
+            {goalScorer !== 'own_goal' && <>
+              <label style={{ display: 'block', fontSize: 13, color: '#cbd5e1', fontWeight: 600 }}>Assist (optional)</label>
+              <select value={goalAssister} onChange={(e) => setGoalAssister(e.target.value)} style={{ width: '100%', padding: 12, marginTop: 6, fontSize: 15, borderRadius: 10, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc' }}>
+                <option value="">No assist</option>
+                {players.filter((player) => player.id !== goalScorer).map((player) => (
+                  <option key={player.id} value={player.id}>#{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}</option>
+                ))}
+              </select>
+            </>}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 18 }}>
               <button onClick={() => { setShowGoal(false); setGoalScorer(''); setGoalAssister('') }} style={{ padding: 12, fontSize: 15, borderRadius: 10, border: '1px solid #334155', background: '#334155', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
                 Cancel
