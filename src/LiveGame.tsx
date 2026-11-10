@@ -1207,7 +1207,7 @@ export default function LiveGame({
   }
 
   function optimizeNextQuarter() {
-    if (quarter >= 4) return
+    if (quarter >= 4 + extraPeriods) return
     const recentGoalScorerIds = [...new Set(
       events
         .filter((event) => event.event_type === 'our_goal' && event.player_id)
@@ -2138,9 +2138,7 @@ export default function LiveGame({
             {showTournamentSetup ? <>
               <h2>Extra Time Rules</h2>
               <label style={{ display: 'grid', gap: 6 }}>Additional periods
-                <select value={extraPeriods} onChange={(e) => setExtraPeriods(Number(e.target.value))} style={{ padding: 10, borderRadius: 8, background: '#1e293b', color: '#fff' }}>
-                  {[1,2,4,6,8].map((n) => <option value={n} key={n}>{n} {gameFormat === '11v11' ? 'halves' : 'quarters'}</option>)}
-                </select>
+                <input type="number" min={1} max={8} value={extraPeriods} onChange={(e) => setExtraPeriods(Math.max(1, Math.min(8, Number(e.target.value) || 1)))} style={{ padding: 10, borderRadius: 8, background: '#1e293b', color: '#fff' }} />
               </label>
               <p>Tournament rules</p>
               <label><input type="checkbox" checked={extraGkAllowed} onChange={(e) => setExtraGkAllowed(e.target.checked)} /> Can a player exceed the regular goalkeeper limit?</label><br/>
