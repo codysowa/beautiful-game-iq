@@ -181,7 +181,7 @@ export default function LiveGame({
   async function loadGame() {
     const { data } = await supabase
       .from('games')
-      .select('status, format, team_id, captain_1_id, captain_2_id, tournament_extra_periods, tournament_extra_gk_allowed, tournament_extra_bench_allowed, tournament_suspend_playing_limits, pk_initial_kicks, pk_only_end_players, pk_sudden_death, pk_goalkeeper_can_kick, pk_kicker_order, tournament_phase')
+      .select('status, format, team_id, captain_1_id, captain_2_id, tournament_extra_periods, tournament_extra_gk_allowed, tournament_extra_bench_allowed, tournament_suspend_playing_limits, pk_initial_kicks, pk_only_end_players, pk_sudden_death, pk_goalkeeper_can_kick, pk_kicker_order, tournament_phase, tournament_current_period')
       .eq('id', gameId)
       .single()
 
@@ -196,7 +196,7 @@ export default function LiveGame({
       setPkSuddenDeath(data.pk_sudden_death ?? true)
       setPkGoalkeeperCanKick(data.pk_goalkeeper_can_kick ?? true)
       setPkKickerOrder(Array.isArray(data.pk_kicker_order) ? data.pk_kicker_order : [])
-      if (data.tournament_phase === 'shootout') setQuarter(7)
+      setQuarter(data.tournament_current_period ?? (data.tournament_phase === 'shootout' ? 7 : 1))
       setLoadedCaptainIds([data.captain_1_id, data.captain_2_id].filter((id): id is string => Boolean(id)))
       const format = data.format || '7v7'
       setGameFormat(format)
@@ -529,7 +529,7 @@ export default function LiveGame({
     }
 
     setQuarter(nextQuarter)
-    if (nextQuarter > 4) await supabase.from('games').update({ tournament_phase: 'extra_time' }).eq('id', gameId)
+    await supabase.from('games').update({ tournament_current_period: nextQuarter, ...(nextQuarter > 4 ? { tournament_phase: 'extra_time' } : {}) }).eq('id', gameId)
   }
 
   useEffect(() => {
@@ -847,10 +847,10 @@ export default function LiveGame({
 
   async function startShootout() {
     if (pkKickerOrder.length === 0) { setShowPkSetup(true); alert('Set the kicker order before starting the shootout.'); return }
-    const { error } = await supabase.from('games').update({ tournament_phase: 'shootout' }).eq('id', gameId)
+    const { error } = await supabase.from('games').update({ tournament_phase: 'shootout', tournament_current_period: 7 }).eq('id', gameId)
     if (error) { alert('Could not start shootout: ' + error.message); return }
     const closed = await closePositionTracking(quarter)
-    if (closed) setQuarter(7)
+    if (closed) { setQuarter(7); await supabase.from('games').update({ tournament_current_period: 7 }).eq('id', gameId) }
   }
 
   async function recordPenalty(eventType: 'pk_our_goal' | 'pk_our_miss' | 'pk_their_goal' | 'pk_their_miss') {
