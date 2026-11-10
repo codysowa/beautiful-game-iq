@@ -142,6 +142,7 @@ export default function LiveGame({
   )
   const [gameFormat, setGameFormat] = useState('7v7')
   const [liveLineup, setLiveLineup] = useState<Lineup[]>([])
+  const [copySourceQuarter, setCopySourceQuarter] = useState(1)
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
   const [selectedPosition, setSelectedPosition] = useState('')
   const [selectedMovePosition, setSelectedMovePosition] = useState('')
@@ -511,22 +512,23 @@ export default function LiveGame({
     return true
   }
 
-  async function copyPreviousPeriodLineup() {
-    if (!canManageGame || gameStatus !== 'Live' || quarter <= 1 || quarter === 7 || saving || lineupLoading) return
-    const sourceQuarter = quarter - 1
+  async function copySelectedQuarterLineup() {
+    if (!canManageGame || gameStatus !== 'Live' || quarter <= 4 || quarter === 7 || saving || lineupLoading) return
+    const sourceQuarter = copySourceQuarter
     setSaving(true)
     const [{ data: liveData, error: liveError }, { data: plannedData, error: plannedError }] = await Promise.all([
       supabase.from('game_live_lineups').select('player_id, quarter, position').eq('game_id', gameId).eq('quarter', sourceQuarter),
       supabase.from('game_lineups').select('player_id, quarter, position').eq('game_id', gameId).eq('quarter', sourceQuarter),
     ])
     if (liveError || plannedError) {
-      alert(`Could not load the previous period lineup: ${(liveError || plannedError)?.message}`)
+      alert(`Could not load Q${sourceQuarter} lineup: ${(liveError || plannedError)?.message}`)
       setSaving(false)
       return
     }
-    const source = (liveData && liveData.length > 0 ? liveData : plannedData || lineups.filter((item) => item.quarter === sourceQuarter)) as Lineup[]
+    const fallback = lineups.filter((item) => item.quarter === sourceQuarter)
+    const source = (liveData && liveData.length > 0 ? liveData : plannedData && plannedData.length > 0 ? plannedData : fallback) as Lineup[]
     if (source.length === 0) {
-      alert(`There is no saved lineup for ${periodLabel(sourceQuarter)} to copy.`)
+      alert(`There is no saved Q${sourceQuarter} lineup to copy.`)
       setSaving(false)
       return
     }
@@ -1646,10 +1648,15 @@ export default function LiveGame({
           )}
         </div>
 
-        {canManageGame && gameStatus === 'Live' && quarter > 1 && quarter !== 7 && (
-          <button onClick={copyPreviousPeriodLineup} disabled={saving || lineupLoading} style={{ width: '100%', minHeight: 42, marginBottom: 10, borderRadius: 9, border: '1px solid #0ea5e9', background: '#0c4a6e', color: '#fff', fontWeight: 800 }}>
-            COPY {periodLabel(quarter - 1)} LINEUP
-          </button>
+        {canManageGame && gameStatus === 'Live' && quarter > 4 && quarter !== 7 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 8, marginBottom: 10 }}>
+            <select value={copySourceQuarter} onChange={(e) => setCopySourceQuarter(Number(e.target.value))} disabled={saving || lineupLoading} aria-label="Choose quarter lineup to copy" style={{ minWidth: 0, padding: '10px 12px', borderRadius: 9, border: '1px solid #0ea5e9', background: '#1e293b', color: '#f8fafc', fontWeight: 700 }}>
+              {[1, 2, 3, 4].map((sourceQuarter) => <option key={sourceQuarter} value={sourceQuarter}>Copy from Q{sourceQuarter}</option>)}
+            </select>
+            <button onClick={copySelectedQuarterLineup} disabled={saving || lineupLoading} style={{ minHeight: 42, padding: '0 14px', borderRadius: 9, border: '1px solid #0ea5e9', background: '#0c4a6e', color: '#fff', fontWeight: 800, whiteSpace: 'nowrap' }}>
+              COPY LINEUP
+            </button>
+          </div>
         )}
         {lineupLoading ? (
           <p style={{ margin: 0, fontWeight: 600, color: '#94a3b8', textAlign: 'center', padding: '40px 0' }}>Loading Q{quarter} lineup...</p>
