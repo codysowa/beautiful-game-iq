@@ -1168,7 +1168,7 @@ export default function LiveGame({
     )]
     setCurrentQuarterAdvice(getRotationAdvice({
       players,
-      teamRules: quarter > 4 && suspendPlayingLimits ? null : quarter > 4 ? { ...teamRules, max_gk_quarters: extraGkAllowed ? null : teamRules?.max_gk_quarters, max_bench_quarters: extraBenchAllowed ? null : teamRules?.max_bench_quarters } : teamRules,
+      teamRules: quarter > 4 && suspendPlayingLimits ? null : quarter > 4 ? { ...teamRules, max_gk_quarters: extraGkAllowed || suspendPlayingLimits ? 99 : teamRules?.max_gk_quarters, max_bench_quarters: extraBenchAllowed || suspendPlayingLimits ? 99 : teamRules?.max_bench_quarters } : teamRules,
       attendance: quarter > 4 ? Object.fromEntries(Object.entries(attendance).map(([id, record]) => [id, { ...record, available_quarters: null, status: record.status === 'Absent' ? 'Absent' : 'Present' }])) : attendance,
       plannedLineups: lineups,
       priorActualLiveLineups: actualLiveLineups,
