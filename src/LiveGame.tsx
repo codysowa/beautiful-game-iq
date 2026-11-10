@@ -684,6 +684,13 @@ export default function LiveGame({
   // selected formation as being on the field. Older saved lineups can contain
   // extra or incompatible positions; those players must remain visible on the bench.
   const visibleFormationPositions = new Set(fieldRows().flat())
+  const eligiblePkPlayers = players.filter((player) =>
+    activeLineup.some((item) =>
+      item.player_id === player.id &&
+      visibleFormationPositions.has(item.position) &&
+      (pkGoalkeeperCanKick || item.position !== 'Goalkeeper')
+    )
+  )
   const benchPlayers = players.filter(
     (player) => !activeLineup.some(
       (item) => item.player_id === player.id && visibleFormationPositions.has(item.position)
@@ -866,7 +873,7 @@ export default function LiveGame({
       tournament_extra_bench_allowed: extraBenchAllowed,
       tournament_suspend_playing_limits: suspendPlayingLimits,
       pk_initial_kicks: pkInitialKicks,
-      pk_only_end_players: pkOnlyEndPlayers,
+      pk_only_end_players: true,
       pk_sudden_death: pkSuddenDeath,
       pk_goalkeeper_can_kick: pkGoalkeeperCanKick,
       pk_kicker_order: pkKickerOrder,
@@ -878,7 +885,7 @@ export default function LiveGame({
   }
 
   async function startShootout() {
-    if (pkKickerOrder.length === 0) { setShowPkSetup(true); alert('Set the kicker order before starting the shootout.'); return }
+    if (pkKickerOrder.length !== eligiblePkPlayers.length || eligiblePkPlayers.length === 0 || pkKickerOrder.some((id) => !eligiblePkPlayers.some((player) => player.id === id))) { setShowPkSetup(true); alert('Set the kicker order for every player who was on the field at the end of the final period.'); return }
     const { error } = await supabase.from('games').update({ tournament_phase: 'shootout', tournament_current_period: 7 }).eq('id', gameId)
     if (error) { alert('Could not start shootout: ' + error.message); return }
     const closed = await closePositionTracking(quarter)
@@ -2190,20 +2197,19 @@ export default function LiveGame({
             </> : <>
               <h2>Penalty Shootout Rules &amp; Kicker Order</h2>
               <label>Initial kicks per team <select value={pkInitialKicks} onChange={(e) => setPkInitialKicks(Number(e.target.value))}>{[3,4,5,6,7,8,9,10,11].map((n) => <option key={n}>{n}</option>)}</select></label><br/>
-              <label><input type="checkbox" checked={pkOnlyEndPlayers} onChange={(e) => setPkOnlyEndPlayers(e.target.checked)} /> Only players on field at end of final period may kick</label><br/>{pkOnlyEndPlayers && quarter < 4 + extraPeriods && <p style={{color:'#fbbf24'}}>Kicker selection unlocks after the final extra-time period, using the players actually on the field then.</p>}
+              <p>Only players on the field at the end of the final period are eligible ({eligiblePkPlayers.length} players).</p>{quarter < 4 + extraPeriods && <p style={{color:'#fbbf24'}}>Kicker selection unlocks after the final extra-time period, using the players actually on the field then.</p>}
               <label><input type="checkbox" checked={pkSuddenDeath} onChange={(e) => setPkSuddenDeath(e.target.checked)} /> Sudden death if tied after initial kicks</label><br/>
               <label><input type="checkbox" checked={pkGoalkeeperCanKick} onChange={(e) => setPkGoalkeeperCanKick(e.target.checked)} /> Goalkeeper may kick</label>
               <p>Kicker order</p>
-              {Array.from({length: players.length}, (_,i) => i).map((i) => {
-                const eligible = players.filter((player) => (!pkOnlyEndPlayers || activeLineup.some((item) => item.player_id === player.id)) && (pkGoalkeeperCanKick || activeLineup.find((item) => item.player_id === player.id)?.position !== 'Goalkeeper'));
-                return <label key={i} style={{ display: 'flex', gap: 8, margin: '6px 0' }}>{i+1}
+              {eligiblePkPlayers.map((player, i) => (
+                <label key={player.id} style={{ display: 'flex', gap: 8, margin: '6px 0' }}>{i+1}
                   <select value={pkKickerOrder[i] || ''} onChange={(e) => setPkKickerOrder((old) => { const next=[...old]; next[i]=e.target.value; return next.filter(Boolean) })}>
                     <option value="">Select player</option>
-                    {eligible.filter((p) => p.id === pkKickerOrder[i] || !pkKickerOrder.includes(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {eligiblePkPlayers.filter((p) => p.id === pkKickerOrder[i] || !pkKickerOrder.includes(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </label>
-              })}
-              <button onClick={saveTournamentSettings} disabled={saving || !pkKickerOrder.length} style={{ width: '100%', minHeight: 44, marginTop: 16, background: '#7c3aed', color: '#fff', border: 0, borderRadius: 8, fontWeight: 800 }}>SAVE SHOOTOUT RULES</button>
+              ))}
+              <button onClick={saveTournamentSettings} disabled={saving || pkKickerOrder.length !== eligiblePkPlayers.length || eligiblePkPlayers.length === 0} style={{ width: '100%', minHeight: 44, marginTop: 16, background: '#7c3aed', color: '#fff', border: 0, borderRadius: 8, fontWeight: 800 }}>SAVE SHOOTOUT RULES</button>
             </>}
             <button onClick={() => {setShowTournamentSetup(false);setShowPkSetup(false)}} style={{ width: '100%', minHeight: 40, marginTop: 8, background: '#334155', color: '#fff', border: 0, borderRadius: 8 }}>CLOSE</button>
           </section>
