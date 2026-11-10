@@ -101,7 +101,6 @@ const positionShort: Record<string, string> = {
 export default function LiveGame({
   gameId,
   opponent,
-  extraTimeEnabled,
   players,
   lineups,
   captainIds,
@@ -530,6 +529,7 @@ export default function LiveGame({
     }
 
     setQuarter(nextQuarter)
+    if (nextQuarter > 4) await supabase.from('games').update({ tournament_phase: 'extra_time' }).eq('id', gameId)
   }
 
   useEffect(() => {
@@ -846,6 +846,7 @@ export default function LiveGame({
   }
 
   async function startShootout() {
+    if (pkKickerOrder.length === 0) { setShowPkSetup(true); alert('Set the kicker order before starting the shootout.'); return }
     const { error } = await supabase.from('games').update({ tournament_phase: 'shootout' }).eq('id', gameId)
     if (error) { alert('Could not start shootout: ' + error.message); return }
     const closed = await closePositionTracking(quarter)
