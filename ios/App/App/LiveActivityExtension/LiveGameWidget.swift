@@ -3,6 +3,15 @@ import SwiftUI
 import WidgetKit
 import UIKit
 
+private func periodLabel(_ quarter: Int) -> String {
+    switch quarter {
+    case 1...4: return "Q\(quarter)"
+    case 5: return "ET 1"
+    case 6: return "ET 2"
+    default: return "PKs"
+    }
+}
+
 private func actionURL(_ action: String, gameId: String) -> URL {
     var components = URLComponents()
     components.scheme = "beautifulgameiq"
@@ -23,7 +32,7 @@ struct LiveGameWidget: Widget {
                         .font(.caption.bold())
                         .foregroundStyle(Color.white)
                     Spacer()
-                    Text("Q\(context.state.quarter)")
+                    Text(periodLabel(context.state.quarter))
                         .font(.caption.bold())
                         .foregroundStyle(.secondary)
                 }
@@ -81,7 +90,7 @@ struct LiveGameWidget: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack {
-                        Text("Q\(context.state.quarter)").font(.caption.bold())
+                        Text(periodLabel(context.state.quarter)).font(.caption.bold())
                         Spacer()
                         Link("GOAL", destination: actionURL("our_goal", gameId: context.attributes.gameId))
                         Link("THEIR GOAL", destination: actionURL("their_goal", gameId: context.attributes.gameId))
