@@ -1411,7 +1411,7 @@ export default function LiveGame({
         </button>
       )}
 
-      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6, marginBottom: 12 }}>
+      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: `repeat(${extraTimeEnabled ? 6 : 4}, 1fr)`, gap: 6, marginBottom: 12 }}>
         {[1, 2, 3, 4, ...(extraTimeEnabled ? [5, 6] : [])].map((q) => (
           <button
             key={q}
@@ -1468,7 +1468,7 @@ export default function LiveGame({
         <section style={{ marginBottom: 12, padding: 14, borderRadius: 12, background: '#172554', border: '1px solid #2563eb', color: '#fff' }}>
           <strong>{quarter === 4 ? 'End of regulation' : quarter === 5 ? 'End of extra period 1' : 'End of extra period 2'}</strong>
           <p style={{ margin: '6px 0 12px', fontSize: 13, color: '#bfdbfe' }}>Current score: {ourGoals}-{theirGoals}</p>
-          {ourGoals === theirGoals && quarter < 6 ? (
+          {((quarter === 4 && ourGoals === theirGoals) || quarter === 5) ? (
             <button onClick={() => changeQuarter(quarter + 1)} disabled={lineupLoading || saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#2563eb', color: '#fff', fontWeight: 800 }}>
               START {periodLabel(quarter + 1)} →
             </button>
@@ -1480,7 +1480,7 @@ export default function LiveGame({
         </section>
       )}
 
-      {quarter === 7 && gameStatus === 'Live' && (
+      {canManageGame && quarter === 7 && gameStatus === 'Live' && (
         <section style={{ marginBottom: 14, padding: 16, borderRadius: 14, background: '#172554', border: '1px solid #7c3aed', color: '#fff' }}>
           <h2 style={{ margin: '0 0 6px' }}>Penalty Shootout</h2>
           <div style={{ fontSize: 13, color: '#bfdbfe' }}>Regulation + extra time: {ourGoals}-{theirGoals}</div>
