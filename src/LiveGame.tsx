@@ -450,7 +450,7 @@ export default function LiveGame({
 
     const { error } = await supabase
       .from('games')
-      .update({ status: nextStatus })
+      .update({ status: nextStatus, ...(nextStatus === 'Completed' ? { tournament_phase: 'completed' } : {}) })
       .eq('id', gameId)
 
     if (error) {
