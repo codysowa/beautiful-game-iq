@@ -1430,13 +1430,13 @@ export default function LiveGame({
         )}
       </div>
 
-      {canManageGame && gameStatus === 'Live' && quarter !== 7 && (
+      {canManageGame && gameStatus === 'Live' && quarter !== 7 && (quarter > 4 || (quarter === 4 && ourGoals === theirGoals && extraTimeEnabled)) && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
           <button onClick={() => setShowTournamentSetup(true)} style={{ minHeight: 42, borderRadius: 9, border: '1px solid #64748b', background: '#1e293b', color: '#fff', fontWeight: 700 }}>EXTRA TIME RULES</button>
           <button onClick={() => setShowPkSetup(true)} style={{ minHeight: 42, borderRadius: 9, border: '1px solid #7c3aed', background: '#312e81', color: '#fff', fontWeight: 700 }}>PK SHOOTOUT SETUP</button>
         </div>
       )}
-      {canManageGame && gameStatus === 'Live' && quarter !== 7 && (
+      {canManageGame && gameStatus === 'Live' && quarter !== 7 && quarter > 4 && (
         <button onClick={startShootout} style={{ width: '100%', minHeight: 44, marginBottom: 12, borderRadius: 9, border: '1px solid #7c3aed', background: '#4c1d95', color: '#fff', fontWeight: 800 }}>START PENALTY SHOOTOUT</button>
       )}
 
@@ -1450,7 +1450,7 @@ export default function LiveGame({
         </button>
       )}
 
-      {canManageGame && gameStatus === 'Live' && (
+      {canManageGame && gameStatus === 'Live' && quarter > 4 && (
         <button
           onClick={() => {
             if (confirm('End this game? No more live events will be recorded.')) {
@@ -1474,8 +1474,8 @@ export default function LiveGame({
         </button>
       )}
 
-      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: `repeat(${4 + extraPeriods}, 1fr)`, gap: 6, marginBottom: 12 }}>
-        {[1, 2, 3, 4, ...Array.from({ length: extraPeriods }, (_, i) => i + 5)].map((q) => (
+      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: `repeat(${quarter > 4 ? 4 + extraPeriods : 4}, 1fr)`, gap: 6, marginBottom: 12 }}>
+        {[1, 2, 3, 4, ...(quarter > 4 ? Array.from({ length: extraPeriods }, (_, i) => i + 5) : [])].map((q) => (
           <button
             key={q}
             onClick={() => changeQuarter(q)}
@@ -1508,7 +1508,7 @@ export default function LiveGame({
         </button>
       )}
 
-      {canManageGame && gameStatus === 'Live' && quarter < 4 + extraPeriods && (
+      {canManageGame && gameStatus === 'Live' && quarter > 4 && quarter < 4 + extraPeriods && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
           <button
             onClick={openNextQuarterOptimizer}
@@ -1531,11 +1531,11 @@ export default function LiveGame({
         <section style={{ marginBottom: 12, padding: 14, borderRadius: 12, background: '#172554', border: '1px solid #2563eb', color: '#fff' }}>
           <strong>{quarter === 4 ? 'End of regulation' : `End of extra period ${quarter - 4}`}</strong>
           <p style={{ margin: '6px 0 12px', fontSize: 13, color: '#bfdbfe' }}>Current score: {ourGoals}-{theirGoals}</p>
-          {((quarter === 4 && ourGoals === theirGoals) || (quarter > 4 && quarter < 4 + extraPeriods)) ? (
+          {quarter === 4 ? (ourGoals === theirGoals && extraTimeEnabled ? <button onClick={() => changeQuarter(5)} disabled={lineupLoading || saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#2563eb', color: '#fff', fontWeight: 800 }}>START EXTRA TIME →</button> : null) : quarter < 4 + extraPeriods ? (
             <button onClick={() => changeQuarter(quarter + 1)} disabled={lineupLoading || saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#2563eb', color: '#fff', fontWeight: 800 }}>
               START {periodLabel(quarter + 1)} →
             </button>
-          ) : ourGoals === theirGoals && quarter === 4 + extraPeriods ? (
+          ) : ourGoals === theirGoals ? (
             <button onClick={startShootout} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#7c3aed', color: '#fff', fontWeight: 800 }}>START PK SHOOTOUT →</button>
           ) : (
             <button onClick={() => updateGameStatus('Completed')} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 800 }}>FINISH GAME</button>
@@ -2169,10 +2169,10 @@ export default function LiveGame({
         </div>
       )}
 
-      {canManageGame && showNextQuarterOptimizer && quarter < 4 && (
+      {canManageGame && showNextQuarterOptimizer && quarter > 4 && quarter < 4 + extraPeriods && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1100 }}>
           <div style={{ background: '#0f172a', border: '1px solid #334155', color: '#f8fafc', width: '100%', maxWidth: 700, maxHeight: '88vh', overflowY: 'auto', padding: 20, borderRadius: '20px 20px 0 0', boxSizing: 'border-box', boxShadow: '0 -10px 25px rgba(0,0,0,0.5)' }}>
-            <h2 style={{ margin: '0 0 4px', fontSize: 18, color: '#f8fafc' }}>Optimize Q{quarter + 1}</h2>
+            <h2 style={{ margin: '0 0 4px', fontSize: 18, color: '#f8fafc' }}>Optimize {periodLabel(quarter + 1)}</h2>
             <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 14 }}>
               Score: {ourGoals}-{theirGoals}. Uses actual live assignments from earlier quarters when available.
             </div>
@@ -2217,12 +2217,12 @@ export default function LiveGame({
 
             {!nextQuarterAdvice ? (
               <button onClick={optimizeNextQuarter} disabled={optimizerLoading} style={{ width: '100%', marginTop: 14, minHeight: 48, fontWeight: 700, borderRadius: 10, border: 'none', background: '#0284c7', color: '#fff', cursor: 'pointer' }}>
-                {optimizerLoading ? 'LOADING GAME CONTEXT...' : `PREVIEW Q${quarter + 1} PLAN`}
+                {optimizerLoading ? 'LOADING GAME CONTEXT...' : `PREVIEW ${periodLabel(quarter + 1)} PLAN`}
               </button>
             ) : (
               <>
                 <div style={{ marginTop: 14, padding: 12, border: '1px solid #334155', borderRadius: 10, background: '#1e293b' }}>
-                  <strong style={{ color: '#38bdf8' }}>Q{quarter + 1} - {nextQuarterFormation}</strong>
+                  <strong style={{ color: '#38bdf8' }}>{periodLabel(quarter + 1)} - {nextQuarterFormation}</strong>
                   <div style={{ fontSize: 12, marginTop: 4, color: '#94a3b8' }}>
                     {nextQuarterSituation}: {nextQuarterAdvice.message}
                   </div>
@@ -2247,7 +2247,7 @@ export default function LiveGame({
                 )}
 
                 <button onClick={applyNextQuarterPlan} disabled={saving || !nextQuarterAdvice.canApply} style={{ width: '100%', marginTop: 16, minHeight: 48, fontWeight: 700, borderRadius: 10, border: 'none', background: nextQuarterAdvice.canApply ? '#10b981' : '#475569', color: '#fff', cursor: saving || !nextQuarterAdvice.canApply ? 'not-allowed' : 'pointer' }}>
-                  {saving ? 'SAVING...' : nextQuarterAdvice.canApply ? `APPLY Q${quarter + 1} PLAN` : 'NO RULE-COMPLIANT PLAN'}
+                  {saving ? 'SAVING...' : nextQuarterAdvice.canApply ? `APPLY ${periodLabel(quarter + 1)} PLAN` : 'NO RULE-COMPLIANT PLAN'}
                 </button>
               </>
             )}
