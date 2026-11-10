@@ -1924,9 +1924,9 @@ export default function LiveGame({
             </div>
           </>
         )}
-      </section>      
+      </section>}      
 
-      {canManageGame && selectedPosition && (
+      {canManageGame && quarter !== 7 && selectedPosition && (
         <div onClick={() => { setSelectedPosition(''); setSelectedBenchPlayerId('') }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: '#0f172a', border: '1px solid #334155', color: '#f8fafc', width: '100%', maxWidth: 700, padding: '20px 20px calc(20px + env(safe-area-inset-bottom))', borderRadius: '20px 20px 0 0', boxSizing: 'border-box', boxShadow: '0 -10px 25px rgba(0,0,0,0.5)' }}>
             {selectedBenchPlayerId ? (
