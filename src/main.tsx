@@ -65,20 +65,27 @@ function Root() {
   useEffect(() => {
     if (!session?.user.id) return
 
-    const recordActivity = (activityType: 'app_open' | 'app_resumed') => {
-      void supabase.rpc('record_user_activity', { p_activity_type: activityType })
+    const recordActivity = async (activityType: 'app_open' | 'app_resumed') => {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !sessionData.session) {
+        console.warn('[activity-tracking] No authenticated session; activity was not recorded.', sessionError)
+        return
+      }
+
+      const { error } = await supabase.rpc('record_user_activity', { p_activity_type: activityType })
+      if (error) console.error('[activity-tracking] Could not record activity.', error)
     }
 
-    recordActivity('app_open')
+    void recordActivity('app_open')
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') recordActivity('app_resumed')
+      if (document.visibilityState === 'visible') void recordActivity('app_resumed')
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     let appStateListener: { remove: () => Promise<void> } | null = null
     if (Capacitor.isNativePlatform()) {
       void CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) recordActivity('app_resumed')
+        if (isActive) void recordActivity('app_resumed')
       }).then((listener) => { appStateListener = listener })
     }
 
