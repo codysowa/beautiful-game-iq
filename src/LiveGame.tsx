@@ -566,7 +566,7 @@ export default function LiveGame({
       const eventType = action === 'our_goal' || action === 'their_goal' || action === 'save' || action === 'our_shot'
         ? action
         : null
-      if (!eventType || gameStatus !== 'Live' || !canStatTrack || saving) return
+      if (!eventType || gameStatus !== 'Live' || quarter === 7 || !canStatTrack || saving) return
 
       // Lock Screen goal taps must collect scorer/assister in the app.
       // Do not create an unattributed goal before the coach confirms the details.
@@ -1514,7 +1514,7 @@ export default function LiveGame({
         </button>
         <button
           onClick={recordTheirGoal}
-          disabled={gameStatus !== 'Live' || saving}
+          disabled={gameStatus !== 'Live' || saving || quarter === 7}
           style={{ minHeight: 56, fontSize: 15, fontWeight: 800, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff', boxShadow: '0 4px 12px rgba(239,68,68,0.3)', cursor: 'pointer' }}
         >
           ❌ THEIR GOAL
@@ -1528,7 +1528,7 @@ export default function LiveGame({
         </button>
         <button
           onClick={() => { setShotPlayer(''); setShowShot(true) }}
-          disabled={gameStatus !== 'Live' || saving || lineupLoading}
+          disabled={gameStatus !== 'Live' || saving || lineupLoading || quarter === 7}
           style={{ minHeight: 48, fontSize: 14, fontWeight: 700, borderRadius: 12, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc', cursor: 'pointer' }}
         >
           🎯 OUR SHOT
