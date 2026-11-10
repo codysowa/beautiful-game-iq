@@ -111,6 +111,17 @@ export default function LiveGame({
   const canManageGame = userRole === 'owner' || userRole === 'coach'
   const canStatTrack = userRole === 'owner' || userRole === 'coach' || userRole === 'viewer'
   const [quarter, setQuarter] = useState(1)
+  const [extraPeriods, setExtraPeriods] = useState(2)
+  const [extraGkAllowed, setExtraGkAllowed] = useState(false)
+  const [extraBenchAllowed, setExtraBenchAllowed] = useState(false)
+  const [suspendPlayingLimits, setSuspendPlayingLimits] = useState(false)
+  const [pkInitialKicks, setPkInitialKicks] = useState(5)
+  const [pkOnlyEndPlayers, setPkOnlyEndPlayers] = useState(true)
+  const [pkSuddenDeath, setPkSuddenDeath] = useState(true)
+  const [pkGoalkeeperCanKick, setPkGoalkeeperCanKick] = useState(true)
+  const [pkKickerOrder, setPkKickerOrder] = useState<string[]>([])
+  const [showTournamentSetup, setShowTournamentSetup] = useState(false)
+  const [showPkSetup, setShowPkSetup] = useState(false)
   const [events, setEvents] = useState<Event[]>([])
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [editEventQuarter, setEditEventQuarter] = useState(1)
@@ -171,12 +182,22 @@ export default function LiveGame({
   async function loadGame() {
     const { data } = await supabase
       .from('games')
-      .select('status, format, team_id, captain_1_id, captain_2_id')
+      .select('status, format, team_id, captain_1_id, captain_2_id, tournament_extra_periods, tournament_extra_gk_allowed, tournament_extra_bench_allowed, tournament_suspend_playing_limits, pk_initial_kicks, pk_only_end_players, pk_sudden_death, pk_goalkeeper_can_kick, pk_kicker_order, tournament_phase')
       .eq('id', gameId)
       .single()
 
     if (data) {
       setGameStatus(data.status)
+      setExtraPeriods(data.tournament_extra_periods ?? 2)
+      setExtraGkAllowed(Boolean(data.tournament_extra_gk_allowed))
+      setExtraBenchAllowed(Boolean(data.tournament_extra_bench_allowed))
+      setSuspendPlayingLimits(Boolean(data.tournament_suspend_playing_limits))
+      setPkInitialKicks(data.pk_initial_kicks ?? 5)
+      setPkOnlyEndPlayers(data.pk_only_end_players ?? true)
+      setPkSuddenDeath(data.pk_sudden_death ?? true)
+      setPkGoalkeeperCanKick(data.pk_goalkeeper_can_kick ?? true)
+      setPkKickerOrder(Array.isArray(data.pk_kicker_order) ? data.pk_kicker_order : [])
+      if (data.tournament_phase === 'shootout') setQuarter(7)
       setLoadedCaptainIds([data.captain_1_id, data.captain_2_id].filter((id): id is string => Boolean(id)))
       const format = data.format || '7v7'
       setGameFormat(format)
@@ -529,9 +550,13 @@ export default function LiveGame({
   const pkTheirGoals = events.filter((event) => event.event_type === 'pk_their_goal').length
   const pkOurAttempts = events.filter((event) => event.event_type === 'pk_our_goal' || event.event_type === 'pk_our_miss').length
   const pkTheirAttempts = events.filter((event) => event.event_type === 'pk_their_goal' || event.event_type === 'pk_their_miss').length
-  const pkWinner = pkOurAttempts >= 5 && pkTheirAttempts >= 5 && pkOurAttempts === pkTheirAttempts && pkOurGoals !== pkTheirGoals
-    ? (pkOurGoals > pkTheirGoals ? 'us' : 'them')
-    : null
+  const ourRemaining = Math.max(0, pkInitialKicks - pkOurAttempts)
+  const theirRemaining = Math.max(0, pkInitialKicks - pkTheirAttempts)
+  const clinchedUs = pkOurAttempts <= pkInitialKicks && pkOurGoals > pkTheirGoals + theirRemaining
+  const clinchedThem = pkTheirAttempts <= pkInitialKicks && pkTheirGoals > pkOurGoals + ourRemaining
+  const suddenDeathWinner = pkSuddenDeath && pkOurAttempts >= pkInitialKicks && pkTheirAttempts >= pkInitialKicks && pkOurAttempts === pkTheirAttempts && pkOurGoals !== pkTheirGoals
+  const pkWinner = clinchedUs || (suddenDeathWinner && pkOurGoals > pkTheirGoals) ? 'us' : clinchedThem || (suddenDeathWinner && pkTheirGoals > pkOurGoals) ? 'them' : null
+  const pkNextKicker = pkKickerOrder.length ? pkKickerOrder[pkOurAttempts % pkKickerOrder.length] : ''
 
   useEffect(() => {
     if (gameStatus === 'Live') {
@@ -801,11 +826,37 @@ export default function LiveGame({
     setSubInPlayerId('')
   }
 
+  async function saveTournamentSettings() {
+    setSaving(true)
+    const { error } = await supabase.from('games').update({
+      tournament_extra_periods: extraPeriods,
+      tournament_extra_gk_allowed: extraGkAllowed,
+      tournament_extra_bench_allowed: extraBenchAllowed,
+      tournament_suspend_playing_limits: suspendPlayingLimits,
+      pk_initial_kicks: pkInitialKicks,
+      pk_only_end_players: pkOnlyEndPlayers,
+      pk_sudden_death: pkSuddenDeath,
+      pk_goalkeeper_can_kick: pkGoalkeeperCanKick,
+      pk_kicker_order: pkKickerOrder,
+    }).eq('id', gameId)
+    setSaving(false)
+    if (error) { alert('Could not save tournament settings: ' + error.message); return }
+    setShowTournamentSetup(false)
+    setShowPkSetup(false)
+  }
+
+  async function startShootout() {
+    const { error } = await supabase.from('games').update({ tournament_phase: 'shootout' }).eq('id', gameId)
+    if (error) { alert('Could not start shootout: ' + error.message); return }
+    const closed = await closePositionTracking(quarter)
+    if (closed) setQuarter(7)
+  }
+
   async function recordPenalty(eventType: 'pk_our_goal' | 'pk_our_miss' | 'pk_their_goal' | 'pk_their_miss') {
     if (!canManageGame || gameStatus !== 'Live' || quarter !== 7 || saving || pkWinner) return
     setSaving(true)
     const { data, error } = await supabase.from('game_events')
-      .insert({ game_id: gameId, quarter: 7, event_type: eventType })
+      .insert({ game_id: gameId, quarter: 7, event_type: eventType, player_id: eventType.startsWith('pk_our_') ? (pkNextKicker || null) : null })
       .select()
       .single()
     if (error) alert('Could not record penalty: ' + error.message)
@@ -1147,7 +1198,7 @@ export default function LiveGame({
   }
 
   function openNextQuarterOptimizer() {
-    if (quarter >= 4) return
+    if (quarter >= 4 + extraPeriods) return
     setNextQuarterSituation('Normal')
     setNextQuarterFormation(getFormationsForFormat(gameFormat).includes(liveFormation) ? liveFormation : getDefaultFormationForFormat(gameFormat))
     setNextQuarterAdvice(null)
@@ -1176,7 +1227,7 @@ export default function LiveGame({
   }
 
   async function applyNextQuarterPlan() {
-    if (!nextQuarterAdvice || !nextQuarterAdvice.canApply || quarter >= 4) return
+    if (!nextQuarterAdvice || !nextQuarterAdvice.canApply || quarter >= 4 + extraPeriods) return
     const targetQuarter = quarter + 1
     const nextLineup = nextQuarterAdvice.suggestedLineup.map(({ player, position }) => ({
       player_id: player.id,
@@ -1377,6 +1428,13 @@ export default function LiveGame({
         )}
       </div>
 
+      {canManageGame && gameStatus === 'Live' && quarter !== 7 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+          <button onClick={() => setShowTournamentSetup(true)} style={{ minHeight: 42, borderRadius: 9, border: '1px solid #64748b', background: '#1e293b', color: '#fff', fontWeight: 700 }}>EXTRA TIME RULES</button>
+          <button onClick={() => setShowPkSetup(true)} style={{ minHeight: 42, borderRadius: 9, border: '1px solid #7c3aed', background: '#312e81', color: '#fff', fontWeight: 700 }}>PK SHOOTOUT SETUP</button>
+        </div>
+      )}
+
       {canManageGame && gameStatus === 'Scheduled' && (
         <button
           onClick={() => updateGameStatus('Live')}
@@ -1411,8 +1469,8 @@ export default function LiveGame({
         </button>
       )}
 
-      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: `repeat(${extraTimeEnabled ? 6 : 4}, 1fr)`, gap: 6, marginBottom: 12 }}>
-        {[1, 2, 3, 4, ...(extraTimeEnabled ? [5, 6] : [])].map((q) => (
+      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: `repeat(${extraTimeEnabled ? 4 + extraPeriods : 4}, 1fr)`, gap: 6, marginBottom: 12 }}>
+        {[1, 2, 3, 4, ...(extraTimeEnabled ? Array.from({ length: extraPeriods }, (_, i) => i + 5) : [])].map((q) => (
           <button
             key={q}
             onClick={() => changeQuarter(q)}
@@ -1445,35 +1503,35 @@ export default function LiveGame({
         </button>
       )}
 
-      {canManageGame && gameStatus === 'Live' && quarter < 4 && (
+      {canManageGame && gameStatus === 'Live' && quarter < 4 + extraPeriods && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
           <button
             onClick={openNextQuarterOptimizer}
             disabled={lineupLoading || optimizerLoading}
             style={{ minHeight: 46, fontSize: 13, fontWeight: 700, borderRadius: 10, border: '1px solid #334155', background: '#1e293b', color: '#cbd5e1', cursor: 'pointer' }}
           >
-            {optimizerLoading ? 'PREPARING...' : `⚡ OPTIMIZE Q${quarter + 1}`}
+            {optimizerLoading ? 'PREPARING...' : `⚡ OPTIMIZE ${periodLabel(quarter + 1)}`}
           </button>
           <button
             onClick={() => changeQuarter(quarter + 1)}
             disabled={lineupLoading}
             style={{ minHeight: 46, fontSize: 14, fontWeight: 700, borderRadius: 10, border: '1px solid #0284c7', background: '#0284c7', color: '#fff', cursor: 'pointer' }}
           >
-            {lineupLoading ? 'LOADING...' : `START Q${quarter + 1} →`}
+            {lineupLoading ? 'LOADING...' : `START ${periodLabel(quarter + 1)} →`}
           </button>
         </div>
       )}
 
-      {canManageGame && gameStatus === 'Live' && extraTimeEnabled && quarter >= 4 && quarter <= 6 && (
+      {canManageGame && gameStatus === 'Live' && extraTimeEnabled && quarter >= 4 && quarter <= 4 + extraPeriods && (
         <section style={{ marginBottom: 12, padding: 14, borderRadius: 12, background: '#172554', border: '1px solid #2563eb', color: '#fff' }}>
-          <strong>{quarter === 4 ? 'End of regulation' : quarter === 5 ? 'End of extra period 1' : 'End of extra period 2'}</strong>
+          <strong>{quarter === 4 ? 'End of regulation' : `End of extra period ${quarter - 4}`}</strong>
           <p style={{ margin: '6px 0 12px', fontSize: 13, color: '#bfdbfe' }}>Current score: {ourGoals}-{theirGoals}</p>
-          {((quarter === 4 && ourGoals === theirGoals) || quarter === 5) ? (
+          {((quarter === 4 && ourGoals === theirGoals) || (quarter > 4 && quarter < 4 + extraPeriods)) ? (
             <button onClick={() => changeQuarter(quarter + 1)} disabled={lineupLoading || saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#2563eb', color: '#fff', fontWeight: 800 }}>
               START {periodLabel(quarter + 1)} →
             </button>
-          ) : ourGoals === theirGoals && quarter === 6 ? (
-            <button onClick={async () => { const closed = await closePositionTracking(quarter); if (closed) setQuarter(7) }} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#7c3aed', color: '#fff', fontWeight: 800 }}>START PK SHOOTOUT →</button>
+          ) : ourGoals === theirGoals && quarter === 4 + extraPeriods ? (
+            <button onClick={startShootout} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#7c3aed', color: '#fff', fontWeight: 800 }}>START PK SHOOTOUT →</button>
           ) : (
             <button onClick={() => updateGameStatus('Completed')} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 800 }}>FINISH GAME</button>
           )}
@@ -1483,7 +1541,7 @@ export default function LiveGame({
       {canManageGame && quarter === 7 && gameStatus === 'Live' && (
         <section style={{ marginBottom: 14, padding: 16, borderRadius: 14, background: '#172554', border: '1px solid #7c3aed', color: '#fff' }}>
           <h2 style={{ margin: '0 0 6px' }}>Penalty Shootout</h2>
-          <div style={{ fontSize: 13, color: '#bfdbfe' }}>Regulation + extra time: {ourGoals}-{theirGoals}</div>
+          <div style={{ fontSize: 13, color: '#bfdbfe' }}>Match score: {ourGoals}-{theirGoals}</div><div style={{ textAlign: 'center', marginTop: 8 }}>Next kicker: <strong>{players.find((p) => p.id === pkNextKicker)?.name || 'Configure kicker order'}</strong></div>
           <div style={{ display: 'flex', justifyContent: 'space-around', margin: '14px 0', fontSize: 24, fontWeight: 800 }}>
             <span>US {pkOurGoals} <small style={{ fontSize: 12 }}>({pkOurAttempts} kicks)</small></span>
             <span>THEM {pkTheirGoals} <small style={{ fontSize: 12 }}>({pkTheirAttempts} kicks)</small></span>
@@ -1495,8 +1553,8 @@ export default function LiveGame({
             </>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button onClick={() => recordPenalty('pk_our_goal')} disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 700 }}>OUR PK: GOAL</button>
-              <button onClick={() => recordPenalty('pk_our_miss')} disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>OUR PK: MISS</button>
+              <button onClick={() => recordPenalty('pk_our_goal')} disabled={saving || !pkNextKicker} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 700 }}>OUR PK: GOAL</button>
+              <button onClick={() => recordPenalty('pk_our_miss')} disabled={saving || !pkNextKicker} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>OUR PK: MISS</button>
               <button onClick={() => recordPenalty('pk_their_goal')} disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#b91c1c', color: '#fff', fontWeight: 700 }}>THEIR PK: GOAL</button>
               <button onClick={() => recordPenalty('pk_their_miss')} disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>THEIR PK: MISS</button>
             </div>
@@ -2067,6 +2125,44 @@ export default function LiveGame({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {canManageGame && (showTournamentSetup || showPkSetup) && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1300, background: 'rgba(0,0,0,.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }}>
+          <section style={{ width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto', background: '#0f172a', color: '#f8fafc', border: '1px solid #475569', borderRadius: 16, padding: 18 }}>
+            {showTournamentSetup ? <>
+              <h2>Extra Time Rules</h2>
+              <label style={{ display: 'grid', gap: 6 }}>Additional periods
+                <select value={extraPeriods} onChange={(e) => setExtraPeriods(Number(e.target.value))} style={{ padding: 10, borderRadius: 8, background: '#1e293b', color: '#fff' }}>
+                  {[1,2,4,6,8].map((n) => <option value={n} key={n}>{n} {gameFormat === '11v11' ? 'halves' : 'quarters'}</option>)}
+                </select>
+              </label>
+              <p>Tournament rules</p>
+              <label><input type="checkbox" checked={extraGkAllowed} onChange={(e) => setExtraGkAllowed(e.target.checked)} /> Can a player exceed the regular goalkeeper limit?</label><br/>
+              <label><input type="checkbox" checked={extraBenchAllowed} onChange={(e) => setExtraBenchAllowed(e.target.checked)} /> Can a player exceed the regular bench limit?</label><br/>
+              <label><input type="checkbox" checked={suspendPlayingLimits} onChange={(e) => setSuspendPlayingLimits(e.target.checked)} /> Suspend regular playing-time restrictions during extra time?</label>
+              <button onClick={saveTournamentSettings} disabled={saving} style={{ width: '100%', minHeight: 44, marginTop: 16, background: '#0284c7', color: '#fff', border: 0, borderRadius: 8, fontWeight: 800 }}>SAVE EXTRA TIME RULES</button>
+            </> : <>
+              <h2>Penalty Shootout Rules &amp; Kicker Order</h2>
+              <label>Initial kicks per team <select value={pkInitialKicks} onChange={(e) => setPkInitialKicks(Number(e.target.value))}>{[3,4,5,6,7,8,9,10,11].map((n) => <option key={n}>{n}</option>)}</select></label><br/>
+              <label><input type="checkbox" checked={pkOnlyEndPlayers} onChange={(e) => setPkOnlyEndPlayers(e.target.checked)} /> Only players on field at end of final period may kick</label><br/>
+              <label><input type="checkbox" checked={pkSuddenDeath} onChange={(e) => setPkSuddenDeath(e.target.checked)} /> Sudden death if tied after initial kicks</label><br/>
+              <label><input type="checkbox" checked={pkGoalkeeperCanKick} onChange={(e) => setPkGoalkeeperCanKick(e.target.checked)} /> Goalkeeper may kick</label>
+              <p>Kicker order</p>
+              {Array.from({length: players.length}, (_,i) => i).map((i) => {
+                const eligible = players.filter((player) => (!pkOnlyEndPlayers || activeLineup.some((item) => item.player_id === player.id)) && (pkGoalkeeperCanKick || activeLineup.find((item) => item.player_id === player.id)?.position !== 'Goalkeeper'));
+                return <label key={i} style={{ display: 'flex', gap: 8, margin: '6px 0' }}>{i+1}
+                  <select value={pkKickerOrder[i] || ''} onChange={(e) => setPkKickerOrder((old) => { const next=[...old]; next[i]=e.target.value; return next.filter(Boolean) })}>
+                    <option value="">Select player</option>
+                    {eligible.filter((p) => p.id === pkKickerOrder[i] || !pkKickerOrder.includes(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </label>
+              })}
+              <button onClick={saveTournamentSettings} disabled={saving || !pkKickerOrder.length} style={{ width: '100%', minHeight: 44, marginTop: 16, background: '#7c3aed', color: '#fff', border: 0, borderRadius: 8, fontWeight: 800 }}>SAVE SHOOTOUT RULES</button>
+            </>}
+            <button onClick={() => {setShowTournamentSetup(false);setShowPkSetup(false)}} style={{ width: '100%', minHeight: 40, marginTop: 8, background: '#334155', color: '#fff', border: 0, borderRadius: 8 }}>CLOSE</button>
+          </section>
         </div>
       )}
 
