@@ -73,7 +73,7 @@ type AttendanceRecord = {
 type GameEvent = {
   id: string
   game_id: string
-  event_type: 'our_goal' | 'their_goal' | 'save' | 'our_shot'
+  event_type: 'our_goal' | 'their_goal' | 'save' | 'our_shot' | 'pk_our_goal' | 'pk_our_miss' | 'pk_their_goal' | 'pk_their_miss'
   player_id: string | null
   assister_id: string | null
   quarter: number
@@ -1704,8 +1704,14 @@ function playerAtPosition(position: string) {
       goalsFor += forGoals
       goalsAgainst += againstGoals
 
-      if (forGoals > againstGoals) wins += 1
-      else if (forGoals < againstGoals) losses += 1
+      const pkFor = events.filter((event) => event.event_type === 'pk_our_goal').length
+      const pkAgainst = events.filter((event) => event.event_type === 'pk_their_goal').length
+      const ourPkAttempts = events.filter((event) => event.event_type === 'pk_our_goal' || event.event_type === 'pk_our_miss').length
+      const theirPkAttempts = events.filter((event) => event.event_type === 'pk_their_goal' || event.event_type === 'pk_their_miss').length
+      const shootoutDecided = ourPkAttempts >= 5 && ourPkAttempts === theirPkAttempts && pkFor !== pkAgainst
+
+      if (shootoutDecided ? pkFor > pkAgainst : forGoals > againstGoals) wins += 1
+      else if (shootoutDecided ? pkFor < pkAgainst : forGoals < againstGoals) losses += 1
       else draws += 1
     })
 
@@ -2762,10 +2768,16 @@ function playerAtPosition(position: string) {
       goalsAgainst += againstGoals
 
       let result = 'D'
-      if (forGoals > againstGoals) {
+      const pkFor = events.filter((event) => event.event_type === 'pk_our_goal').length
+      const pkAgainst = events.filter((event) => event.event_type === 'pk_their_goal').length
+      const ourPkAttempts = events.filter((event) => event.event_type === 'pk_our_goal' || event.event_type === 'pk_our_miss').length
+      const theirPkAttempts = events.filter((event) => event.event_type === 'pk_their_goal' || event.event_type === 'pk_their_miss').length
+      const shootoutDecided = ourPkAttempts >= 5 && ourPkAttempts === theirPkAttempts && pkFor !== pkAgainst
+
+      if (shootoutDecided ? pkFor > pkAgainst : forGoals > againstGoals) {
         wins += 1
         result = 'W'
-      } else if (forGoals < againstGoals) {
+      } else if (shootoutDecided ? pkFor < pkAgainst : forGoals < againstGoals) {
         losses += 1
         result = 'L'
       } else {
