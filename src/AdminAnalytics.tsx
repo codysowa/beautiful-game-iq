@@ -32,6 +32,7 @@ function dateTime(value: string) {
 function activityLabel(value: string | null) {
   if (value === 'app_open') return 'Opened app'
   if (value === 'app_resumed') return 'Returned to app'
+  if (value === 'session_refresh') return 'Auth session refreshed'
   return '—'
 }
 
@@ -74,7 +75,7 @@ export default function AdminAnalytics() {
         <div>
           <p className="admin-eyebrow">BEAUTIFUL GAME IQ · PRIVATE ADMIN</p>
           <h1>Product analytics</h1>
-          <p className="admin-subtitle">App adoption and real coaching activity recorded in the database.</p>
+          <p className="admin-subtitle">App adoption and authenticated session activity recorded in the database.</p>
         </div>
         <div className="admin-actions">
           <button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh data'}</button>
@@ -103,7 +104,7 @@ export default function AdminAnalytics() {
               <div className="admin-list-row" key={user.email}>
                 <div>
                   <strong>{user.email}</strong>
-                  <span>Last app activity: {user.last_active_at ? dateTime(user.last_active_at) : 'Not recorded yet'} · {activityLabel(user.last_activity_type)}</span>
+                  <span>Last seen: {user.last_active_at ? dateTime(user.last_active_at) : 'Not recorded yet'} · {activityLabel(user.last_activity_type)}</span>
                 </div>
                 <time>{user.last_sign_in_at ? `Signed in ${dateTime(user.last_sign_in_at)}` : 'No sign-in recorded'}</time>
               </div>
@@ -136,8 +137,7 @@ export default function AdminAnalytics() {
         </section>
 
         <p className="admin-note">
-          Last app activity is tracked from app opens and returns to the foreground. Authentication sign-in timestamps remain separate.
-          Historical activity before this update cannot be reconstructed from these records.
+          Last seen combines app-open/foreground events with Supabase authentication session refreshes. A session refresh confirms the account was active in the app or browser, but is not an exact measure of time spent using it.
         </p>
       </>}
     </main>
