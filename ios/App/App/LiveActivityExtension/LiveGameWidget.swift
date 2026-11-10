@@ -17,7 +17,7 @@ private func actionURL(_ action: String, gameId: String) -> URL {
 struct LiveGameWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: LiveGameActivityAttributes.self) { context in
-            VStack(spacing: 12) {
+            VStack(spacing: 6) {
                 HStack {
                     Text("BEAUTIFUL GAME IQ")
                         .font(.caption.bold())
@@ -34,7 +34,7 @@ struct LiveGameWidget: Widget {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                         Text("\(context.state.ourGoals)")
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
                     }
                     Spacer()
                     Text("–")
@@ -61,7 +61,8 @@ struct LiveGameWidget: Widget {
                     actionButton("NEXT Q →", action: "next_quarter", gameId: context.attributes.gameId, tint: .gray)
                 }
             }
-            .padding()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             .activityBackgroundTint(Color(red: 0.06, green: 0.10, blue: 0.18))
             .activitySystemActionForegroundColor(.primary)
         } dynamicIsland: { context in
@@ -108,7 +109,7 @@ struct LiveGameWidget: Widget {
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
+                .padding(.vertical, 6)
                 .background(tint.opacity(0.30), in: RoundedRectangle(cornerRadius: 9))
         }
         .foregroundStyle(tint)
