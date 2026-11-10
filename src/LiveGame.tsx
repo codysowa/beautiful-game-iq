@@ -101,6 +101,7 @@ const positionShort: Record<string, string> = {
 export default function LiveGame({
   gameId,
   opponent,
+  extraTimeEnabled,
   players,
   lineups,
   captainIds,
