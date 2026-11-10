@@ -1167,8 +1167,8 @@ export default function LiveGame({
     )]
     setCurrentQuarterAdvice(getRotationAdvice({
       players,
-      teamRules,
-      attendance,
+      teamRules: quarter > 4 && suspendPlayingLimits ? null : quarter > 4 ? { ...teamRules, max_gk_quarters: extraGkAllowed ? null : teamRules?.max_gk_quarters, max_bench_quarters: extraBenchAllowed ? null : teamRules?.max_bench_quarters } : teamRules,
+      attendance: quarter > 4 ? Object.fromEntries(Object.entries(attendance).map(([id, record]) => [id, { ...record, available_quarters: null, status: record.status === 'Absent' ? 'Absent' : 'Present' }])) : attendance,
       plannedLineups: lineups,
       priorActualLiveLineups: actualLiveLineups,
       gameSituation: currentQuarterSituation,
@@ -1214,8 +1214,8 @@ export default function LiveGame({
     )]
     setNextQuarterAdvice(getRotationAdvice({
       players,
-      teamRules,
-      attendance,
+      teamRules: quarter + 1 > 4 && suspendPlayingLimits ? null : quarter + 1 > 4 ? { ...teamRules, max_gk_quarters: extraGkAllowed ? null : teamRules?.max_gk_quarters, max_bench_quarters: extraBenchAllowed ? null : teamRules?.max_bench_quarters } : teamRules,
+      attendance: quarter + 1 > 4 ? Object.fromEntries(Object.entries(attendance).map(([id, record]) => [id, { ...record, available_quarters: null, status: record.status === 'Absent' ? 'Absent' : 'Present' }])) : attendance,
       plannedLineups: lineups,
       priorActualLiveLineups: actualLiveLineups,
       gameSituation: nextQuarterSituation,
@@ -1434,6 +1434,9 @@ export default function LiveGame({
           <button onClick={() => setShowPkSetup(true)} style={{ minHeight: 42, borderRadius: 9, border: '1px solid #7c3aed', background: '#312e81', color: '#fff', fontWeight: 700 }}>PK SHOOTOUT SETUP</button>
         </div>
       )}
+      {canManageGame && gameStatus === 'Live' && quarter !== 7 && (
+        <button onClick={startShootout} style={{ width: '100%', minHeight: 44, marginBottom: 12, borderRadius: 9, border: '1px solid #7c3aed', background: '#4c1d95', color: '#fff', fontWeight: 800 }}>START PENALTY SHOOTOUT</button>
+      )}
 
       {canManageGame && gameStatus === 'Scheduled' && (
         <button
@@ -1469,8 +1472,8 @@ export default function LiveGame({
         </button>
       )}
 
-      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: `repeat(${extraTimeEnabled ? 4 + extraPeriods : 4}, 1fr)`, gap: 6, marginBottom: 12 }}>
-        {[1, 2, 3, 4, ...(extraTimeEnabled ? Array.from({ length: extraPeriods }, (_, i) => i + 5) : [])].map((q) => (
+      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: `repeat(${4 + extraPeriods}, 1fr)`, gap: 6, marginBottom: 12 }}>
+        {[1, 2, 3, 4, ...Array.from({ length: extraPeriods }, (_, i) => i + 5)].map((q) => (
           <button
             key={q}
             onClick={() => changeQuarter(q)}
@@ -1522,7 +1525,7 @@ export default function LiveGame({
         </div>
       )}
 
-      {canManageGame && gameStatus === 'Live' && extraTimeEnabled && quarter >= 4 && quarter <= 4 + extraPeriods && (
+      {canManageGame && gameStatus === 'Live' && quarter >= 4 && quarter <= 4 + extraPeriods && (
         <section style={{ marginBottom: 12, padding: 14, borderRadius: 12, background: '#172554', border: '1px solid #2563eb', color: '#fff' }}>
           <strong>{quarter === 4 ? 'End of regulation' : `End of extra period ${quarter - 4}`}</strong>
           <p style={{ margin: '6px 0 12px', fontSize: 13, color: '#bfdbfe' }}>Current score: {ourGoals}-{theirGoals}</p>
