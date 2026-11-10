@@ -1431,13 +1431,13 @@ export default function LiveGame({
         )}
       </div>
 
-      {canManageGame && gameStatus === 'Live' && quarter !== 7 && (quarter > 4 || (quarter === 4 && ourGoals === theirGoals && extraTimeEnabled)) && (
+      {canManageGame && gameStatus === 'Live' && quarter !== 7 && quarter >= 4 + extraPeriods && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
           <button onClick={() => setShowTournamentSetup(true)} style={{ minHeight: 42, borderRadius: 9, border: '1px solid #64748b', background: '#1e293b', color: '#fff', fontWeight: 700 }}>EXTRA TIME RULES</button>
           <button onClick={() => setShowPkSetup(true)} style={{ minHeight: 42, borderRadius: 9, border: '1px solid #7c3aed', background: '#312e81', color: '#fff', fontWeight: 700 }}>PK SHOOTOUT SETUP</button>
         </div>
       )}
-      {canManageGame && gameStatus === 'Live' && quarter !== 7 && quarter > 4 && (
+      {canManageGame && gameStatus === 'Live' && quarter !== 7 && quarter >= 4 + extraPeriods && (
         <button onClick={startShootout} style={{ width: '100%', minHeight: 44, marginBottom: 12, borderRadius: 9, border: '1px solid #7c3aed', background: '#4c1d95', color: '#fff', fontWeight: 800 }}>START PENALTY SHOOTOUT</button>
       )}
 
@@ -1620,7 +1620,7 @@ export default function LiveGame({
 
         {lineupLoading ? (
           <p style={{ margin: 0, fontWeight: 600, color: '#94a3b8', textAlign: 'center', padding: '40px 0' }}>Loading Q{quarter} lineup...</p>
-        ) : activeLineup.length === 0 ? (
+        ) : activeLineup.length === 0 && (!canManageGame || gameStatus !== 'Live') ? (
           <p style={{ margin: 0, color: '#94a3b8', textAlign: 'center', padding: '40px 0' }}>No saved lineup for this quarter.</p>
         ) : (
           <>
@@ -2150,7 +2150,7 @@ export default function LiveGame({
             </> : <>
               <h2>Penalty Shootout Rules &amp; Kicker Order</h2>
               <label>Initial kicks per team <select value={pkInitialKicks} onChange={(e) => setPkInitialKicks(Number(e.target.value))}>{[3,4,5,6,7,8,9,10,11].map((n) => <option key={n}>{n}</option>)}</select></label><br/>
-              <label><input type="checkbox" checked={pkOnlyEndPlayers} onChange={(e) => setPkOnlyEndPlayers(e.target.checked)} /> Only players on field at end of final period may kick</label><br/>
+              <label><input type="checkbox" checked={pkOnlyEndPlayers} onChange={(e) => setPkOnlyEndPlayers(e.target.checked)} /> Only players on field at end of final period may kick</label><br/>{pkOnlyEndPlayers && quarter < 4 + extraPeriods && <p style={{color:'#fbbf24'}}>Kicker selection unlocks after the final extra-time period, using the players actually on the field then.</p>}
               <label><input type="checkbox" checked={pkSuddenDeath} onChange={(e) => setPkSuddenDeath(e.target.checked)} /> Sudden death if tied after initial kicks</label><br/>
               <label><input type="checkbox" checked={pkGoalkeeperCanKick} onChange={(e) => setPkGoalkeeperCanKick(e.target.checked)} /> Goalkeeper may kick</label>
               <p>Kicker order</p>
