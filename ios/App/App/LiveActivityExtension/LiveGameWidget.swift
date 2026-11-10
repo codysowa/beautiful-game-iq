@@ -21,7 +21,7 @@ struct LiveGameWidget: Widget {
                 HStack {
                     Text("BEAUTIFUL GAME IQ")
                         .font(.caption.bold())
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(Color.white)
                     Spacer()
                     Text("Q\(context.state.quarter)")
                         .font(.caption.bold())
@@ -62,7 +62,7 @@ struct LiveGameWidget: Widget {
                 }
             }
             .padding()
-            .activityBackgroundTint(Color(uiColor: .systemBackground))
+            .activityBackgroundTint(Color(red: 0.06, green: 0.10, blue: 0.18))
             .activitySystemActionForegroundColor(.primary)
         } dynamicIsland: { context in
             DynamicIsland {
