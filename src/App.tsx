@@ -60,6 +60,7 @@ type Game = {
   notes: string | null
   captain_1_id: string | null
   captain_2_id: string | null
+  extra_time_enabled: boolean
 }
 
 type AttendanceRecord = {
@@ -298,6 +299,7 @@ function App() {
   const [location, setLocation] = useState('')
   const [homeAway, setHomeAway] = useState('Home')
   const [gameNotes, setGameNotes] = useState('')
+  const [gameExtraTimeEnabled, setGameExtraTimeEnabled] = useState(false)
   const [showNewTeamForm, setShowNewTeamForm] = useState(false)
   const [showNewUserOnboarding, setShowNewUserOnboarding] = useState(false)
   const [helpStep, setHelpStep] = useState(0)
@@ -1005,6 +1007,7 @@ function App() {
     setLocation(game.location || '')
     setHomeAway(game.home_away)
     setGameNotes(game.notes || '')
+    setGameExtraTimeEnabled(Boolean(game.extra_time_enabled))
     setScreen('new-game')
   }
 
@@ -1030,6 +1033,7 @@ function App() {
         location: location.trim() || null,
         home_away: homeAway,
         notes: gameNotes.trim() || null,
+        extra_time_enabled: gameExtraTimeEnabled,
       })
       .eq('id', editingGameId)
       .select()
@@ -1053,6 +1057,7 @@ function App() {
     setLocation('')
     setHomeAway('Home')
     setGameNotes('')
+    setGameExtraTimeEnabled(false)
     setScreen('games')
   }
 
@@ -1082,6 +1087,7 @@ function App() {
         home_away: homeAway,
         status: 'Scheduled',
         notes: gameNotes.trim() || null,
+        extra_time_enabled: gameExtraTimeEnabled,
       })
       .select()
       .single()
@@ -1100,6 +1106,7 @@ function App() {
     setLocation('')
     setHomeAway('Home')
     setGameNotes('')
+    setGameExtraTimeEnabled(false)
 
     await loadApp()
 
@@ -2878,6 +2885,7 @@ function playerAtPosition(position: string) {
     setLocation('')
     setHomeAway('Home')
     setGameNotes('')
+    setGameExtraTimeEnabled(false)
     setScreen('new-game')
     window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0)
   }
@@ -3591,6 +3599,11 @@ function playerAtPosition(position: string) {
               onChange={(e) => setGameNotes(e.target.value)}
             />
 
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', fontWeight: 600 }}>
+              <input type="checkbox" checked={gameExtraTimeEnabled} onChange={(e) => setGameExtraTimeEnabled(e.target.checked)} />
+              If tied: two extra periods, then PK shootout
+            </label>
+
             <button
               className="primary-button"
               onClick={editingGameId ? updateGame : createGame}
@@ -3609,6 +3622,7 @@ function playerAtPosition(position: string) {
                   setLocation('')
                   setHomeAway('Home')
                   setGameNotes('')
+                  setGameExtraTimeEnabled(false)
                   setScreen('games')
                 }}
               >
@@ -3886,6 +3900,7 @@ function playerAtPosition(position: string) {
       <LiveGame
         gameId={selectedGame.id}
         opponent={selectedGame.opponent}
+        extraTimeEnabled={Boolean(selectedGame.extra_time_enabled)}
         players={players}
         lineups={allGameLineups}
         captainIds={[selectedGame.captain_1_id || captain1Id, selectedGame.captain_2_id || captain2Id].filter((id): id is string => Boolean(id)).map((id) => String(id).trim())}
