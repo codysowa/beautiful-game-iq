@@ -3611,9 +3611,12 @@ function playerAtPosition(position: string) {
               onChange={(e) => setGameNotes(e.target.value)}
             />
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', fontWeight: 600 }}>
-              <input type="checkbox" checked={gameExtraTimeEnabled} onChange={(e) => setGameExtraTimeEnabled(e.target.checked)} />
-              Could this game end in a tie? (Playoff / tournament game)
+            <label style={{ display: 'grid', gap: 6, padding: '10px 0', fontWeight: 600 }}>
+              Could this game end in a tie?
+              <select value={gameExtraTimeEnabled ? 'no' : 'yes'} onChange={(e) => setGameExtraTimeEnabled(e.target.value === 'no')}>
+                <option value="yes">Yes — a tie is allowed</option>
+                <option value="no">No — playoff / tournament game (extra time if tied)</option>
+              </select>
             </label>
 
             <button
