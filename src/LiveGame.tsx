@@ -1504,7 +1504,7 @@ export default function LiveGame({
           disabled={lineupLoading || optimizerLoading}
           style={{ width: '100%', minHeight: 46, fontSize: 14, fontWeight: 700, marginBottom: 8, borderRadius: 10, border: '1px solid #0284c7', background: '#0369a1', color: '#fff', cursor: 'pointer' }}
         >
-          {optimizerLoading ? 'PREPARING...' : `⚡ OPTIMIZE Q${quarter} NOW`}
+          {optimizerLoading ? 'PREPARING...' : `⚡ OPTIMIZE ${periodLabel(quarter)} NOW`}
         </button>
       )}
 
@@ -1531,7 +1531,7 @@ export default function LiveGame({
         <section style={{ marginBottom: 12, padding: 14, borderRadius: 12, background: '#172554', border: '1px solid #2563eb', color: '#fff' }}>
           <strong>{quarter === 4 ? 'End of regulation' : `End of extra period ${quarter - 4}`}</strong>
           <p style={{ margin: '6px 0 12px', fontSize: 13, color: '#bfdbfe' }}>Current score: {ourGoals}-{theirGoals}</p>
-          {quarter === 4 ? (ourGoals === theirGoals && extraTimeEnabled ? <button onClick={() => changeQuarter(5)} disabled={lineupLoading || saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#2563eb', color: '#fff', fontWeight: 800 }}>START EXTRA TIME →</button> : null) : quarter < 4 + extraPeriods ? (
+          {quarter === 4 ? (ourGoals === theirGoals && extraTimeEnabled ? <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}><button onClick={() => changeQuarter(5)} disabled={lineupLoading || saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#2563eb', color: '#fff', fontWeight: 800 }}>START EXTRA TIME →</button><button onClick={() => updateGameStatus('Completed')} disabled={saving} style={{ minHeight: 44, border: '1px solid #64748b', borderRadius: 9, background: '#334155', color: '#fff', fontWeight: 800 }}>END GAME</button></div> : <button onClick={() => updateGameStatus('Completed')} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 800 }}>END GAME</button>) : quarter < 4 + extraPeriods ? (
             <button onClick={() => changeQuarter(quarter + 1)} disabled={lineupLoading || saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#2563eb', color: '#fff', fontWeight: 800 }}>
               START {periodLabel(quarter + 1)} →
             </button>
