@@ -3613,7 +3613,7 @@ function playerAtPosition(position: string) {
 
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', fontWeight: 600 }}>
               <input type="checkbox" checked={gameExtraTimeEnabled} onChange={(e) => setGameExtraTimeEnabled(e.target.checked)} />
-              If tied: two extra periods, then PK shootout
+              Could this game end in a tie? (Playoff / tournament game)
             </label>
 
             <button
