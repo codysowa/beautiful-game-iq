@@ -919,7 +919,7 @@ export default function LiveGame({
   }
 
   async function recordOurGoal() {
-    if (!canStatTrack || !goalScorer || gameStatus !== 'Live' || saving) return
+    if (!canStatTrack || (!goalScorer) || gameStatus !== 'Live' || saving) return
     setSaving(true)
     let savedGoal: Event | null = null
 
@@ -930,8 +930,8 @@ export default function LiveGame({
           game_id: gameId,
           quarter,
           event_type: 'our_goal',
-          player_id: goalScorer,
-          assister_id: goalAssister || null,
+          player_id: goalScorer === 'own_goal' ? null : goalScorer,
+          assister_id: goalScorer === 'own_goal' ? null : goalAssister || null,
         })
         .select()
         .single()
@@ -944,19 +944,22 @@ export default function LiveGame({
 
       savedGoal = goalData as Event
 
-      const { data: shotData, error: shotError } = await supabase
-        .from('game_events')
-        .insert({
-          game_id: gameId,
-          quarter,
-          event_type: 'our_shot',
-          player_id: goalScorer,
-          related_goal_id: savedGoal.id,
-        })
-        .select()
-        .single()
+      if (goalScorer === 'own_goal') {
+        setEvents((current) => [savedGoal!, ...current.filter((event) => event.id !== savedGoal!.id)])
+      } else {
+        const { data: shotData, error: shotError } = await supabase
+          .from('game_events')
+          .insert({
+            game_id: gameId,
+            quarter,
+            event_type: 'our_shot',
+            player_id: goalScorer,
+            related_goal_id: savedGoal.id,
+          })
+          .select()
+          .single()
 
-      if (shotError || !shotData) {
+        if (shotError || !shotData) {
         console.error(shotError)
         setEvents((current) => [savedGoal!, ...current.filter((event) => event.id !== savedGoal!.id)])
         alert('Goal recorded, but the automatic shot could not be recorded: ' + (shotError?.message || 'Unknown error'))
@@ -966,6 +969,7 @@ export default function LiveGame({
           savedGoal!,
           ...current.filter((event) => event.id !== savedGoal!.id),
         ])
+        }
       }
 
       setGoalScorer('')
@@ -1100,8 +1104,7 @@ export default function LiveGame({
     if (!editingEvent || !canManageGame) return
 
     if (
-      (editingEvent.event_type === 'our_goal' ||
-        editingEvent.event_type === 'save' ||
+      ((editingEvent.event_type === 'save' ||
         editingEvent.event_type === 'our_shot') &&
       !editEventScorer
     ) {
@@ -1118,8 +1121,8 @@ export default function LiveGame({
 
     const payload = {
       quarter: editEventQuarter,
-      player_id: playerAttributedEvent ? editEventScorer : null,
-      assister_id: editingEvent.event_type === 'our_goal' ? editEventAssister || null : null,
+      player_id: playerAttributedEvent ? (editingEvent.event_type === 'our_goal' && editEventScorer === 'own_goal' ? null : editEventScorer || null) : null,
+      assister_id: editingEvent.event_type === 'our_goal' && editEventScorer !== 'own_goal' ? editEventAssister || null : null,
     }
 
     const { data, error } = await supabase
@@ -2134,7 +2137,7 @@ export default function LiveGame({
                     onChange={(e) => setEditEventScorer(e.target.value)}
                     style={{ width: '100%', padding: 10, boxSizing: 'border-box', borderRadius: 10, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc' }}
                   >
-                    <option value="">Select scorer</option>
+                    <option value="own_goal">Own Goal (no player credit)</option>
                     {players.map((player) => (
                       <option key={player.id} value={player.id}>
                         #{player.jersey_number ?? '-'} {player.first_name || player.name.split(' ')[0]}
