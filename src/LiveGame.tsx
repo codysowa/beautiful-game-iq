@@ -54,6 +54,7 @@ type Event = {
 type Props = {
   gameId: string
   opponent: string
+  extraTimeEnabled: boolean
   players: Player[]
   lineups: Lineup[]
   captainIds: string[]
@@ -100,6 +101,7 @@ const positionShort: Record<string, string> = {
 export default function LiveGame({
   gameId,
   opponent,
+  extraTimeEnabled,
   players,
   lineups,
   captainIds,
@@ -149,6 +151,13 @@ export default function LiveGame({
   const [currentQuarterFormation, setCurrentQuarterFormation] = useState('3-2-1')
   const [currentQuarterAdvice, setCurrentQuarterAdvice] = useState<RotationAdvice | null>(null)
   const lineupLoadId = useRef(0)
+
+  function periodLabel(value: number) {
+    if (value <= 4) return `Q${value}`
+    if (value === 5) return 'ET 1'
+    if (value === 6) return 'ET 2'
+    return 'PKs'
+  }
 
   function formationForLineup(items: Lineup[]) {
     const match = getFormationsForFormat(gameFormat).find((formation) => {
@@ -516,6 +525,13 @@ export default function LiveGame({
 
   const ourGoals = events.filter((event) => event.event_type === 'our_goal').length
   const theirGoals = events.filter((event) => event.event_type === 'their_goal').length
+  const pkOurGoals = events.filter((event) => event.event_type === 'pk_our_goal').length
+  const pkTheirGoals = events.filter((event) => event.event_type === 'pk_their_goal').length
+  const pkOurAttempts = events.filter((event) => event.event_type === 'pk_our_goal' || event.event_type === 'pk_our_miss').length
+  const pkTheirAttempts = events.filter((event) => event.event_type === 'pk_their_goal' || event.event_type === 'pk_their_miss').length
+  const pkWinner = pkOurAttempts >= 5 && pkTheirAttempts >= 5 && pkOurAttempts === pkTheirAttempts && pkOurGoals !== pkTheirGoals
+    ? (pkOurGoals > pkTheirGoals ? 'us' : 'them')
+    : null
 
   useEffect(() => {
     if (gameStatus === 'Live') {
@@ -543,7 +559,7 @@ export default function LiveGame({
 
       const action = parsed.searchParams.get('action')
       if (action === 'next_quarter') {
-        if (gameStatus === 'Live') setQuarter((current) => Math.min(4, current + 1))
+        if (gameStatus === 'Live') setQuarter((current) => Math.min(6, current + 1))
         return
       }
 
@@ -783,6 +799,18 @@ export default function LiveGame({
     setLiveFormation(newFormation)
     setSelectedPlayerId('')
     setSubInPlayerId('')
+  }
+
+  async function recordPenalty(eventType: 'pk_our_goal' | 'pk_our_miss' | 'pk_their_goal' | 'pk_their_miss') {
+    if (!canManageGame || gameStatus !== 'Live' || quarter !== 7 || saving || pkWinner) return
+    setSaving(true)
+    const { data, error } = await supabase.from('game_events')
+      .insert({ game_id: gameId, quarter: 7, event_type: eventType })
+      .select()
+      .single()
+    if (error) alert('Could not record penalty: ' + error.message)
+    else if (data) setEvents((current) => [data as Event, ...current])
+    setSaving(false)
   }
 
   async function recordTheirGoal() {
@@ -1383,8 +1411,8 @@ export default function LiveGame({
         </button>
       )}
 
-      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 12 }}>
-        {[1, 2, 3, 4].map((q) => (
+      <div className="live-game-quarter-tabs" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6, marginBottom: 12 }}>
+        {[1, 2, 3, 4, ...(extraTimeEnabled ? [5, 6] : [])].map((q) => (
           <button
             key={q}
             onClick={() => changeQuarter(q)}
@@ -1402,7 +1430,7 @@ export default function LiveGame({
               boxShadow: quarter === q ? '0 0 12px rgba(56,189,248,0.4)' : 'none'
             }}
           >
-            Q{q}
+            {periodLabel(q)}
           </button>
         ))}
       </div>
@@ -1434,6 +1462,46 @@ export default function LiveGame({
             {lineupLoading ? 'LOADING...' : `START Q${quarter + 1} →`}
           </button>
         </div>
+      )}
+
+      {canManageGame && gameStatus === 'Live' && extraTimeEnabled && quarter >= 4 && quarter <= 6 && (
+        <section style={{ marginBottom: 12, padding: 14, borderRadius: 12, background: '#172554', border: '1px solid #2563eb', color: '#fff' }}>
+          <strong>{quarter === 4 ? 'End of regulation' : quarter === 5 ? 'End of extra period 1' : 'End of extra period 2'}</strong>
+          <p style={{ margin: '6px 0 12px', fontSize: 13, color: '#bfdbfe' }}>Current score: {ourGoals}-{theirGoals}</p>
+          {quarter < 6 ? (
+            <button onClick={() => changeQuarter(quarter + 1)} disabled={lineupLoading || saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#2563eb', color: '#fff', fontWeight: 800 }}>
+              START {periodLabel(quarter + 1)} →
+            </button>
+          ) : ourGoals === theirGoals ? (
+            <button onClick={async () => { await closePositionTracking(quarter); setQuarter(7) }} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#7c3aed', color: '#fff', fontWeight: 800 }}>START PK SHOOTOUT →</button>
+          ) : (
+            <button onClick={() => updateGameStatus('Completed')} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 800 }}>FINISH GAME</button>
+          )}
+        </section>
+      )}
+
+      {quarter === 7 && gameStatus === 'Live' && (
+        <section style={{ marginBottom: 14, padding: 16, borderRadius: 14, background: '#172554', border: '1px solid #7c3aed', color: '#fff' }}>
+          <h2 style={{ margin: '0 0 6px' }}>Penalty Shootout</h2>
+          <div style={{ fontSize: 13, color: '#bfdbfe' }}>Regulation + extra time: {ourGoals}-{theirGoals}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-around', margin: '14px 0', fontSize: 24, fontWeight: 800 }}>
+            <span>US {pkOurGoals} <small style={{ fontSize: 12 }}>({pkOurAttempts} kicks)</small></span>
+            <span>THEM {pkTheirGoals} <small style={{ fontSize: 12 }}>({pkTheirAttempts} kicks)</small></span>
+          </div>
+          {pkWinner ? (
+            <>
+              <h3 style={{ textAlign: 'center', color: '#86efac' }}>{pkWinner === 'us' ? 'WE WIN' : 'OPPONENT WINS'} ON PKs</h3>
+              <button onClick={() => updateGameStatus('Completed')} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 800 }}>FINISH GAME</button>
+            </>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <button onClick={() => recordPenalty('pk_our_goal')} disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 700 }}>OUR PK: GOAL</button>
+              <button onClick={() => recordPenalty('pk_our_miss')} disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>OUR PK: MISS</button>
+              <button onClick={() => recordPenalty('pk_their_goal')} disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#b91c1c', color: '#fff', fontWeight: 700 }}>THEIR PK: GOAL</button>
+              <button onClick={() => recordPenalty('pk_their_miss')} disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>THEIR PK: MISS</button>
+            </div>
+          )}
+        </section>
       )}
 
       <div className="live-game-event-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
