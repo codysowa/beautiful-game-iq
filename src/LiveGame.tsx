@@ -511,6 +511,34 @@ export default function LiveGame({
     return true
   }
 
+  async function copyPreviousPeriodLineup() {
+    if (!canManageGame || gameStatus !== 'Live' || quarter <= 1 || quarter === 7 || saving || lineupLoading) return
+    const sourceQuarter = quarter - 1
+    setSaving(true)
+    const [{ data: liveData, error: liveError }, { data: plannedData, error: plannedError }] = await Promise.all([
+      supabase.from('game_live_lineups').select('player_id, quarter, position').eq('game_id', gameId).eq('quarter', sourceQuarter),
+      supabase.from('game_lineups').select('player_id, quarter, position').eq('game_id', gameId).eq('quarter', sourceQuarter),
+    ])
+    if (liveError || plannedError) {
+      alert(`Could not load the previous period lineup: ${(liveError || plannedError)?.message}`)
+      setSaving(false)
+      return
+    }
+    const source = (liveData && liveData.length > 0 ? liveData : plannedData || lineups.filter((item) => item.quarter === sourceQuarter)) as Lineup[]
+    if (source.length === 0) {
+      alert(`There is no saved lineup for ${periodLabel(sourceQuarter)} to copy.`)
+      setSaving(false)
+      return
+    }
+    const copied = source.map((item) => ({ ...item, quarter }))
+    const saved = await persistLiveLineup(copied, quarter)
+    if (saved) {
+      setLiveLineup(copied)
+      setLiveFormation(formationForLineup(copied))
+    }
+    setSaving(false)
+  }
+
   async function changeQuarter(nextQuarter: number) {
     if (!canManageGame || nextQuarter === quarter || lineupLoading) return
 
@@ -1618,6 +1646,11 @@ export default function LiveGame({
           )}
         </div>
 
+        {canManageGame && gameStatus === 'Live' && quarter > 1 && quarter !== 7 && (
+          <button onClick={copyPreviousPeriodLineup} disabled={saving || lineupLoading} style={{ width: '100%', minHeight: 42, marginBottom: 10, borderRadius: 9, border: '1px solid #0ea5e9', background: '#0c4a6e', color: '#fff', fontWeight: 800 }}>
+            COPY {periodLabel(quarter - 1)} LINEUP
+          </button>
+        )}
         {lineupLoading ? (
           <p style={{ margin: 0, fontWeight: 600, color: '#94a3b8', textAlign: 'center', padding: '40px 0' }}>Loading Q{quarter} lineup...</p>
         ) : activeLineup.length === 0 && (!canManageGame || gameStatus !== 'Live') ? (
