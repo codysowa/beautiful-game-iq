@@ -118,6 +118,7 @@ export default function LiveGame({
   const [pkInitialKicks, setPkInitialKicks] = useState(5)
   const [pkSuddenDeath, setPkSuddenDeath] = useState(true)
   const [pkGoalkeeperCanKick, setPkGoalkeeperCanKick] = useState(true)
+  const [pkFirstKicker, setPkFirstKicker] = useState<'us' | 'them'>('us')
   const [pkKickerOrder, setPkKickerOrder] = useState<string[]>([])
   const [showTournamentSetup, setShowTournamentSetup] = useState(false)
   const [showPkSetup, setShowPkSetup] = useState(false)
@@ -182,7 +183,7 @@ export default function LiveGame({
   async function loadGame() {
     const { data } = await supabase
       .from('games')
-      .select('status, format, team_id, captain_1_id, captain_2_id, tournament_extra_periods, tournament_extra_gk_allowed, tournament_extra_bench_allowed, tournament_suspend_playing_limits, pk_initial_kicks, pk_only_end_players, pk_sudden_death, pk_goalkeeper_can_kick, pk_kicker_order, tournament_phase, tournament_current_period')
+      .select('status, format, team_id, captain_1_id, captain_2_id, tournament_extra_periods, tournament_extra_gk_allowed, tournament_extra_bench_allowed, tournament_suspend_playing_limits, pk_initial_kicks, pk_only_end_players, pk_sudden_death, pk_goalkeeper_can_kick, pk_kicker_order, pk_first_kicker, tournament_phase, tournament_current_period')
       .eq('id', gameId)
       .single()
 
@@ -196,6 +197,7 @@ export default function LiveGame({
       setPkSuddenDeath(data.pk_sudden_death ?? true)
       setPkGoalkeeperCanKick(data.pk_goalkeeper_can_kick ?? true)
       setPkKickerOrder(Array.isArray(data.pk_kicker_order) ? data.pk_kicker_order : [])
+      setPkFirstKicker(data.pk_first_kicker === 'them' ? 'them' : 'us')
       setQuarter(data.tournament_current_period ?? (data.tournament_phase === 'shootout' ? 7 : 1))
       setLoadedCaptainIds([data.captain_1_id, data.captain_2_id].filter((id): id is string => Boolean(id)))
       const format = data.format || '7v7'
@@ -585,7 +587,7 @@ export default function LiveGame({
   const clinchedThem = pkTheirAttempts <= pkInitialKicks && pkTheirGoals > pkOurGoals + ourRemaining
   const suddenDeathWinner = pkSuddenDeath && pkOurAttempts >= pkInitialKicks && pkTheirAttempts >= pkInitialKicks && pkOurAttempts === pkTheirAttempts && pkOurGoals !== pkTheirGoals
   const pkWinner = clinchedUs || (suddenDeathWinner && pkOurGoals > pkTheirGoals) ? 'us' : clinchedThem || (suddenDeathWinner && pkTheirGoals > pkOurGoals) ? 'them' : null
-  const pkOurTurn = pkOurAttempts === pkTheirAttempts
+  const pkOurTurn = pkFirstKicker === 'us' ? pkOurAttempts === pkTheirAttempts : pkOurAttempts === pkTheirAttempts - 1
   const pkNextKicker = pkKickerOrder.length ? pkKickerOrder[pkOurAttempts % pkKickerOrder.length] : ''
 
   useEffect(() => {
@@ -875,6 +877,7 @@ export default function LiveGame({
       pk_sudden_death: pkSuddenDeath,
       pk_goalkeeper_can_kick: pkGoalkeeperCanKick,
       pk_kicker_order: pkKickerOrder,
+      pk_first_kicker: pkFirstKicker,
     }).eq('id', gameId)
     setSaving(false)
     if (error) { alert('Could not save tournament settings: ' + error.message); return }
@@ -1579,29 +1582,50 @@ export default function LiveGame({
         </section>
       )}
 
-      {canManageGame && quarter === 7 && gameStatus === 'Live' && (
-        <section style={{ marginBottom: 14, padding: 16, borderRadius: 14, background: '#172554', border: '1px solid #7c3aed', color: '#fff' }}>
+      {canManageGame && quarter === 7 && gameStatus === 'Live' && (() => {
+        const orderedPkEvents = events.filter((event) => ['pk_our_goal', 'pk_our_miss', 'pk_their_goal', 'pk_their_miss'].includes(event.event_type)).sort((a, b) => a.created_at.localeCompare(b.created_at))
+        const ourKickStatuses = new Map<string, 'goal' | 'miss'>()
+        const theirKickStatuses = new Map<number, 'goal' | 'miss'>()
+        let ourKickIndex = 0
+        let theirKickIndex = 0
+        orderedPkEvents.forEach((event) => {
+          if (event.event_type.startsWith('pk_our_')) {
+            if (event.player_id) ourKickStatuses.set(event.player_id, event.event_type === 'pk_our_goal' ? 'goal' : 'miss')
+            ourKickIndex++
+          } else {
+            theirKickStatuses.set(((theirKickIndex++) % Math.max(1, eligiblePkPlayers.length)) + 1, event.event_type === 'pk_their_goal' ? 'goal' : 'miss')
+          }
+        })
+        const dot = (status?: 'goal' | 'miss') => ({ width: 15, height: 15, flex: '0 0 15px', borderRadius: '50%', background: status === 'goal' ? '#22c55e' : status === 'miss' ? '#ef4444' : '#94a3b8', border: '1px solid rgba(255,255,255,.25)' })
+        return <section style={{ marginBottom: 14, padding: 16, borderRadius: 14, background: '#172554', border: '1px solid #7c3aed', color: '#fff' }}>
           <h2 style={{ margin: '0 0 6px' }}>Penalty Shootout</h2>
-          <div style={{ fontSize: 13, color: '#bfdbfe' }}>Match score: {ourGoals}-{theirGoals}</div><div style={{ textAlign: 'center', marginTop: 8 }}>Next kick: <strong>{pkOurTurn ? (players.find((p) => p.id === pkNextKicker)?.name || 'Configure kicker order') : 'Opponent'}</strong></div>
-          <div style={{ display: 'flex', justifyContent: 'space-around', margin: '14px 0', fontSize: 24, fontWeight: 800 }}>
+          <div style={{ fontSize: 13, color: '#bfdbfe' }}>Match score: {ourGoals}-{theirGoals}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-around', margin: '14px 0', fontSize: 22, fontWeight: 800 }}>
             <span>US {pkOurGoals} <small style={{ fontSize: 12 }}>({pkOurAttempts} kicks)</small></span>
             <span>THEM {pkTheirGoals} <small style={{ fontSize: 12 }}>({pkTheirAttempts} kicks)</small></span>
           </div>
-          {pkWinner ? (
-            <>
-              <h3 style={{ textAlign: 'center', color: '#86efac' }}>{pkWinner === 'us' ? 'WE WIN' : 'OPPONENT WINS'} ON PKs</h3>
-              <button onClick={() => updateGameStatus('Completed')} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 800 }}>FINISH GAME</button>
-            </>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button onClick={() => recordPenalty('pk_our_goal')} disabled={saving || !pkNextKicker || !pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 700 }}>OUR PK: GOAL</button>
-              <button onClick={() => recordPenalty('pk_our_miss')} disabled={saving || !pkNextKicker || !pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>OUR PK: MISS</button>
-              <button onClick={() => recordPenalty('pk_their_goal')} disabled={saving || pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#b91c1c', color: '#fff', fontWeight: 700 }}>THEIR PK: GOAL</button>
-              <button onClick={() => recordPenalty('pk_their_miss')} disabled={saving || pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>THEIR PK: MISS</button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '8px 0 16px' }}>
+            <div>
+              <div style={{ color: '#bfdbfe', fontSize: 12, fontWeight: 800, marginBottom: 8 }}>OUR KICKERS</div>
+              {pkKickerOrder.map((id, index) => <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 34, fontSize: 13, fontWeight: index < 5 ? 800 : 500, borderBottom: '1px solid rgba(148,163,184,.16)' }}><span style={dot(ourKickStatuses.get(id))} /><span>{index + 1}. {players.find((p) => p.id === id)?.name || 'Player'}</span></div>)}
             </div>
-          )}
+            <div>
+              <div style={{ color: '#bfdbfe', fontSize: 12, fontWeight: 800, marginBottom: 8 }}>OPPONENT</div>
+              {Array.from({ length: Math.max(eligiblePkPlayers.length, pkInitialKicks) }, (_, index) => <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 34, fontSize: 13, fontWeight: index < 5 ? 800 : 500, borderBottom: '1px solid rgba(148,163,184,.16)' }}><span style={dot(theirKickStatuses.get(index + 1))} /><span>Kicker {index + 1}</span></div>)}
+            </div>
+          </div>
+          <div style={{ textAlign: 'center', margin: '8px 0 12px', color: '#bfdbfe', fontSize: 13 }}>Next kick: <strong style={{ color: '#fff' }}>{pkOurTurn ? (players.find((p) => p.id === pkNextKicker)?.name || 'Configure kicker order') : 'Opponent'}</strong></div>
+          {pkWinner ? <>
+            <h3 style={{ textAlign: 'center', color: '#86efac' }}>{pkWinner === 'us' ? 'WE WIN' : 'OPPONENT WINS'} ON PKs</h3>
+            <button onClick={() => updateGameStatus('Completed')} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 800 }}>FINISH GAME</button>
+          </> : <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <button onClick={() => recordPenalty('pk_our_goal')} disabled={saving || !pkNextKicker || !pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 700 }}>OUR PK: GOAL</button>
+            <button onClick={() => recordPenalty('pk_our_miss')} disabled={saving || !pkNextKicker || !pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>OUR PK: MISS</button>
+            <button onClick={() => recordPenalty('pk_their_goal')} disabled={saving || pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#b91c1c', color: '#fff', fontWeight: 700 }}>THEIR PK: GOAL</button>
+            <button onClick={() => recordPenalty('pk_their_miss')} disabled={saving || pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>THEIR PK: MISS</button>
+          </div>}
         </section>
-      )}
+      })()}
 
       <div className="live-game-event-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
         <button
@@ -1634,7 +1658,7 @@ export default function LiveGame({
         </button>
       </div>
 
-      <section className="live-game-lineup-card" style={{ marginTop: 12, border: '1px solid #334155', borderRadius: 16, padding: 14, background: '#0f172a', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
+      {quarter !== 7 && <section className="live-game-lineup-card" style={{ marginTop: 12, border: '1px solid #334155', borderRadius: 16, padding: 14, background: '#0f172a', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f8fafc' }}>{periodLabel(quarter)} Formation</h2>
           {canManageGame && gameStatus === 'Live' && (
@@ -2194,7 +2218,7 @@ export default function LiveGame({
               <button onClick={saveTournamentSettings} disabled={saving} style={{ width: '100%', minHeight: 44, marginTop: 16, background: '#0284c7', color: '#fff', border: 0, borderRadius: 8, fontWeight: 800 }}>SAVE EXTRA TIME RULES</button>
             </> : <>
               <h2>Penalty Shootout Rules &amp; Kicker Order</h2>
-              <label>Initial kicks per team <select value={pkInitialKicks} onChange={(e) => setPkInitialKicks(Number(e.target.value))}>{[3,4,5,6,7,8,9,10,11].map((n) => <option key={n}>{n}</option>)}</select></label><br/>
+              <label>Who kicks first? <select value={pkFirstKicker} onChange={(e) => setPkFirstKicker(e.target.value as 'us' | 'them')} style={{ marginLeft: 8, padding: 8, borderRadius: 8, background: '#1e293b', color: '#fff' }}><option value="us">Our team</option><option value="them">Opponent</option></select></label><br/>\n              <label>Initial kicks per team <select value={pkInitialKicks} onChange={(e) => setPkInitialKicks(Number(e.target.value))}>{[3,4,5,6,7,8,9,10,11].map((n) => <option key={n}>{n}</option>)}</select></label><br/>
               <p>Only players on the field at the end of the final period are eligible ({eligiblePkPlayers.length} players).</p>{quarter < 4 + extraPeriods && <p style={{color:'#fbbf24'}}>Kicker selection unlocks after the final extra-time period, using the players actually on the field then.</p>}
               <label><input type="checkbox" checked={pkSuddenDeath} onChange={(e) => setPkSuddenDeath(e.target.checked)} /> Sudden death if tied after initial kicks</label><br/>
               <label><input type="checkbox" checked={pkGoalkeeperCanKick} onChange={(e) => setPkGoalkeeperCanKick(e.target.checked)} /> Goalkeeper may kick</label>
