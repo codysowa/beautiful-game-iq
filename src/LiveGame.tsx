@@ -556,6 +556,7 @@ export default function LiveGame({
   const clinchedThem = pkTheirAttempts <= pkInitialKicks && pkTheirGoals > pkOurGoals + ourRemaining
   const suddenDeathWinner = pkSuddenDeath && pkOurAttempts >= pkInitialKicks && pkTheirAttempts >= pkInitialKicks && pkOurAttempts === pkTheirAttempts && pkOurGoals !== pkTheirGoals
   const pkWinner = clinchedUs || (suddenDeathWinner && pkOurGoals > pkTheirGoals) ? 'us' : clinchedThem || (suddenDeathWinner && pkTheirGoals > pkOurGoals) ? 'them' : null
+  const pkOurTurn = pkOurAttempts === pkTheirAttempts
   const pkNextKicker = pkKickerOrder.length ? pkKickerOrder[pkOurAttempts % pkKickerOrder.length] : ''
 
   useEffect(() => {
@@ -854,7 +855,7 @@ export default function LiveGame({
   }
 
   async function recordPenalty(eventType: 'pk_our_goal' | 'pk_our_miss' | 'pk_their_goal' | 'pk_their_miss') {
-    if (!canManageGame || gameStatus !== 'Live' || quarter !== 7 || saving || pkWinner) return
+    if (!canManageGame || gameStatus !== 'Live' || quarter !== 7 || saving || pkWinner || (eventType.startsWith('pk_our_') !== pkOurTurn)) return
     setSaving(true)
     const { data, error } = await supabase.from('game_events')
       .insert({ game_id: gameId, quarter: 7, event_type: eventType, player_id: eventType.startsWith('pk_our_') ? (pkNextKicker || null) : null })
@@ -1545,7 +1546,7 @@ export default function LiveGame({
       {canManageGame && quarter === 7 && gameStatus === 'Live' && (
         <section style={{ marginBottom: 14, padding: 16, borderRadius: 14, background: '#172554', border: '1px solid #7c3aed', color: '#fff' }}>
           <h2 style={{ margin: '0 0 6px' }}>Penalty Shootout</h2>
-          <div style={{ fontSize: 13, color: '#bfdbfe' }}>Match score: {ourGoals}-{theirGoals}</div><div style={{ textAlign: 'center', marginTop: 8 }}>Next kicker: <strong>{players.find((p) => p.id === pkNextKicker)?.name || 'Configure kicker order'}</strong></div>
+          <div style={{ fontSize: 13, color: '#bfdbfe' }}>Match score: {ourGoals}-{theirGoals}</div><div style={{ textAlign: 'center', marginTop: 8 }}>Next kick: <strong>{pkOurTurn ? (players.find((p) => p.id === pkNextKicker)?.name || 'Configure kicker order') : 'Opponent'}</strong></div>
           <div style={{ display: 'flex', justifyContent: 'space-around', margin: '14px 0', fontSize: 24, fontWeight: 800 }}>
             <span>US {pkOurGoals} <small style={{ fontSize: 12 }}>({pkOurAttempts} kicks)</small></span>
             <span>THEM {pkTheirGoals} <small style={{ fontSize: 12 }}>({pkTheirAttempts} kicks)</small></span>
@@ -1557,10 +1558,10 @@ export default function LiveGame({
             </>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button onClick={() => recordPenalty('pk_our_goal')} disabled={saving || !pkNextKicker} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 700 }}>OUR PK: GOAL</button>
-              <button onClick={() => recordPenalty('pk_our_miss')} disabled={saving || !pkNextKicker} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>OUR PK: MISS</button>
-              <button onClick={() => recordPenalty('pk_their_goal')} disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#b91c1c', color: '#fff', fontWeight: 700 }}>THEIR PK: GOAL</button>
-              <button onClick={() => recordPenalty('pk_their_miss')} disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>THEIR PK: MISS</button>
+              <button onClick={() => recordPenalty('pk_our_goal')} disabled={saving || !pkNextKicker || !pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 700 }}>OUR PK: GOAL</button>
+              <button onClick={() => recordPenalty('pk_our_miss')} disabled={saving || !pkNextKicker || !pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>OUR PK: MISS</button>
+              <button onClick={() => recordPenalty('pk_their_goal')} disabled={saving || pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#b91c1c', color: '#fff', fontWeight: 700 }}>THEIR PK: GOAL</button>
+              <button onClick={() => recordPenalty('pk_their_miss')} disabled={saving || pkOurTurn} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#475569', color: '#fff', fontWeight: 700 }}>THEIR PK: MISS</button>
             </div>
           )}
         </section>
