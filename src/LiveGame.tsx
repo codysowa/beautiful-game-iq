@@ -415,7 +415,7 @@ export default function LiveGame({
       }
     }
 
-    if (nextStatus === 'Completed') {
+    if (nextStatus === 'Completed' && quarter !== 7) {
       const saved = await persistLiveLineup(activeLineup, quarter)
       if (!saved) {
         setSaving(false)
@@ -1468,12 +1468,12 @@ export default function LiveGame({
         <section style={{ marginBottom: 12, padding: 14, borderRadius: 12, background: '#172554', border: '1px solid #2563eb', color: '#fff' }}>
           <strong>{quarter === 4 ? 'End of regulation' : quarter === 5 ? 'End of extra period 1' : 'End of extra period 2'}</strong>
           <p style={{ margin: '6px 0 12px', fontSize: 13, color: '#bfdbfe' }}>Current score: {ourGoals}-{theirGoals}</p>
-          {quarter < 6 ? (
+          {ourGoals === theirGoals && quarter < 6 ? (
             <button onClick={() => changeQuarter(quarter + 1)} disabled={lineupLoading || saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#2563eb', color: '#fff', fontWeight: 800 }}>
               START {periodLabel(quarter + 1)} →
             </button>
-          ) : ourGoals === theirGoals ? (
-            <button onClick={async () => { await closePositionTracking(quarter); setQuarter(7) }} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#7c3aed', color: '#fff', fontWeight: 800 }}>START PK SHOOTOUT →</button>
+          ) : ourGoals === theirGoals && quarter === 6 ? (
+            <button onClick={async () => { const closed = await closePositionTracking(quarter); if (closed) setQuarter(7) }} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#7c3aed', color: '#fff', fontWeight: 800 }}>START PK SHOOTOUT →</button>
           ) : (
             <button onClick={() => updateGameStatus('Completed')} disabled={saving} style={{ width: '100%', minHeight: 44, border: 0, borderRadius: 9, background: '#059669', color: '#fff', fontWeight: 800 }}>FINISH GAME</button>
           )}
@@ -1507,7 +1507,7 @@ export default function LiveGame({
       <div className="live-game-event-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
         <button
           onClick={() => setShowGoal(true)}
-          disabled={gameStatus !== 'Live' || saving}
+          disabled={gameStatus !== 'Live' || saving || quarter === 7}
           style={{ minHeight: 56, fontSize: 15, fontWeight: 800, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', boxShadow: '0 4px 12px rgba(16,185,129,0.3)', cursor: 'pointer' }}
         >
           ⚽ OUR GOAL
@@ -1521,7 +1521,7 @@ export default function LiveGame({
         </button>
         <button
           onClick={recordSave}
-          disabled={gameStatus !== 'Live' || saving || lineupLoading}
+          disabled={gameStatus !== 'Live' || saving || lineupLoading || quarter === 7}
           style={{ minHeight: 48, fontSize: 14, fontWeight: 700, borderRadius: 12, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc', cursor: 'pointer' }}
         >
           🧤 SAVE
@@ -1537,7 +1537,7 @@ export default function LiveGame({
 
       <section className="live-game-lineup-card" style={{ marginTop: 12, border: '1px solid #334155', borderRadius: 16, padding: 14, background: '#0f172a', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f8fafc' }}>Q{quarter} Formation</h2>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f8fafc' }}>{periodLabel(quarter)} Formation</h2>
           {canManageGame && gameStatus === 'Live' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>Formation</span>
