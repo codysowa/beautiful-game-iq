@@ -1586,12 +1586,10 @@ export default function LiveGame({
         const orderedPkEvents = events.filter((event) => ['pk_our_goal', 'pk_our_miss', 'pk_their_goal', 'pk_their_miss'].includes(event.event_type)).sort((a, b) => a.created_at.localeCompare(b.created_at))
         const ourKickStatuses = new Map<string, 'goal' | 'miss'>()
         const theirKickStatuses = new Map<number, 'goal' | 'miss'>()
-        let ourKickIndex = 0
         let theirKickIndex = 0
         orderedPkEvents.forEach((event) => {
           if (event.event_type.startsWith('pk_our_')) {
             if (event.player_id) ourKickStatuses.set(event.player_id, event.event_type === 'pk_our_goal' ? 'goal' : 'miss')
-            ourKickIndex++
           } else {
             theirKickStatuses.set(((theirKickIndex++) % Math.max(1, eligiblePkPlayers.length)) + 1, event.event_type === 'pk_their_goal' ? 'goal' : 'miss')
           }
@@ -1627,7 +1625,7 @@ export default function LiveGame({
         </section>
       })()}
 
-      <div className="live-game-event-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+      {quarter !== 7 && <div className="live-game-event-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
         <button
           onClick={() => setShowGoal(true)}
           disabled={gameStatus !== 'Live' || saving || quarter === 7}
@@ -1656,7 +1654,7 @@ export default function LiveGame({
         >
           🎯 OUR SHOT
         </button>
-      </div>
+      </div>}
 
       {quarter !== 7 && <section className="live-game-lineup-card" style={{ marginTop: 12, border: '1px solid #334155', borderRadius: 16, padding: 14, background: '#0f172a', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
