@@ -587,6 +587,8 @@ export default function LiveGame({
   const clinchedThem = pkTheirAttempts <= pkInitialKicks && pkTheirGoals > pkOurGoals + ourRemaining
   const suddenDeathWinner = pkSuddenDeath && pkOurAttempts >= pkInitialKicks && pkTheirAttempts >= pkInitialKicks && pkOurAttempts === pkTheirAttempts && pkOurGoals !== pkTheirGoals
   const pkWinner = clinchedUs || (suddenDeathWinner && pkOurGoals > pkTheirGoals) ? 'us' : clinchedThem || (suddenDeathWinner && pkTheirGoals > pkOurGoals) ? 'them' : null
+  const hasShootoutResult = gameStatus === 'Completed' && pkOurAttempts + pkTheirAttempts > 0
+  const completedResultLabel = hasShootoutResult ? (pkWinner === 'us' ? 'W' : pkWinner === 'them' ? 'L' : 'DRAW') : 'COMPLETED'
   const pkOurTurn = pkFirstKicker === 'us' ? pkOurAttempts === pkTheirAttempts : pkOurAttempts === pkTheirAttempts - 1
   const pkNextKicker = pkKickerOrder.length ? pkKickerOrder[pkOurAttempts % pkKickerOrder.length] : ''
 
@@ -1459,11 +1461,12 @@ export default function LiveGame({
       </button>
 
       <div className="live-game-scoreboard" style={{ textAlign: 'center', padding: '12px 0 18px', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', borderRadius: 16, border: '1px solid #334155', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)', marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', color: '#38bdf8', marginBottom: 4 }}>{gameStatus.toUpperCase()}</div>
+        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', color: hasShootoutResult ? (pkWinner === 'us' ? '#34d399' : pkWinner === 'them' ? '#f87171' : '#38bdf8') : '#38bdf8', marginBottom: 4 }}>{gameStatus === 'Completed' ? completedResultLabel : gameStatus.toUpperCase()}</div>
         <h1 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 800, color: '#f8fafc' }}>vs {opponent}</h1>
         <div style={{ fontSize: 52, fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em', color: '#ffffff', textShadow: '0 2px 10px rgba(56,189,248,0.3)' }}>
           {ourGoals} - {theirGoals}
         </div>
+        {hasShootoutResult && <div style={{ marginTop: 8, fontSize: 18, fontWeight: 800, color: '#cbd5e1' }}>{pkOurGoals} - {pkTheirGoals} on PKs</div>}
         {captainIds.length > 0 && (
           <div style={{ marginTop: 10, fontSize: 13, color: '#94a3b8' }}>
             <strong style={{ color: '#cbd5e1' }}>Captains:</strong> {captainIds.map((id) => playerName(id)).join('  |  ')}
