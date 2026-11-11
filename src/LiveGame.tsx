@@ -1539,7 +1539,7 @@ export default function LiveGame({
         ))}
       </div>
 
-      {canManageGame && gameStatus === 'Live' && (
+      {canManageGame && gameStatus === 'Live' && quarter !== 7 && (
         <button
           onClick={openCurrentQuarterOptimizer}
           disabled={lineupLoading || optimizerLoading}
@@ -1585,16 +1585,15 @@ export default function LiveGame({
       )}
 
       {canManageGame && quarter === 7 && gameStatus === 'Live' && (() => {
-        const orderedPkEvents = events.filter((event) => ['pk_our_goal', 'pk_our_miss', 'pk_their_goal', 'pk_their_miss'].includes(event.event_type)).sort((a, b) => a.created_at.localeCompare(b.created_at))
+        const ourPkEvents = events.filter((event) => event.event_type === 'pk_our_goal' || event.event_type === 'pk_our_miss').slice().reverse()
+        const theirPkEvents = events.filter((event) => event.event_type === 'pk_their_goal' || event.event_type === 'pk_their_miss').slice().reverse()
         const ourKickStatuses = new Map<string, 'goal' | 'miss'>()
         const theirKickStatuses = new Map<number, 'goal' | 'miss'>()
-        let theirKickIndex = 0
-        orderedPkEvents.forEach((event) => {
-          if (event.event_type.startsWith('pk_our_')) {
-            if (event.player_id) ourKickStatuses.set(event.player_id, event.event_type === 'pk_our_goal' ? 'goal' : 'miss')
-          } else {
-            theirKickStatuses.set(((theirKickIndex++) % Math.max(1, eligiblePkPlayers.length)) + 1, event.event_type === 'pk_their_goal' ? 'goal' : 'miss')
-          }
+        ourPkEvents.forEach((event) => {
+          if (event.player_id) ourKickStatuses.set(event.player_id, event.event_type === 'pk_our_goal' ? 'goal' : 'miss')
+        })
+        theirPkEvents.forEach((event, index) => {
+          theirKickStatuses.set(index + 1, event.event_type === 'pk_their_goal' ? 'goal' : 'miss')
         })
         const dot = (status?: 'goal' | 'miss') => ({ width: 15, height: 15, flex: '0 0 15px', borderRadius: '50%', background: status === 'goal' ? '#22c55e' : status === 'miss' ? '#ef4444' : '#94a3b8', border: '1px solid rgba(255,255,255,.25)' })
         return <section style={{ marginBottom: 14, padding: 16, borderRadius: 14, background: '#172554', border: '1px solid #7c3aed', color: '#fff' }}>
