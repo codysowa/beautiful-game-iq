@@ -1610,7 +1610,7 @@ export default function LiveGame({
             </div>
             <div>
               <div style={{ color: '#bfdbfe', fontSize: 12, fontWeight: 800, marginBottom: 8 }}>OPPONENT</div>
-              {Array.from({ length: Math.max(eligiblePkPlayers.length, pkInitialKicks) }, (_, index) => <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 34, fontSize: 13, fontWeight: index < 5 ? 800 : 500, borderBottom: '1px solid rgba(148,163,184,.16)' }}><span style={dot(theirKickStatuses.get(index + 1))} /><span>Kicker {index + 1}</span></div>)}
+              {Array.from({ length: eligiblePkPlayers.length }, (_, index) => <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 34, fontSize: 13, fontWeight: index < 5 ? 800 : 500, borderBottom: '1px solid rgba(148,163,184,.16)' }}><span style={dot(theirKickStatuses.get(index + 1))} /><span>Kicker {index + 1}</span></div>)}
             </div>
           </div>
           <div style={{ textAlign: 'center', margin: '8px 0 12px', color: '#bfdbfe', fontSize: 13 }}>Next kick: <strong style={{ color: '#fff' }}>{pkOurTurn ? (players.find((p) => p.id === pkNextKicker)?.name || 'Configure kicker order') : 'Opponent'}</strong></div>
