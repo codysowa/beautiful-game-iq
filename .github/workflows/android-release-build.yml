@@ -54,10 +54,10 @@ jobs:
           content = path.read_text()
           if 'versionCode 1' not in content:
               raise SystemExit('Expected generated Android versionCode 1 not found; refusing unsafe replacement.')
-          content = content.replace('versionCode 1', 'versionCode 6', 1)
-          content = content.replace('versionName "1.0"', 'versionName "1.0.5"', 1)
+          content = content.replace('versionCode 1', 'versionCode 7', 1)
+          content = content.replace('versionName "1.0"', 'versionName "1.0.6"', 1)
           path.write_text(content)
-          print('Set Android versionCode=6 and versionName=1.0.5')
+          print('Set Android versionCode=7 and versionName=1.0.6')
           PY
 
       - name: Generate branded Android launcher icons
