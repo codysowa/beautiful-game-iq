@@ -309,3 +309,5 @@ jobs:
       - name: Remove temporary signing key
         if: always()
         run: rm -f "$RUNNER_TEMP/upload-keystore.jks"
+
+# Release workflow enabled on main for Play upload.
